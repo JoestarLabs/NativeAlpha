@@ -1,6 +1,5 @@
 package com.cylonid.nativealpha.util
 
-import android.annotation.SuppressLint
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -11,12 +10,10 @@ object DateUtils {
     fun getTimeInSeconds(): Long = System.currentTimeMillis() / 1000
 
     @JvmStatic
-    @SuppressLint("SimpleDateFormat")
     fun getHourMinFormat(): SimpleDateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     @JvmStatic
-    @SuppressLint("SimpleDateFormat")
-    fun getDayHourMinuteSecondsFormat(): SimpleDateFormat = SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.getDefault())
+    fun getDayHourMinuteSecondsFormat(): SimpleDateFormat = SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.US)
 
     @JvmStatic
     fun convertStringToCalendar(str: String?): Calendar? {

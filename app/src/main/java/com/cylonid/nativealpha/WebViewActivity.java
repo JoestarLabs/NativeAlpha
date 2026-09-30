@@ -403,7 +403,6 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 		});
 	}
 
-	@SuppressLint("RequiresFeature")
 	private void setDarkModeIfNeeded() {
 		if (!BuildConfig.FLAVOR.contains("extended")) {
 			return;
@@ -415,43 +414,36 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 				|| (!webapp.isUseTimespanDarkMode() && webapp.isForceDarkMode());
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-			boolean isForceDarkSupported = WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK);
-			boolean isForceDarkStrategySupported = WebViewFeature
-					.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY);
-			boolean isAlgorithmicDarkeningSupported = WebViewFeature
-					.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING);
-
 			if (needsForcedDarkMode) {
 				wv.setBackgroundColor(Color.BLACK);
 				wv.setForceDarkAllowed(true);
 				getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-				if (isForceDarkSupported) {
+				if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
 					WebSettingsCompat.setForceDark(wv.getSettings(), WebSettingsCompat.FORCE_DARK_ON);
 				}
-				if (isForceDarkStrategySupported) {
+				if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
 					WebSettingsCompat.setForceDarkStrategy(wv.getSettings(),
 							WebSettingsCompat.DARK_STRATEGY_PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING);
 				}
-				if (isAlgorithmicDarkeningSupported) {
+				if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
 					WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), true);
 				}
 			} else {
 				getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
 				wv.setBackgroundColor(Color.WHITE);
 
-				if (isForceDarkSupported) {
+				if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
 					WebSettingsCompat.setForceDark(wv.getSettings(), WebSettingsCompat.FORCE_DARK_OFF);
 				}
-				if (isForceDarkStrategySupported) {
+				if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
 					WebSettingsCompat.setForceDarkStrategy(wv.getSettings(),
 							WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY);
 				}
-				if (isAlgorithmicDarkeningSupported) {
+				if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
 					WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), false);
 				}
 			}
 		}
-
 	}
 
 	private void showWebViewPopupMenu() {

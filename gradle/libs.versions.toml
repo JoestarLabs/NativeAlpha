@@ -27,6 +27,7 @@ hasher = "1.2"
 process-phoenix = "3.0.0"
 easypermissions = "3.0.0"
 adfilter = "v0.9.1"
+timber = "5.0.1"
 
 # Testing
 junit = "4.13.2"
@@ -68,6 +69,7 @@ hasher = { module = "com.github.ihimanshurawat:Hasher", version.ref = "hasher" }
 process-phoenix = { module = "com.jakewharton:process-phoenix", version.ref = "process-phoenix" }
 easypermissions = { module = "pub.devrel:easypermissions", version.ref = "easypermissions" }
 ad-filter = { module = "com.github.Edsuns.AdblockAndroid:ad-filter", version.ref = "adfilter" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 
 # Testing
 junit = { module = "junit:junit", version.ref = "junit" }
@@ -87,6 +89,7 @@ testng = { module = "org.testng:testng", version.ref = "testng" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }

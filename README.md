@@ -2,8 +2,9 @@
 
 [![GitHub release](https://img.shields.io/github/v/release/JoestarLabs/NativeAlpha?color=blueviolet&style=flat)](https://github.com/JoestarLabs/NativeAlpha/releases)
 [![License](https://img.shields.io/github/license/JoestarLabs/NativeAlpha?color=orange&style=flat)](LICENSE)
-[![Min SDK](https://img.shields.io/badge/Min%20SDK-28-blue?style=flat)](https://developer.android.com)
-[![Target SDK](https://img.shields.io/badge/Target%20SDK-35-green?style=flat)](https://developer.android.com)
+[![Min SDK](https://img.shields.io/badge/Min%20SDK-26-blue?style=flat)](https://developer.android.com)
+[![Target SDK](https://img.shields.io/badge/Target%20SDK-37-green?style=flat)](https://developer.android.com)
+[![16 KB Pages](https://img.shields.io/badge/16%20KB%20Pages-Compatible-brightgreen?style=flat)](https://developer.android.com/guide/practices/page-sizes)
 
 **Native Alpha** turns web applications and websites into distraction-free, borderless, full-screen native Android applications powered by Android System WebView.
 
@@ -20,6 +21,7 @@ Run your favorite web services with granular privacy controls, ad blocking, cust
 - **Shortcuts & Custom Icons**: Add web apps to the home screen with high-resolution icon caching and SVG support.
 - **Sandboxed Sessions**: Keep web app data and cookies isolated across distinct sandboxed containers.
 - **Biometric Protection**: Lock sensitive web apps with fingerprint or lockscreen PIN authentication.
+- **16 KB Page Alignment**: Native C++ adblock engine built with NDK r28c, fully aligned for Android 15+ 16 KB page size devices.
 - **Lightweight & Transparent**: Zero background bloatware, telemetry, or analytics.
 
 ---
@@ -89,9 +91,10 @@ Native Alpha probes the site's manifest, apple-touch-icon, and favicon tags (inc
 ## Building from Source
 
 ### Prerequisites
-- Android SDK (API Level 35)
-- JDK 17+
-- Gradle 8.10+
+- Android SDK (API Level 37)
+- Android NDK (r28+) & CMake (3.22.1+)
+- JDK 21+
+- Gradle 9.8+ (included wrapper)
 
 ### Build Debug APK
 ```bash
@@ -103,11 +106,15 @@ Native Alpha probes the site's manifest, apple-touch-icon, and favicon tags (inc
 ./gradlew assembleStandardRelease
 ```
 
+### 16 KB Page Size Compatibility
+Native Alpha compiles its native C++ adblock engine (`:adblock-client`, sourced from [Edsuns/AdblockAndroid](https://github.com/Edsuns/AdblockAndroid)) directly from source using CMake and modern NDK r28c with flexible page size flags (`-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON` and `-Wl,-z,max-page-size=16384`). All 64-bit ELF binaries (`arm64-v8a` and `x86_64`) have their `LOAD` segments aligned at 16 KB boundaries, satisfying Google Play and Android 15+ requirements.
+
 ---
 
 ## Upstream & Credits
 
-Native Alpha was originally designed and built by [cylonid](https://github.com/cylonid) in [NativeAlphaForAndroid](https://github.com/cylonid/NativeAlphaForAndroid). This repository is a modernized continuation maintained under [JoestarLabs](https://github.com/JoestarLabs). We are deeply grateful to the original author for the foundational project and open-source work.
+- **Native Alpha**: Originally designed and built by [cylonid](https://github.com/cylonid) in [NativeAlphaForAndroid](https://github.com/cylonid/NativeAlphaForAndroid). This repository is a modernized continuation maintained under [JoestarLabs](https://github.com/JoestarLabs). We are deeply grateful to the original author for the foundational project and open-source work.
+- **Adblock Engine (`:adblock-client`)**: Sourced from [Edsuns/AdblockAndroid](https://github.com/Edsuns/AdblockAndroid), adapting [Brave's ad-block](https://github.com/brave/ad-block) C++ engine and [DuckDuckGo Android](https://github.com/duckduckgo/Android) bindings for Android WebView. Modernized here to build from source with modern NDK r28c and 16 KB page-size support.
 
 ---
 

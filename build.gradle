@@ -1,19 +1,20 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.android.library) apply false
     alias(libs.plugins.aboutlibraries) apply false
     alias(libs.plugins.spotless)
 }
 
 spotless {
     kotlin {
-        target 'app/src/**/*.kt'
+        target 'app/src/**/*.kt', 'adblock-client/src/**/*.kt'
         ktlint('1.5.0')
         trimTrailingWhitespace()
         endWithNewline()
     }
     java {
-        target 'app/src/**/*.java'
+        target 'app/src/**/*.java', 'adblock-client/src/**/*.java'
         eclipse()
         trimTrailingWhitespace()
         endWithNewline()
@@ -24,7 +25,7 @@ spotless {
         endWithNewline()
     }
     format 'xml', {
-        target 'app/src/**/*.xml'
+        target 'app/src/**/*.xml', 'adblock-client/src/**/*.xml'
         trimTrailingWhitespace()
         endWithNewline()
     }

@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 
 rootProject.name = 'NativeAlpha'
 include ':app'
+include ':adblock-client'

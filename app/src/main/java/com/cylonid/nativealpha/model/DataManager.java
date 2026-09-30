@@ -306,7 +306,6 @@ public class DataManager {
 		return result;
 	}
 
-	@SuppressWarnings({"unchecked"})
 	public boolean loadSharedPreferencesFromFile(Uri uri) {
 		boolean result = false;
 		try (FileInputStream fis = (FileInputStream) App.getAppContext().getContentResolver().openInputStream(uri);
@@ -317,14 +316,18 @@ public class DataManager {
 					.edit();
 			prefEdit.clear();
 			String checksum = (String) ois.readObject();
-			TreeMap<String, ?> shared_pref_map = ((TreeMap<String, ?>) ois.readObject());
+			Object readObj = ois.readObject();
+			if (!(readObj instanceof Map<?, ?>)) {
+				throw new IOException("Invalid backup format: expected map data.");
+			}
+			Map<?, ?> shared_pref_map = (Map<?, ?>) readObj;
 			String new_checksum = Hasher.Companion.hash(shared_pref_map.toString(), HashType.SHA_256);
 
 			if (!checksum.equals(new_checksum))
 				throw new InvalidChecksumException("Checksums between backup and restored settings do not match.");
-			for (Map.Entry<String, ?> entry : shared_pref_map.entrySet()) {
+			for (Map.Entry<?, ?> entry : shared_pref_map.entrySet()) {
 				Object v = entry.getValue();
-				String key = entry.getKey();
+				String key = String.valueOf(entry.getKey());
 
 				if (v instanceof Boolean)
 					prefEdit.putBoolean(key, (Boolean) v);
