@@ -1,140 +1,116 @@
+# <img src="graphics/logo.png" width="48px" alt="Native Alpha Logo" style="vertical-align: middle;"> Native Alpha
 
-# <img src="graphics/logo.png" width="50px" alt=""></img> Native Alpha
-![OS](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white&style=plastic)
-![OS](https://img.shields.io/badge/MinVersion-9.0-red)
-![SDK](https://img.shields.io/badge/SDK-35-yellowgreen)
-[![GitHub release](https://img.shields.io/github/v/release/cylonid/NativeAlphaForAndroid?include_prereleases&color=blueviolet)](https://github.com/cylonid/NativeAlphaForAndroid/releases)
-[![Github all releases](https://img.shields.io/github/downloads/cylonid/NativeAlphaForAndroid/total?color=blue&label=GitHub%E2%87%A9&style=plastic)](https://somsubhra.github.io/github-release-stats/?username=cylonid&repository=NativeAlphaForAndroid&page=1&per_page=20)
-[![GitHub license](https://img.shields.io/github/license/cylonid/NativeAlphaForAndroid?color=orange)](https://github.com/cylonid/NativeAlphaForAndroid/blob/master/LICENSE)
-![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)
+[![GitHub release](https://img.shields.io/github/v/release/JoestarLabs/NativeAlpha?color=blueviolet&style=flat)](https://github.com/JoestarLabs/NativeAlpha/releases)
+[![License](https://img.shields.io/github/license/JoestarLabs/NativeAlpha?color=orange&style=flat)](LICENSE)
+[![Min SDK](https://img.shields.io/badge/Min%20SDK-28-blue?style=flat)](https://developer.android.com)
+[![Target SDK](https://img.shields.io/badge/Target%20SDK-35-green?style=flat)](https://developer.android.com)
 
+**Native Alpha** turns web applications and websites into distraction-free, borderless, full-screen native Android applications powered by Android System WebView.
+
+Run your favorite web services with granular privacy controls, ad blocking, custom home screen shortcuts, and an edge-to-edge Material 3 experience.
+
+---
 
 ## Features
-  * Shows any website in a borderless full-screen window using Android System WebView.
-  * Create home screen shortcuts and retrieves icons in suitable resolution.
-  * Various settings (JavaScript, cookies, adblocking, location/camera/microphone access) can be set for every web app individually
-  * Navigation with multi-touch gestures while browsing.
-  * Opt-in adblock with user-selected filter lists.
-  * Less memory footprint and no privacy-invading app permissions in comparison to native apps
-  * Dark mode for Android 10+
 
-## Download Options
-[![IzzyOnDroid Download Badge](graphics/IzzyOnDroid.png)](https://apt.izzysoft.de/fdroid/index/apk/com.cylonid.nativealpha)
-[![APK Download Badge](graphics/apk_badge.png)](https://github.com/cylonid/NativeAlphaForAndroid/releases/download/v1.5.2/NativeAlpha-extendedGithub-universal-release-v1.5.2.apk)
-[![Google Play Download Badge](graphics/google_play.png)](https://play.google.com/store/apps/details?id=com.cylonid.nativealpha)
-### Paid Download
-[![Google Play Download Badge](graphics/google_play.png)](https://play.google.com/store/apps/details?id=com.cylonid.nativealpha.pro)
+- **Borderless Full-Screen**: Native, distraction-free web browsing with customizable navigation gestures.
+- **Granular Privacy & Permissions**: Configure JavaScript, cookies, location, camera, and microphone per web app.
+- **Integrated Ad Blocking**: Flexible ad-blocking engine with support for custom filter lists.
+- **Material 3 Design**: Clean, modern interface supporting dynamic system dark mode and edge-to-edge layouts.
+- **Shortcuts & Custom Icons**: Add web apps to the home screen with high-resolution icon caching and SVG support.
+- **Sandboxed Sessions**: Keep web app data and cookies isolated across distinct sandboxed containers.
+- **Biometric Protection**: Lock sensitive web apps with fingerprint or lockscreen PIN authentication.
+- **Lightweight & Transparent**: Zero background bloatware, telemetry, or analytics.
 
+---
 
+## Download
 
+### Install via Obtainium
 
-[![LiberaPay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/cylonid/donate)
+Recommended for automated background updates directly from GitHub releases:
 
-## Paid Features
+<a href="https://apps.obtainium.page/redirect?r=obtainium://add/https://github.com/JoestarLabs/NativeAlpha/releases">
+  <img src=".github/assets/badge_obtainium.png" alt="Get it on Obtainium" height="85" />
+</a>
 
-__Note: From v1.5.0, the GitHub and IzzyOnDroid release is functionally equivalent to Native Alpha Plus.__
+### GitHub Releases
 
-  * Sandbox containers: Web Apps are loaded in fully separated sandboxes, cookies or other data are not shared with other Web Apps
-  * Kiosk Mode: Fullscreen with menubars hidden
-  * Biometric Access Protection: For every Web App, you can enable access protection (Fingerprint + fallback to lockscreen PIN)
-  * Experimental "Force Dark Mode" also available for websites (configurable with respect to day-time)
-  
-## Latest Major Changes (v1.5.x)
+Download release APKs directly from the [GitHub Releases](https://github.com/JoestarLabs/NativeAlpha/releases) page:
 
-* New adblock engine that allows users to add their own selection of block lists. By default, the app will download and use "Fanboy Ultimate List" from https://fanboy.co.nz. You can change your block list sources at any time.
-* Material Design 3-based components and theme
-* Cleaner main screen, less buttons: "Delete" and "Open settings" actions are available via swipe, Web Apps are opened by clicking on the label.
-* Login using HTTP Auth is supported
-* Several bugfixes, most notably regarding the top system bar on devices running Android 15
+- **Universal APK**: Works across all supported Android architectures.
+- **ABI-specific APKs**: `arm64-v8a`, `armeabi-v7a` for optimized file sizes.
 
-### Small release (v1.5.2)
-* Fixed cases where OK button could not be pressed on intro screen
-* Changed system top bar to neutral color again
-* Fixed an issue with desktop mode on large screens
-* Fixed crashes when opening pop up menu
-* Information dialog regarding adblock-related crashes
-
-### Native Alpha Plus
-
-* Biometric Access Protection: For every Web App, you can enable access protection (Fingerprint + fallback to lockscreen PIN)
-* Further enhancements for Dark Mode
-
-
-## FAQ
-<details> 
-<summary><i> Q: Why would I need this app if any mobile browser can do the same? </i></summary>
-A: Mobile browsers usually only are able to create shortcuts which give a native, borderless fullscreen experience if the website has a Progressive Web App (PWA) manifest. Unfortunately, most websites do not offer this feature yet. Additionally, you cannot set different settings for different websites with an usual browser.
-</details>
-
-<details> 
-<summary><i> Q: Can I keep multiple log-in sessions of the same website? </i></summary>
-A: Yes, this is possible using the sandbox feature of Native Alpha Plus.
-</details>
-
-<details> 
-<summary><i> Q: Why isn't the sandbox feature in Native Alpha Plus enabled by default? </i></summary>
-A: The sandboxing approach is recommended for specific usage rather than general usage because it can limit the performance of the application and increase the disk usage. Therefore, use it for privacy-invasive websites or websites where you want to be logged in twice, but not for any website just because you can.
-</details>
-
-<details> 
-<summary><i> Q: Is this app a dedicated web browser with its own browser engine? </i></summary>
-A: No. As stated, this app relies on the system built-in Android WebView in order to display the website. For privacy reasons, you can opt to use alternative webviews such as [Bromite](https://www.bromite.org/system_web_view) on rooted phones. Always make sure to use to most recent version of any WebView implementation you use!
-</details>
-
-<details>
-<summary><i> Q: Why is it not possible to find an icon for a certain website? </i></summary>
-A: This problem can occur due to multiple reasons. In most cases, the website does not offer a high-resolution icon. If you are a website maintainer and your website icon cannot be found, look at [RealFaviconGenerator](https://realfavicongenerator.net) for further information. If you think it should work, feel free to post the URL and I will look into it.
-</details>
-
-<details>
-<summary><i> Q: In constrast to your promise, this app has a large memory footprint! </i></summary>
-A: This is because Native Alpha makes use of caching in the same way your browser app does, i.e., it saves web content locally on your device. Then it can be loaded faster if you visit the same page again. You can either delete cache regularly yourself or set the "Clear cache after usage" setting in the global settings if memory footprint is a concern for you. However, then websites will take a longer time to load because everything has to be loaded from net.
-</details>
-
-<details>
-<summary><i> Q: What is the minimum Android version for running Native Alpha? </i></summary>
-A: Android 9 and newer are supported.
-</details>
-
-<details>
-<summary><i> Q: I don't want to use Google Play services, is there any other way to obtain Native Alpha Plus? </i></summary>
-A: You can build the app yourself, everything is open-source including the paid features. Also, the GitHub release includes the Pro features.
-</details>
-
-## Notable used libraries/resources
-* [CircularProgressBar](https://github.com/lopspower/CircularProgressBar)
-* [JSoup](https://jsoup.org/)
-* [AdblockAndroid](https://github.com/Edsuns/AdblockAndroid)
-* [MovableFloatingActionButton](https://stackoverflow.com/questions/46370836/android-movable-draggable-floating-action-button-fab)
-* [Android About Page](https://github.com/medyo/android-about-page)
-* [Android Databinding](https://developer.android.com/topic/libraries/data-binding)
-* [AboutLibraries](https://github.com/mikepenz/AboutLibraries)
-* [Drag & Drop n' Swipe Recyclerview](https://github.com/ernestoyaquello/DragDropSwipeRecyclerview)
-
-For testing purposes:
-* [Robolectric](https://github.com/robolectric/robolectric)
-* [Espresso](https://developer.android.com/training/testing/espresso/)
-
-A list of used open-source libraries can also be found inside the app ("About" section).
+---
 
 ## Screenshots
+
 <details>
-<summary> Click to see screenshots </summary>
-<div style="text-align: center; margin: auto;">
-<img src="graphics/screenshots/mainScreen.png" alt="Main Screen" width="350"/>
-<img src="graphics/screenshots/addWebApp.png" alt="Add Web App" width="350"/>
-<img src="graphics/screenshots/webAppSettings.png" alt="Available Web App Settings" width="350"/>
-<img src="graphics/screenshots/globalSettings.png" alt="Global Settings" width="350"/>
+<summary><b>Click to expand screenshots</b></summary>
+<br>
+<div align="center">
+  <img src="graphics/screenshots/mainScreen.png" alt="Main Screen" width="230"/>
+  <img src="graphics/screenshots/addWebApp.png" alt="Add Web App" width="230"/>
+  <img src="graphics/screenshots/webAppSettings.png" alt="Web App Settings" width="230"/>
+  <img src="graphics/screenshots/globalSettings.png" alt="Global Settings" width="230"/>
 </div>
 </details>
 
+---
+
+## FAQ
+
+<details> 
+<summary><b>Why use Native Alpha over a mobile browser?</b></summary>
+<br>
+Standard mobile browsers typically only offer fullscreen shortcuts if a website explicitly supplies a Progressive Web App (PWA) manifest. Native Alpha gives <i>every</i> website a native, borderless container while allowing independent permissions, cache controls, and adblock configurations per site.
+</details>
+
+<details> 
+<summary><b>Does Native Alpha use its own browser engine?</b></summary>
+<br>
+No. Native Alpha runs on top of the built-in Android System WebView (Chromium). Keep your device's System WebView updated to benefit from the latest web standards, performance, and security fixes.
+</details>
+
+<details> 
+<summary><b>Can I maintain separate logins for the same site?</b></summary>
+<br>
+Yes. Native Alpha supports sandboxed containers that isolate cookies, storage, and sessions across different instances of the same service.
+</details>
+
+<details> 
+<summary><b>How are website icons retrieved?</b></summary>
+<br>
+Native Alpha probes the site's manifest, apple-touch-icon, and favicon tags (including SVG favicons) to find the highest available resolution. Custom icons can also be applied.
+</details>
+
+---
+
+## Building from Source
+
+### Prerequisites
+- Android SDK (API Level 35)
+- JDK 17+
+- Gradle 8.10+
+
+### Build Debug APK
+```bash
+./gradlew assembleStandardDebug
+```
+
+### Build Release APK
+```bash
+./gradlew assembleStandardRelease
+```
+
+---
+
+## Upstream & Credits
+
+Native Alpha was originally designed and built by [cylonid](https://github.com/cylonid) in [NativeAlphaForAndroid](https://github.com/cylonid/NativeAlphaForAndroid). This repository is a modernized continuation maintained under [JoestarLabs](https://github.com/JoestarLabs). We are deeply grateful to the original author for the foundational project and open-source work.
+
+---
 
 ## License
-Native Alpha is Free Software: You can use, study share and improve it at your
-will. Specifically you can redistribute and/or modify it under the terms of the
-[GNU General Public License](https://www.gnu.org/licenses/gpl.html) as
-published by the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
 
-## End User License Agreement
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Native Alpha is Free and Open Source Software licensed under the [GNU General Public License v3.0](LICENSE).
