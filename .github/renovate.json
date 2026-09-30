@@ -1,0 +1,24 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["^androidx\\."],
+      "groupName": "AndroidX dependencies"
+    },
+    {
+      "matchPackagePatterns": ["^org\\.jetbrains\\.kotlin"],
+      "groupName": "Kotlin dependencies"
+    },
+    {
+      "matchPackagePatterns": ["^com\\.android\\.tools\\.build"],
+      "groupName": "Android Gradle Plugin"
+    },
+    {
+      "matchPackagePatterns": ["^com\\.mikepenz"],
+      "groupName": "AboutLibraries dependencies"
+    }
+  ]
+}
