@@ -2,7 +2,13 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "package-name": "NativeAlpha"
+      "package-name": "NativeAlpha",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "app/build.gradle"
+        }
+      ]
     }
   }
 }
