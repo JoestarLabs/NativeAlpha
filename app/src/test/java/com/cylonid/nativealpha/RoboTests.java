@@ -1,8 +1,10 @@
 package com.cylonid.nativealpha;
 
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 
+@Ignore("Empty test suite - tests commented out")
 @RunWith(RobolectricTestRunner.class)
 public class RoboTests {
 

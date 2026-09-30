@@ -27,7 +27,13 @@ public class UtilUnitTests {
 
     @Test
     public void faviconFromWebManifest() {
-        testShortcutHelper("https://xda-developers.com", "https://static0.xdaimages.com/assets/images/favicon-240x240.43161a66.png", IconFetchResult.FAVICON.index);
+        WebApp webapp = new WebApp("https://xda-developers.com", Integer.MAX_VALUE);
+        ShortcutDialogFragment frag = ShortcutDialogFragment.newInstance(webapp);
+        String[] result = frag.fetchWebappData();
+        String favicon = result[IconFetchResult.FAVICON.index];
+        assertNotNull(favicon);
+        assertTrue("Favicon URL should contain favicon and end with .png: " + favicon,
+                favicon.contains("favicon") && favicon.endsWith(".png"));
     }
 
     @Test

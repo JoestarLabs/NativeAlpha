@@ -88,10 +88,10 @@ class WebAppSettingsActivity : ToolbarBaseActivity<WebappSettingsBinding>() {
                 DataManager.getInstance().saveGlobalSettings()
             } else {
                 for (task in activityManager.appTasks) {
-                    val id = task.taskInfo.baseIntent.getIntExtra(
+                    val id = task.taskInfo?.baseIntent?.getIntExtra(
                         Const.INTENT_WEBAPPID,
                         -1
-                    )
+                    ) ?: -1
                     if (id == webappID) task.finishAndRemoveTask()
                 }
                 for (processInfo in activityManager.runningAppProcesses) {

@@ -7,7 +7,7 @@ object ProcessUtils {
     @JvmStatic
     fun closeAllWebAppsAndProcesses(activityManager: ActivityManager) {
         for (task in activityManager.appTasks) {
-            val id = task.taskInfo.baseIntent.getIntExtra(Const.INTENT_WEBAPPID, -1)
+            val id = task.taskInfo?.baseIntent?.getIntExtra(Const.INTENT_WEBAPPID, -1) ?: -1
             if (id != -1) task.finishAndRemoveTask()
         }
         for (processInfo in activityManager.runningAppProcesses) {

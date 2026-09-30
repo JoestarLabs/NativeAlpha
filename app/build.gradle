@@ -1,17 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.aboutlibraries)
 }
 
-aboutLibraries {
-    excludeFields = ["generated"]
-}
 
 android {
     namespace 'com.cylonid.nativealpha'
-    compileSdk 35
+    compileSdk 37
 
     dependenciesInfo {
         includeInApk = false
@@ -59,11 +54,9 @@ android {
         buildConfig true
         dataBinding true
         viewBinding true
+        resValues true
     }
 
-    kotlinOptions {
-        jvmTarget = '17'
-    }
 
     signingConfigs {
         release {
@@ -87,15 +80,10 @@ android {
             applicationIdSuffix = ".debug"
             resValue "string", "app_name", "_DEBUG-Native Alpha"
         }
-        applicationVariants.all { variant ->
-            variant.outputs.each { output ->
-                project.ext { appName = 'NativeAlpha' }
-                def newName = output.outputFile.name
-                newName = newName.replace("app-", "$project.ext.appName-")
-                newName = newName.replace("-release", "-release-" + "v" + variant.versionName)
-                output.outputFileName = newName
-            }
-        }
+    }
+
+    base {
+        archivesName = 'NativeAlpha'
     }
 
     testOptions {
