@@ -2,9 +2,30 @@
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.aboutlibraries) apply false
+    alias(libs.plugins.spotless)
 }
 
-tasks.register('clean', Delete) {
-    delete rootProject.layout.buildDirectory
+spotless {
+    kotlin {
+        target 'app/src/**/*.kt'
+        ktlint('1.5.0')
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    java {
+        target 'app/src/**/*.java'
+        eclipse()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    groovyGradle {
+        target '**/*.gradle'
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format 'xml', {
+        target 'app/src/**/*.xml'
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
 }
-

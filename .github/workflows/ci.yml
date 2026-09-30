@@ -30,8 +30,8 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Run Unit Tests & Lint
-        run: ./gradlew testStandardDebugUnitTest lintStandardDebug
+      - name: Run Code Format Check, Unit Tests & Lint
+        run: ./gradlew spotlessCheck testStandardDebugUnitTest lintStandardDebug
 
       - name: Assemble Debug APK
         run: ./gradlew assembleStandardDebug

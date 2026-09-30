@@ -17,8 +17,10 @@ object ProcessUtils {
         }
     }
 
-
-    fun killWebSandbox(id: Int, activityManager: ActivityManager) {
+    fun killWebSandbox(
+        id: Int,
+        activityManager: ActivityManager,
+    ) {
         for (processInfo in activityManager.runningAppProcesses) {
             if (processInfo.processName.contains("web_sandbox_$id")) {
                 Process.killProcess(processInfo.pid)

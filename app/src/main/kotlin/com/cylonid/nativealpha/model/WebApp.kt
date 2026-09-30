@@ -2,7 +2,10 @@ package com.cylonid.nativealpha.model
 
 import android.app.Activity
 import android.view.View
-import android.widget.*
+import android.widget.CompoundButton
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.FragmentActivity
 import com.cylonid.nativealpha.R
@@ -11,11 +14,16 @@ import com.cylonid.nativealpha.helper.BiometricPromptHelper
 import com.cylonid.nativealpha.util.Const
 import com.cylonid.nativealpha.util.ShortcutIconUtils
 import com.cylonid.nativealpha.util.Utility
-import java.util.*
 
-data class AdblockConfig(val label: String, val value: String)
+data class AdblockConfig(
+    val label: String,
+    val value: String,
+)
 
-data class WebApp(var baseUrl: String, val ID: Int) {
+data class WebApp(
+    var baseUrl: String,
+    val ID: Int,
+) {
     var title: String
     var isActiveEntry = true
     var isOverrideGlobalSettings = true
@@ -63,11 +71,11 @@ data class WebApp(var baseUrl: String, val ID: Int) {
         initDefaultSettings()
     }
 
-    constructor(baseUrl: String, ID: Int, order: Int): this(baseUrl, ID) {
+    constructor(baseUrl: String, ID: Int, order: Int) : this(baseUrl, ID) {
         this.order = order
     }
 
-    constructor(baseUrl: String, ID: Int, adBlockSettings: MutableList<AdblockConfig>): this(baseUrl, ID) {
+    constructor(baseUrl: String, ID: Int, adBlockSettings: MutableList<AdblockConfig>) : this(baseUrl, ID) {
         this.adBlockSettings = adBlockSettings
     }
 
@@ -79,9 +87,7 @@ data class WebApp(var baseUrl: String, val ID: Int) {
         copySettings(other)
     }
 
-
-
-    //This part of the copy ctor should be callable independently from actual object construction to copy values of the global web app template
+    // This part of the copy ctor should be callable independently from actual object construction to copy values of the global web app template
     fun copySettings(other: WebApp) {
         isOpenUrlExternal = other.isOpenUrlExternal
         isAllowCookies = other.isAllowCookies
@@ -131,7 +137,7 @@ data class WebApp(var baseUrl: String, val ID: Int) {
     /*
         This function is used for settings where the ctor needs to have a different setting because
         we want different behaviour for already existing and newly created Web Apps.
-            */
+     */
     fun applySettingsForNewWebApp() {
         isOverrideGlobalSettings = false
     }
@@ -140,17 +146,26 @@ data class WebApp(var baseUrl: String, val ID: Int) {
         isActiveEntry = false
         ShortcutIconUtils.deleteShortcuts(
             listOf(ID),
-            activity
+            activity,
         )
     }
 
-
     val alphanumericBaseUrl: String
-        get() = baseUrl.replace("\\P{Alnum}".toRegex(), "").replace("https", "").replace("http", "").replace("www", "")
+        get() =
+            baseUrl
+                .replace("\\P{Alnum}".toRegex(), "")
+                .replace("https", "")
+                .replace("http", "")
+                .replace("www", "")
 
-    fun onSwitchCookiesChanged(mSwitch: CompoundButton, isChecked: Boolean) {
+    fun onSwitchCookiesChanged(
+        mSwitch: CompoundButton,
+        isChecked: Boolean,
+    ) {
         val switchThirdPCookies = mSwitch.rootView.findViewById<SwitchCompat>(R.id.switch3PCookies)
-        if (isChecked) switchThirdPCookies.isEnabled = true else {
+        if (isChecked) {
+            switchThirdPCookies.isEnabled = true
+        } else {
             switchThirdPCookies.isEnabled = false
             switchThirdPCookies.isChecked = false
         }
@@ -160,20 +175,24 @@ data class WebApp(var baseUrl: String, val ID: Int) {
         switchBiometricAccess.setOnCheckedChangeListener(null)
     }
 
-    private fun enableSwitchBiometricAccessChangeListener(switchBiometricAccess: SwitchCompat,
-                                                          activity: WebAppSettingsActivity) {
+    private fun enableSwitchBiometricAccessChangeListener(
+        switchBiometricAccess: SwitchCompat,
+        activity: WebAppSettingsActivity,
+    ) {
         switchBiometricAccess.setOnCheckedChangeListener { switch, checked ->
             onSwitchBiometricAccessChanged(
                 switch,
                 checked,
-                activity
+                activity,
             )
         }
     }
 
-    private fun setSwitchBiometricAccessSilently(newValue: Boolean,
-                                                 switchBiometricAccess: SwitchCompat,
-                                                 activity: WebAppSettingsActivity) {
+    private fun setSwitchBiometricAccessSilently(
+        newValue: Boolean,
+        switchBiometricAccess: SwitchCompat,
+        activity: WebAppSettingsActivity,
+    ) {
         disableSwitchBiometricAccessChangeListener(switchBiometricAccess)
         switchBiometricAccess.isChecked = newValue
         enableSwitchBiometricAccessChangeListener(switchBiometricAccess, activity)
@@ -182,7 +201,7 @@ data class WebApp(var baseUrl: String, val ID: Int) {
     fun onSwitchBiometricAccessChanged(
         mSwitch: CompoundButton,
         isChecked: Boolean,
-        activity: WebAppSettingsActivity
+        activity: WebAppSettingsActivity,
     ) {
         val switchBiometricAccess =
             mSwitch.rootView.findViewById<SwitchCompat>(R.id.switchBiometricAccess)
@@ -196,19 +215,26 @@ data class WebApp(var baseUrl: String, val ID: Int) {
                     setSwitchBiometricAccessSilently(true, switchBiometricAccess, activity)
                     isBiometricProtection = true
                 },
-                {}, activity.getString(R.string.bioprompt_enable_restriction)
+                {},
+                activity.getString(R.string.bioprompt_enable_restriction),
             )
         }
         if (switchBiometricAccess.isChecked) {
-            BiometricPromptHelper(activity as FragmentActivity).showPrompt({
-                setSwitchBiometricAccessSilently(false, switchBiometricAccess, activity)
-                isBiometricProtection = false
-            }, {}, activity.getString(R.string.bioprompt_disable_restricition)
+            BiometricPromptHelper(activity as FragmentActivity).showPrompt(
+                {
+                    setSwitchBiometricAccessSilently(false, switchBiometricAccess, activity)
+                    isBiometricProtection = false
+                },
+                {},
+                activity.getString(R.string.bioprompt_disable_restricition),
             )
         }
     }
 
-    fun onSwitchJsChanged(mSwitch: CompoundButton, isChecked: Boolean) {
+    fun onSwitchJsChanged(
+        mSwitch: CompoundButton,
+        isChecked: Boolean,
+    ) {
         val switchDesktopVersion = mSwitch.rootView.findViewById<SwitchCompat>(R.id.switchDesktopSite)
         val switchAdblock = mSwitch.rootView.findViewById<SwitchCompat>(R.id.switchAdblock)
         if (isChecked) {
@@ -222,7 +248,10 @@ data class WebApp(var baseUrl: String, val ID: Int) {
         }
     }
 
-    fun onSwitchForceDarkChanged(mSwitch: CompoundButton, isChecked: Boolean) {
+    fun onSwitchForceDarkChanged(
+        mSwitch: CompoundButton,
+        isChecked: Boolean,
+    ) {
         val switchLimit = mSwitch.rootView.findViewById<SwitchCompat>(R.id.switchTimeSpanDarkMode)
         val txtBegin = mSwitch.rootView.findViewById<EditText>(R.id.textDarkModeBegin)
         val txtEnd = mSwitch.rootView.findViewById<EditText>(R.id.textDarkModeEnd)
@@ -238,7 +267,10 @@ data class WebApp(var baseUrl: String, val ID: Int) {
         }
     }
 
-    fun onSwitchTimeSpanDarkChanged(mSwitch: CompoundButton, isChecked: Boolean) {
+    fun onSwitchTimeSpanDarkChanged(
+        mSwitch: CompoundButton,
+        isChecked: Boolean,
+    ) {
         val lblBegin = mSwitch.rootView.findViewById<TextView>(R.id.lblDarkModeBegin)
         val lblEnd = mSwitch.rootView.findViewById<TextView>(R.id.lblDarkModeEnd)
         val txtBegin = mSwitch.rootView.findViewById<EditText>(R.id.textDarkModeBegin)
@@ -256,7 +288,10 @@ data class WebApp(var baseUrl: String, val ID: Int) {
         }
     }
 
-    fun onSwitchUserAgentChanged(mSwitch: CompoundButton, isChecked: Boolean) {
+    fun onSwitchUserAgentChanged(
+        mSwitch: CompoundButton,
+        isChecked: Boolean,
+    ) {
         val txt = mSwitch.rootView.findViewById<EditText>(R.id.textUserAgent)
         val switchDesktopVersion = mSwitch.rootView.findViewById<SwitchCompat>(R.id.switchDesktopSite)
         if (isChecked) {
@@ -269,27 +304,40 @@ data class WebApp(var baseUrl: String, val ID: Int) {
         }
     }
 
-    fun onSwitchAutoreloadChanged(mSwitch: CompoundButton, isChecked: Boolean) {
+    fun onSwitchAutoreloadChanged(
+        mSwitch: CompoundButton,
+        isChecked: Boolean,
+    ) {
         val text = mSwitch.rootView.findViewById<EditText>(R.id.textReloadInterval)
         val label = mSwitch.rootView.findViewById<TextView>(R.id.labelReloadInterval)
         text.isEnabled = isChecked
         label.isEnabled = isChecked
     }
 
-    fun onSwitchExpertSettingsChanged(mSwitch: CompoundButton, isChecked: Boolean) {
+    fun onSwitchExpertSettingsChanged(
+        mSwitch: CompoundButton,
+        isChecked: Boolean,
+    ) {
         val expertSettings = mSwitch.rootView.findViewById<LinearLayout>(R.id.sectionExpertSettings)
         if (isChecked) expertSettings.visibility = View.VISIBLE else expertSettings.visibility = View.GONE
     }
 
-    fun onSwitchSandboxChanged(mSwitch: CompoundButton?, isChecked: Boolean) {
-        containerId = if (isChecked) {
-            SandboxManager.getInstance().calculateNextFreeContainerId()
-        } else {
-            Const.NO_CONTAINER
-        }
+    fun onSwitchSandboxChanged(
+        mSwitch: CompoundButton?,
+        isChecked: Boolean,
+    ) {
+        containerId =
+            if (isChecked) {
+                SandboxManager.getInstance().calculateNextFreeContainerId()
+            } else {
+                Const.NO_CONTAINER
+            }
     }
 
-    fun onSwitchOverrideGlobalSettingsChanged(mSwitch: CompoundButton, isChecked: Boolean) {
+    fun onSwitchOverrideGlobalSettingsChanged(
+        mSwitch: CompoundButton,
+        isChecked: Boolean,
+    ) {
         val sectionDetailedWebAppSettings = mSwitch.rootView.findViewById<LinearLayout>(R.id.sectionWebAppDetailSettings)
         Utility.setViewAndChildrenEnabled(sectionDetailedWebAppSettings, isChecked)
     }

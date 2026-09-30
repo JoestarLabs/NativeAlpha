@@ -3,28 +3,20 @@ package com.cylonid.nativealpha.util
 import android.annotation.SuppressLint
 import java.text.SimpleDateFormat
 import java.util.Calendar
-
 import java.util.Locale
 import java.util.Objects.requireNonNull
 
 object DateUtils {
-
     @JvmStatic
-    fun getTimeInSeconds(): Long {
-        return System.currentTimeMillis() / 1000
-    }
+    fun getTimeInSeconds(): Long = System.currentTimeMillis() / 1000
 
     @JvmStatic
     @SuppressLint("SimpleDateFormat")
-    fun getHourMinFormat(): SimpleDateFormat {
-        return SimpleDateFormat("HH:mm", Locale.getDefault())
-    }
+    fun getHourMinFormat(): SimpleDateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
 
     @JvmStatic
     @SuppressLint("SimpleDateFormat")
-    fun getDayHourMinuteSecondsFormat(): SimpleDateFormat {
-        return SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.getDefault())
-    }
+    fun getDayHourMinuteSecondsFormat(): SimpleDateFormat = SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.getDefault())
 
     @JvmStatic
     fun convertStringToCalendar(str: String?): Calendar? {
@@ -38,14 +30,19 @@ object DateUtils {
     }
 
     @JvmStatic
-    fun isInInterval(low: Calendar, time: Calendar, high: Calendar): Boolean {
+    fun isInInterval(
+        low: Calendar,
+        time: Calendar,
+        high: Calendar,
+    ): Boolean {
         // Bring timestamp with day_current + HH:mm => day_unixZero + HH:mm by parsing it again...
         val middle = Calendar.getInstance()
-        middle.time = requireNonNull(
-            getHourMinFormat().parse(
-                getHourMinFormat().format(time.time)
+        middle.time =
+            requireNonNull(
+                getHourMinFormat().parse(
+                    getHourMinFormat().format(time.time),
+                ),
             )
-        )
 
         // CASE: If the end of our timespan is after midnight, add one day to the end date to get a proper span.
         if (high.before(low)) {
@@ -58,7 +55,11 @@ object DateUtils {
     }
 
     @JvmStatic
-    fun isOlderThanDays(timestamp: Long, days: Int, targetTime: Long = System.currentTimeMillis()): Boolean {
+    fun isOlderThanDays(
+        timestamp: Long,
+        days: Int,
+        targetTime: Long = System.currentTimeMillis(),
+    ): Boolean {
         val daysInMillis = days * 24L * 60 * 60 * 1000
         return (targetTime - timestamp) > daysInMillis
     }

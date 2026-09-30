@@ -7,10 +7,13 @@ import android.view.View
 import android.widget.PopupMenu
 import androidx.annotation.MenuRes
 
-
 object IconPopupMenuHelper {
     @JvmStatic
-    fun getMenu(v: View, @MenuRes menuRes: Int, c: Context): PopupMenu {
+    fun getMenu(
+        v: View,
+        @MenuRes menuRes: Int,
+        c: Context,
+    ): PopupMenu {
         val popup = PopupMenu(c, v, Gravity.END)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             popup.setForceShowIcon(true)

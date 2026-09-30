@@ -14,7 +14,7 @@ class WebAppDeserializer : JsonDeserializer<WebApp> {
     override fun deserialize(
         json: JsonElement,
         typeOfT: Type,
-        context: JsonDeserializationContext
+        context: JsonDeserializationContext,
     ): WebApp {
         val obj = json.asJsonObject
         val webapp = Gson().fromJson(obj, WebApp::class.java)
@@ -24,9 +24,12 @@ class WebAppDeserializer : JsonDeserializer<WebApp> {
 
     /**
      *  With release v1.5.0 (code 1500), we added the array "adBlockSettings" to WebApp.
-    If the value in JSON string is null, we set an empty array for usual web apps and the default adblock provider for the global web app.
+     If the value in JSON string is null, we set an empty array for usual web apps and the default adblock provider for the global web app.
      */
-    private fun patchDataVersion1500(webapp: WebApp, obj: JsonObject) {
+    private fun patchDataVersion1500(
+        webapp: WebApp,
+        obj: JsonObject,
+    ) {
         var adblockKeyPresent = false
 
         val parsedAdblockSettings =

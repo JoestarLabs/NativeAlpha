@@ -1,9 +1,7 @@
 package com.cylonid.nativealpha.model.deserializer
 
-import android.util.Log
 import com.cylonid.nativealpha.model.GlobalSettings
 import com.cylonid.nativealpha.model.WebApp
-import com.cylonid.nativealpha.util.Const
 import com.google.gson.Gson
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
@@ -15,7 +13,7 @@ class GlobalSettingsDeserializer : JsonDeserializer<GlobalSettings> {
     override fun deserialize(
         json: JsonElement,
         typeOfT: Type,
-        context: JsonDeserializationContext
+        context: JsonDeserializationContext,
     ): GlobalSettings {
         try {
             val obj = json.asJsonObject
@@ -25,8 +23,7 @@ class GlobalSettingsDeserializer : JsonDeserializer<GlobalSettings> {
             settings.globalWebApp = globalWebApp
 
             return settings
-        }
-        catch(e: NullPointerException) {
+        } catch (e: NullPointerException) {
             return GlobalSettings()
         }
     }

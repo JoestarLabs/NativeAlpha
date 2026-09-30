@@ -1,4 +1,4 @@
-package com.cylonid.nativealpha.activities;
+package com.cylonid.nativealpha.activities
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -10,7 +10,6 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import com.cylonid.nativealpha.BuildConfig
@@ -18,9 +17,9 @@ import com.cylonid.nativealpha.databinding.NewsActivityBinding
 import com.cylonid.nativealpha.model.DataManager
 import com.cylonid.nativealpha.util.LocaleUtils
 
-
-class NewsActivity : AppCompatActivity(), View.OnTouchListener {
-
+class NewsActivity :
+    AppCompatActivity(),
+    View.OnTouchListener {
     private lateinit var binding: NewsActivityBinding
 
     inner class WebAppInterface {
@@ -52,32 +51,40 @@ class NewsActivity : AppCompatActivity(), View.OnTouchListener {
 
         binding.newsContent.loadUrl("file:///android_asset/news/" + fileId + "_" + LocaleUtils.fileEnding + ".html")
         binding.newsContent.addJavascriptInterface(WebAppInterface(), "NAlpha")
-        val hideEula = DataManager.getInstance().eulaData;
+        val hideEula = DataManager.getInstance().eulaData
 
-        binding.newsContent.webViewClient = NewsWebViewClient(
-            hideEula = hideEula,
-            showLiberaPay = BuildConfig.FLAVOR == "extendedGithub"
-        )
+        binding.newsContent.webViewClient =
+            NewsWebViewClient(
+                hideEula = hideEula,
+                showLiberaPay = BuildConfig.FLAVOR == "extendedGithub",
+            )
     }
 
-    override fun onTouch(p0: View?, p1: MotionEvent?): Boolean {
-        return false
-    }
-
+    override fun onTouch(
+        p0: View?,
+        p1: MotionEvent?,
+    ): Boolean = false
 }
 
-private class NewsWebViewClient(val hideEula: Boolean, val showLiberaPay: Boolean) :
-    WebViewClient() {
-    override fun onPageFinished(view: WebView, url: String) {
+private class NewsWebViewClient(
+    val hideEula: Boolean,
+    val showLiberaPay: Boolean,
+) : WebViewClient() {
+    override fun onPageFinished(
+        view: WebView,
+        url: String,
+    ) {
         if (hideEula) view.evaluateJavascript("hideById('eula')", null)
         if (showLiberaPay) {
             view.evaluateJavascript("showById('nonGp')", null)
         }
     }
 
-    override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+    override fun shouldOverrideUrlLoading(
+        view: WebView,
+        request: WebResourceRequest,
+    ): Boolean {
         view.context.startActivity(Intent(Intent.ACTION_VIEW, request.url))
         return true
     }
-
 }

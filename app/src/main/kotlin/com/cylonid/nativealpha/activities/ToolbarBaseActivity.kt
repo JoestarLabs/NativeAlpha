@@ -8,9 +8,8 @@ import androidx.viewbinding.ViewBinding
 import com.cylonid.nativealpha.databinding.ActivityToolbarBaseBinding
 
 abstract class ToolbarBaseActivity<VB : ViewBinding> : AppCompatActivity() {
-
-    private lateinit var _binding: VB
-    protected val binding get() = _binding
+    protected lateinit var binding: VB
+        private set
 
     private var onNavigationClickListener: (() -> Unit)? = null
 
@@ -22,8 +21,8 @@ abstract class ToolbarBaseActivity<VB : ViewBinding> : AppCompatActivity() {
         val baseBinding = ActivityToolbarBaseBinding.inflate(layoutInflater)
         setContentView(baseBinding.root)
 
-        _binding = inflateBinding(layoutInflater)
-        baseBinding.activityContent.addView(_binding.root)
+        binding = inflateBinding(layoutInflater)
+        baseBinding.activityContent.addView(binding.root)
 
         val toolbar = baseBinding.toolbar.topAppBar
         setSupportActionBar(toolbar)

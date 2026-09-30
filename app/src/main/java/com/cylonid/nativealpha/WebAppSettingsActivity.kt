@@ -36,12 +36,17 @@ class WebAppSettingsActivity : ToolbarBaseActivity<WebappSettingsBinding>() {
 
         webappID = intent.getIntExtra(Const.INTENT_WEBAPPID, -1)
         Utility.Assert(webappID != -1, "WebApp ID could not be retrieved.")
-        isGlobalWebApp = webappID == DataManager.getInstance().settings.globalWebApp.ID
+        isGlobalWebApp = webappID ==
+            DataManager
+                .getInstance()
+                .settings.globalWebApp.ID
 
         if (isGlobalWebApp) {
             webapp = DataManager.getInstance().settings.globalWebApp
             prepareGlobalWebAppScreen()
-        } else webapp = DataManager.getInstance().getWebAppIgnoringGlobalOverride(webappID, true)
+        } else {
+            webapp = DataManager.getInstance().getWebAppIgnoringGlobalOverride(webappID, true)
+        }
 
         if (webapp == null) {
             finish()
@@ -57,24 +62,21 @@ class WebAppSettingsActivity : ToolbarBaseActivity<WebappSettingsBinding>() {
         setupDesktopUserAgentHint()
         setupShortcutButton()
         setupSwitchListeners(webapp!!)
-
     }
 
-    override fun inflateBinding(layoutInflater: LayoutInflater): WebappSettingsBinding {
-        return WebappSettingsBinding.inflate(layoutInflater)
-    }
+    override fun inflateBinding(layoutInflater: LayoutInflater): WebappSettingsBinding = WebappSettingsBinding.inflate(layoutInflater)
 
     private fun setupSwitchListeners(webapp: WebApp) {
         webapp.onSwitchExpertSettingsChanged(
             binding.switchExpertSettings,
-            webapp.isShowExpertSettings
+            webapp.isShowExpertSettings,
         )
         webapp.onSwitchOverrideGlobalSettingsChanged(
             binding.switchOverrideGlobal,
-            webapp.isOverrideGlobalSettings
+            webapp.isOverrideGlobalSettings,
         )
     }
-    
+
     private fun setupSaveAndCancel(modifiedWebapp: WebApp) {
         binding.btnSave.setOnClickListener {
             val activityManager =
@@ -82,16 +84,17 @@ class WebAppSettingsActivity : ToolbarBaseActivity<WebappSettingsBinding>() {
             // Global web app => close all webview activities, save to global settings
             if (isGlobalWebApp) {
                 closeAllWebAppsAndProcesses(
-                    activityManager
+                    activityManager,
                 )
                 DataManager.getInstance().settings.globalWebApp = modifiedWebapp
                 DataManager.getInstance().saveGlobalSettings()
             } else {
                 for (task in activityManager.appTasks) {
-                    val id = task.taskInfo?.baseIntent?.getIntExtra(
-                        Const.INTENT_WEBAPPID,
-                        -1
-                    ) ?: -1
+                    val id =
+                        task.taskInfo?.baseIntent?.getIntExtra(
+                            Const.INTENT_WEBAPPID,
+                            -1,
+                        ) ?: -1
                     if (id == webappID) task.finishAndRemoveTask()
                 }
                 for (processInfo in activityManager.runningAppProcesses) {
@@ -117,15 +120,14 @@ class WebAppSettingsActivity : ToolbarBaseActivity<WebappSettingsBinding>() {
 
         txtBeginDarkMode.setOnClickListener {
             showTimePicker(
-                txtBeginDarkMode
+                txtBeginDarkMode,
             )
         }
         txtEndDarkMode.setOnClickListener {
             showTimePicker(
-                txtEndDarkMode
+                txtEndDarkMode,
             )
         }
-
     }
 
     private fun setupDesktopUserAgentHint() {
@@ -152,15 +154,20 @@ class WebAppSettingsActivity : ToolbarBaseActivity<WebappSettingsBinding>() {
 
     private fun showTimePicker(txtField: EditText) {
         val c = convertStringToCalendar(txtField.text.toString())
-        val timePickerDialog = TimePickerDialog(
-            this@WebAppSettingsActivity, R.style.AppTheme,
-            { timePicker: TimePicker?, selectedHour: Int, selectedMinute: Int ->
-                val datetime = Calendar.getInstance()
-                datetime[Calendar.HOUR_OF_DAY] = selectedHour
-                datetime[Calendar.MINUTE] = selectedMinute
-                txtField.setText(getHourMinFormat().format(datetime.time))
-            }, c!![Calendar.HOUR_OF_DAY], c[Calendar.MINUTE], true
-        )
+        val timePickerDialog =
+            TimePickerDialog(
+                this@WebAppSettingsActivity,
+                R.style.AppTheme,
+                { timePicker: TimePicker?, selectedHour: Int, selectedMinute: Int ->
+                    val datetime = Calendar.getInstance()
+                    datetime[Calendar.HOUR_OF_DAY] = selectedHour
+                    datetime[Calendar.MINUTE] = selectedMinute
+                    txtField.setText(getHourMinFormat().format(datetime.time))
+                },
+                c!![Calendar.HOUR_OF_DAY],
+                c[Calendar.MINUTE],
+                true,
+            )
         timePickerDialog.show()
     }
 
@@ -180,5 +187,3 @@ class WebAppSettingsActivity : ToolbarBaseActivity<WebappSettingsBinding>() {
         setToolbarTitle(getString(R.string.global_web_app_settings))
     }
 }
-
-

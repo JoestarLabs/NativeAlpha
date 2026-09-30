@@ -5,8 +5,9 @@ import com.cylonid.nativealpha.util.DateUtils
 import io.github.edsuns.adfilter.AdFilter
 import io.github.edsuns.adfilter.Filter
 
-internal class AdblockProviderApiHelper(private val adFilterProvider: AdFilter) {
-
+internal class AdblockProviderApiHelper(
+    private val adFilterProvider: AdFilter,
+) {
     fun synchronizeAdblockProviderWithSettings(settings: List<AdblockConfig>) {
         val map = transformToMapWithUrlKey(adFilterProvider.viewModel.filters.value ?: emptyMap())
         for (config: AdblockConfig in settings) {
@@ -21,7 +22,7 @@ internal class AdblockProviderApiHelper(private val adFilterProvider: AdFilter) 
         }
         for ((_, filter) in map) {
             val existingConfig = settings.find { it.value == filter.url }
-            if(existingConfig == null) {
+            if (existingConfig == null) {
                 adFilterProvider.viewModel.removeFilter(filter.id)
             }
         }

@@ -87,6 +87,7 @@
     <string name="permission_location_rationale">Se si desidera che le Web App siano in grado di recuperare la propria posizione, è possibile concedere a Native Alpha l\'autorizzazione ad accedere alla posizione. Si può decidere di concedere l\'autorizzazione per ogni Web App individualmente.</string>
     <string name="permission_storage_rationale">Se si desidera che le Web App Native Alpha siano in grado di scaricare i file, è necessario accettare la richiesta di autorizzazione all\'archiviazione.</string>
     <string name="file_download">Scaricamento file in corso…</string>
+    <string name="file_download_failed">Download non riuscito.</string>
     <string name="custom_icon">Seleziona un\'icona personalizzata</string>
     <string name="show_progress_bar_during_page_load">Mostra barra di avanzamento durante il caricamento della pagina</string>
     <string name="user_agent">User Agent</string>

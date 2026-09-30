@@ -36,150 +36,149 @@ import static org.hamcrest.Matchers.any;
 
 public class TestUtils {
 
+	public static void acceptLicense() {
+		onView(withId(R.id.btnNewsConfirm)).perform(click());
+	}
+	public static void alertDialogAccept() {
+		onView(withId(android.R.id.button1)).perform(click());
+	}
+	public static void alertDialogDismiss() {
+		onView(withId(android.R.id.button2)).perform(click());
+	}
 
-    public static void acceptLicense() {
-        onView(withId(R.id.btnNewsConfirm)).perform(click());
-    }
-    public static void alertDialogAccept() {
-        onView(withId(android.R.id.button1)).perform(click());
-    }
-    public static void alertDialogDismiss() {
-        onView(withId(android.R.id.button2)).perform(click());
-    }
+	public static boolean viewIsDisplayed(int viewId) {
+		final boolean[] isDisplayed = {true};
+		onView(withId(viewId)).withFailureHandler((error, viewMatcher) -> isDisplayed[0] = false)
+				.check(matches(isDisplayed()));
+		return isDisplayed[0];
+	}
 
-    public static boolean viewIsDisplayed(int viewId)
-    {
-        final boolean[] isDisplayed = {true};
-        onView(withId(viewId)).withFailureHandler((error, viewMatcher) -> isDisplayed[0] = false).check(matches(isDisplayed()));
-        return isDisplayed[0];
-    }
+	public static void waitFor(final long ms) {
+		final CountDownLatch signal = new CountDownLatch(1);
 
+		try {
+			signal.await(ms, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			Assert.fail(e.getMessage());
+		}
+	}
 
-    public static void waitFor(final long ms) {
-        final CountDownLatch signal = new CountDownLatch(1);
+	// Custom ViewAction to perform drag
+	public static ViewAction dragFromTo(final int amountInPixels) {
+		return new ViewAction() {
+			@Override
+			public Matcher<View> getConstraints() {
+				return ViewMatchers.isDisplayed(); // Constraints to ensure the view is displayed
+			}
 
-        try {
-            signal.await(ms, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            Assert.fail(e.getMessage());
-        }
-    }
+			@Override
+			public String getDescription() {
+				return "Drag from a position given by resource ID and move by the specified amount of pixels";
+			}
 
-    // Custom ViewAction to perform drag
-    public static ViewAction dragFromTo(final int amountInPixels) {
-        return new ViewAction() {
-            @Override
-            public Matcher<View> getConstraints() {
-                return ViewMatchers.isDisplayed(); // Constraints to ensure the view is displayed
-            }
+			@Override
+			public void perform(androidx.test.espresso.UiController uiController, View view) {
+				// Start position coordinates
+				CoordinatesProvider startCoordinates = v -> {
+					int[] location = new int[2];
+					v.getLocationOnScreen(location);
+					return new float[]{location[0] + v.getWidth() / 2f, location[1] + v.getHeight() / 2f};
+				};
 
-            @Override
-            public String getDescription() {
-                return "Drag from a position given by resource ID and move by the specified amount of pixels";
-            }
+				// End position coordinates (move down by a specified amount of pixels)
+				CoordinatesProvider endCoordinates = v -> {
+					int[] location = new int[2];
+					v.getLocationOnScreen(location);
+					return new float[]{location[0] + v.getWidth() / 2f,
+							location[1] + v.getHeight() / 2f + amountInPixels};
+				};
 
-            @Override
-            public void perform(androidx.test.espresso.UiController uiController, View view) {
-                // Start position coordinates
-                CoordinatesProvider startCoordinates = v -> {
-                    int[] location = new int[2];
-                    v.getLocationOnScreen(location);
-                    return new float[]{location[0] + v.getWidth() / 2f, location[1] + v.getHeight() / 2f};
-                };
+				// Perform swipe action
+				new GeneralSwipeAction(Swipe.SLOW, startCoordinates, endCoordinates, Press.FINGER).perform(uiController,
+						view);
+			}
+		};
+	}
 
-                // End position coordinates (move down by a specified amount of pixels)
-                CoordinatesProvider endCoordinates = v -> {
-                    int[] location = new int[2];
-                    v.getLocationOnScreen(location);
-                    return new float[]{location[0] + v.getWidth() / 2f, location[1] + v.getHeight() / 2f + amountInPixels};
-                };
+	public static Matcher<View> getElementFromMatchAtPosition(final Matcher<View> matcher, final int position) {
+		return new BaseMatcher<View>() {
+			int counter = 0;
+			@Override
+			public boolean matches(final Object item) {
+				if (matcher.matches(item)) {
+					if (counter == position) {
+						counter++;
+						return true;
+					}
+					counter++;
+				}
+				return false;
+			}
 
-                // Perform swipe action
-                new GeneralSwipeAction(Swipe.SLOW, startCoordinates, endCoordinates, Press.FINGER)
-                        .perform(uiController, view);
-            }
-        };
-    }
+			@Override
+			public void describeTo(final Description description) {
+				description.appendText("Element at hierarchy position " + position);
+			}
+		};
+	}
 
-    public static Matcher<View> getElementFromMatchAtPosition(final Matcher<View> matcher, final int position) {
-        return new BaseMatcher<View>() {
-            int counter = 0;
-            @Override
-            public boolean matches(final Object item) {
-                if (matcher.matches(item)) {
-                    if(counter == position) {
-                        counter++;
-                        return true;
-                    }
-                    counter++;
-                }
-                return false;
-            }
+	public static void waitForElementWithText(@IdRes int stringId) {
 
-            @Override
-            public void describeTo(final Description description) {
-                description.appendText("Element at hierarchy position " + position);
-            }
-        };
-    }
+		ViewInteraction element;
+		do {
+			waitFor(500);
 
-    public static void waitForElementWithText(@IdRes int stringId) {
+			// simple example using withText Matcher.
+			element = onView(withText(stringId));
 
-        ViewInteraction element;
-        do {
-            waitFor(500);
+		} while (!MatcherExtension.exists(element));
 
-            //simple example using withText Matcher.
-            element = onView(withText(stringId));
+	}
 
-        } while (!MatcherExtension.exists(element));
+	public static CoordinatesProvider percentX(final float percent) {
+		return view -> {
+			int[] location = new int[2];
+			view.getLocationOnScreen(location);
+			float x = location[0] + view.getWidth() * percent;
+			float y = location[1] + view.getHeight() / 2f;
+			return new float[]{x, y};
+		};
+	}
 
-    }
+	public static AppCompatActivity getCurrentActivity() {
+		final AppCompatActivity[] activity = new AppCompatActivity[1];
+		onView(isRoot()).check((view, noViewFoundException) -> activity[0] = (AppCompatActivity) view.getContext());
+		return activity[0];
+	}
+	private static class MatcherExtension {
+		@CheckResult
+		public static boolean exists(ViewInteraction interaction) {
+			try {
+				interaction.perform(new ViewAction() {
+					@Override
+					public Matcher<View> getConstraints() {
+						return any(View.class);
+					}
 
-    public static CoordinatesProvider percentX(final float percent) {
-        return view -> {
-            int[] location = new int[2];
-            view.getLocationOnScreen(location);
-            float x = location[0] + view.getWidth() * percent;
-            float y = location[1] + view.getHeight() / 2f;
-            return new float[]{x, y};
-        };
-    }
+					@Override
+					public String getDescription() {
+						return "check for existence";
+					}
 
-    public static AppCompatActivity getCurrentActivity() {
-        final AppCompatActivity[] activity = new AppCompatActivity[1];
-        onView(isRoot()).check((view, noViewFoundException) -> activity[0] = (AppCompatActivity) view.getContext());
-        return activity[0];
-    }
-    private static class MatcherExtension {
-        @CheckResult
-        public static boolean exists(ViewInteraction interaction) {
-            try {
-                interaction.perform(new ViewAction() {
-                    @Override
-                    public Matcher<View> getConstraints() {
-                        return any(View.class);
-                    }
+					@Override
+					public void perform(UiController uiController, View view) {
+						// no op, if this is run, then the execution will continue after .perform(...)
+					}
+				});
+				return true;
+			} catch (AmbiguousViewMatcherException ex) {
+				// if there's any interaction later with the same matcher, that'll fail anyway
+				return true; // we found more than one
+			} catch (NoMatchingViewException | NoMatchingRootException ex) {
+				return false;
+			} // optional depending on what you think "exists" means
 
-                    @Override
-                    public String getDescription() {
-                        return "check for existence";
-                    }
+		}
 
-                    @Override
-                    public void perform(UiController uiController, View view) {
-                        // no op, if this is run, then the execution will continue after .perform(...)
-                    }
-                });
-                return true;
-            } catch (AmbiguousViewMatcherException ex) {
-                // if there's any interaction later with the same matcher, that'll fail anyway
-                return true; // we found more than one
-            } catch (NoMatchingViewException | NoMatchingRootException ex) {
-                return false;
-            } // optional depending on what you think "exists" means
-
-        }
-
-    }
+	}
 }

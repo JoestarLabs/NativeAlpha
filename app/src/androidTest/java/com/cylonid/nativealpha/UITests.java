@@ -51,120 +51,126 @@ import android.view.View;
  */
 @RunWith(AndroidJUnit4.class)
 public class UITests {
-    @Rule
-    public ActivityTestRule<MainActivity> activityTestRule = new ActivityTestRule<>(MainActivity.class);
-//    public ActivityScenarioRule<MainActivity> scenarioRule = new ActivityScenarioRule<>(MainActivity.class);
-    @Test
-    public void addWebsite() {
-        TestUtils.acceptLicense();
-        onView(withId(R.id.websiteUrl)).perform(clearText(), typeText("github.com"));
-        onView(withId(R.id.switchCreateShortcut)).perform(click());
-        onView(withId(android.R.id.button1)).perform(click());
-        assertEquals(DataManager.getInstance().getWebApp(0).getBaseUrl(), "https://github.com");
-        onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
-    }
+	@Rule
+	public ActivityTestRule<MainActivity> activityTestRule = new ActivityTestRule<>(MainActivity.class);
+	// public ActivityScenarioRule<MainActivity> scenarioRule = new
+	// ActivityScenarioRule<>(MainActivity.class);
+	@Test
+	public void addWebsite() {
+		TestUtils.acceptLicense();
+		onView(withId(R.id.websiteUrl)).perform(clearText(), typeText("github.com"));
+		onView(withId(R.id.switchCreateShortcut)).perform(click());
+		onView(withId(android.R.id.button1)).perform(click());
+		assertEquals(DataManager.getInstance().getWebApp(0).getBaseUrl(), "https://github.com");
+		onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
+	}
 
-    @Test
-    public void addMultipleWebsiteAndTestLoadedUrl() {
-        initMultipleWebsites(List.of("github.com", "orf.at"));
-        onView(TestUtils.getElementFromMatchAtPosition(withId(R.id.btnWebAppTitle), 1)).perform(click());
-        onWebView(Matchers.allOf(withId(R.id.webview))).withNoTimeout().check(webMatches(getCurrentUrl(), containsString("orf.at")));
-    }
+	@Test
+	public void addMultipleWebsiteAndTestLoadedUrl() {
+		initMultipleWebsites(List.of("github.com", "orf.at"));
+		onView(TestUtils.getElementFromMatchAtPosition(withId(R.id.btnWebAppTitle), 1)).perform(click());
+		onWebView(Matchers.allOf(withId(R.id.webview))).withNoTimeout()
+				.check(webMatches(getCurrentUrl(), containsString("orf.at")));
+	}
 
-    @Test
-    public void setCustomOrderOfWebapps() {
-        initMultipleWebsites(List.of("github.com", "orf.at"));
-        onView(TestUtils.getElementFromMatchAtPosition(withId(R.id.dragAnchor), 0)).perform(swipeDown());
-        Matcher<View> anchor = TestUtils.getElementFromMatchAtPosition(withId(R.id.dragAnchor), 0);
- 
-        onView(anchor)
-                .perform(actionWithAssertions(dragFromTo(500)));
-        assertEquals(DataManager.getInstance().getWebApp(0).getOrder(), 1);
+	@Test
+	public void setCustomOrderOfWebapps() {
+		initMultipleWebsites(List.of("github.com", "orf.at"));
+		onView(TestUtils.getElementFromMatchAtPosition(withId(R.id.dragAnchor), 0)).perform(swipeDown());
+		Matcher<View> anchor = TestUtils.getElementFromMatchAtPosition(withId(R.id.dragAnchor), 0);
 
-    }
+		onView(anchor).perform(actionWithAssertions(dragFromTo(500)));
+		assertEquals(DataManager.getInstance().getWebApp(0).getOrder(), 1);
 
-    @Test
-    public void startWebView() {
-        initSingleWebsite("https://github.com");
-        onView(allOf(withId(R.id.btnWebAppTitle))).perform(click());
-        onView(withId(R.id.webview)).check(matches(isDisplayed()));
-    }
+	}
 
-    @Test(expected = NoMatchingViewException.class)
-    public void deleteWebsite() {
-        initSingleWebsite("https://github.com");
-        onView(allOf(withId(R.id.webAppListItem))).perform(ViewActions.swipeLeft());
-        TestUtils.alertDialogAccept();
+	@Test
+	public void startWebView() {
+		initSingleWebsite("https://github.com");
+		onView(allOf(withId(R.id.btnWebAppTitle))).perform(click());
+		onView(withId(R.id.webview)).check(matches(isDisplayed()));
+	}
 
-        onView(allOf(withId(R.id.webAppListItem))).check(matches(not(isDisplayed()))); //Throws exception
-    }
+	@Test(expected = NoMatchingViewException.class)
+	public void deleteWebsite() {
+		initSingleWebsite("https://github.com");
+		onView(allOf(withId(R.id.webAppListItem))).perform(ViewActions.swipeLeft());
+		TestUtils.alertDialogAccept();
 
-    @Test
-    public void changeWebAppSettings() {
-        initSingleWebsite("https://whatismybrowser.com/detect/are-third-party-cookies-enabled");
-        onView(withId(R.id.webAppListItem)).perform(new GeneralSwipeAction(FAST, TestUtils.percentX(0.25f), TestUtils.percentX(0.9f), FINGER));
-        onView(withId(R.id.switch3PCookies)).perform(scrollTo()).perform(click());
-        onView(withId(R.id.btnSave)).perform(click());
-        onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
-        onWebView(Matchers.allOf(withId(R.id.webview))).withNoTimeout().withElement(findElement(Locator.ID, "detected_value")).check(webMatches(getText(), containsString("Yes")));
+		onView(allOf(withId(R.id.webAppListItem))).check(matches(not(isDisplayed()))); // Throws exception
+	}
 
-    }
-    @Test
-    public void badSSLAccept() {
-        initSingleWebsite("https://untrusted-root.badssl.com/");
-        onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
-        TestUtils.waitForElementWithText(R.string.load_anyway);
-        onView(withText(R.string.load_anyway)).perform(click());
-        onWebView(Matchers.allOf(withId(R.id.webview))).withNoTimeout().withElement(findElement(Locator.ID, "content")).check(webMatches(getText(), containsString("untrusted-root")));
-    }
+	@Test
+	public void changeWebAppSettings() {
+		initSingleWebsite("https://whatismybrowser.com/detect/are-third-party-cookies-enabled");
+		onView(withId(R.id.webAppListItem))
+				.perform(new GeneralSwipeAction(FAST, TestUtils.percentX(0.25f), TestUtils.percentX(0.9f), FINGER));
+		onView(withId(R.id.switch3PCookies)).perform(scrollTo()).perform(click());
+		onView(withId(R.id.btnSave)).perform(click());
+		onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
+		onWebView(Matchers.allOf(withId(R.id.webview))).withNoTimeout()
+				.withElement(findElement(Locator.ID, "detected_value"))
+				.check(webMatches(getText(), containsString("Yes")));
 
-    @Test(expected = java.lang.RuntimeException.class)
-    public void badSSLDismiss() {
-        initSingleWebsite("https://untrusted-root.badssl.com/");
-        onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
-        TestUtils.waitForElementWithText(android.R.string.cancel);
-        onView(withText(android.R.string.cancel)).perform(click());
-        onWebView(Matchers.allOf(withId(R.id.webview))).withTimeout(3, TimeUnit.SECONDS).withElement(findElement(Locator.ID, "content")).check(webMatches(getText(), containsString("untrusted-root")));
+	}
+	@Test
+	public void badSSLAccept() {
+		initSingleWebsite("https://untrusted-root.badssl.com/");
+		onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
+		TestUtils.waitForElementWithText(R.string.load_anyway);
+		onView(withText(R.string.load_anyway)).perform(click());
+		onWebView(Matchers.allOf(withId(R.id.webview))).withNoTimeout().withElement(findElement(Locator.ID, "content"))
+				.check(webMatches(getText(), containsString("untrusted-root")));
+	}
 
-    }
+	@Test(expected = java.lang.RuntimeException.class)
+	public void badSSLDismiss() {
+		initSingleWebsite("https://untrusted-root.badssl.com/");
+		onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
+		TestUtils.waitForElementWithText(android.R.string.cancel);
+		onView(withText(android.R.string.cancel)).perform(click());
+		onWebView(Matchers.allOf(withId(R.id.webview))).withTimeout(3, TimeUnit.SECONDS)
+				.withElement(findElement(Locator.ID, "content"))
+				.check(webMatches(getText(), containsString("untrusted-root")));
 
-    @Test
-    public void openHTTPSite() {
-        initSingleWebsite("http://httpforever.com/");
-        onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
-        TestUtils.waitForElementWithText(android.R.string.cancel);
-        onView(withId(android.R.id.button2)).perform(scrollTo()).perform(click());
+	}
 
-        onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
-        TestUtils.waitForElementWithText(android.R.string.cancel);
-        onView(withId(android.R.id.button1)).perform(scrollTo()).perform(click());
-        onWebView(Matchers.allOf(withId(R.id.webview))).withTimeout(6, TimeUnit.SECONDS).check(webMatches(getCurrentUrl(), containsString("httpforever.com")));
-    }
+	@Test
+	public void openHTTPSite() {
+		initSingleWebsite("http://httpforever.com/");
+		onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
+		TestUtils.waitForElementWithText(android.R.string.cancel);
+		onView(withId(android.R.id.button2)).perform(scrollTo()).perform(click());
 
+		onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
+		TestUtils.waitForElementWithText(android.R.string.cancel);
+		onView(withId(android.R.id.button1)).perform(scrollTo()).perform(click());
+		onWebView(Matchers.allOf(withId(R.id.webview))).withTimeout(6, TimeUnit.SECONDS)
+				.check(webMatches(getCurrentUrl(), containsString("httpforever.com")));
+	}
 
-    private void initSingleWebsite(final String base_url) {
-        activityTestRule.getActivity().runOnUiThread(() -> {
-            DataManager.getInstance().addWebsite(new WebApp(base_url, DataManager.getInstance().getIncrementedID()));
-            activityTestRule.getActivity().updateWebAppList();
-        });
+	private void initSingleWebsite(final String base_url) {
+		activityTestRule.getActivity().runOnUiThread(() -> {
+			DataManager.getInstance().addWebsite(new WebApp(base_url, DataManager.getInstance().getIncrementedID()));
+			activityTestRule.getActivity().updateWebAppList();
+		});
 
-        TestUtils.acceptLicense();
-        //Get rid of welcome message
-        TestUtils.alertDialogDismiss();
-    }
+		TestUtils.acceptLicense();
+		// Get rid of welcome message
+		TestUtils.alertDialogDismiss();
+	}
 
-    private void initMultipleWebsites(final List<String> urls) {
-        activityTestRule.getActivity().runOnUiThread(() -> {
-            for (String base_url : urls) {
-                DataManager.getInstance().addWebsite(new WebApp(base_url, DataManager.getInstance().getIncrementedID()));
-            }
-            activityTestRule.getActivity().updateWebAppList();
-        });
-        TestUtils.acceptLicense();
-        //Get rid of welcome message
-        TestUtils.alertDialogDismiss();
-    }
-
-
+	private void initMultipleWebsites(final List<String> urls) {
+		activityTestRule.getActivity().runOnUiThread(() -> {
+			for (String base_url : urls) {
+				DataManager.getInstance()
+						.addWebsite(new WebApp(base_url, DataManager.getInstance().getIncrementedID()));
+			}
+			activityTestRule.getActivity().updateWebAppList();
+		});
+		TestUtils.acceptLicense();
+		// Get rid of welcome message
+		TestUtils.alertDialogDismiss();
+	}
 
 }

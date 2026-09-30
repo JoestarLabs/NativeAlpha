@@ -12,10 +12,8 @@ import org.mockito.junit.MockitoJUnitRunner
 
 @RunWith(MockitoJUnitRunner::class)
 class AdblockProviderApiHelperTest {
-
     private lateinit var adblockProviderApiHelper: AdblockProviderApiHelper
     private lateinit var adFilterProvider: AdFilter
-
 
     @Before
     fun setUp() {
@@ -23,52 +21,53 @@ class AdblockProviderApiHelperTest {
         adblockProviderApiHelper = AdblockProviderApiHelper(adFilterProvider)
     }
 
-
-    private fun getActiveUrls(): List<String> {
-        return adFilterProvider.viewModel.filters.value?.values
+    private fun getActiveUrls(): List<String> =
+        adFilterProvider.viewModel.filters.value
+            ?.values
             ?.map { it.url } ?: emptyList()
-    }
 
     @Test
     fun shouldInitEmptyRuntimeConfig() {
-        val ourConfig = listOf(
-            AdblockConfig("Test", "https://someendpoint.xyzabc"),
-            AdblockConfig("Test2", "https://someendpoint.xyzdef")
-        )
+        val ourConfig =
+            listOf(
+                AdblockConfig("Test", "https://someendpoint.xyzabc"),
+                AdblockConfig("Test2", "https://someendpoint.xyzdef"),
+            )
         adblockProviderApiHelper.synchronizeAdblockProviderWithSettings(ourConfig)
         Assert.assertEquals(
             listOf("https://someendpoint.xyzabc", "https://someendpoint.xyzdef"),
-            getActiveUrls()
+            getActiveUrls(),
         )
     }
 
     @Test
     fun shouldAddToExistingRuntimeConfig() {
         adFilterProvider.viewModel.addFilter("Test", "https://someendpoint.xyzabc")
-        val ourConfig = listOf(
-            AdblockConfig("Test", "https://someendpoint.xyzabc"),
-            AdblockConfig("Test2", "https://someendpoint.xyzdef")
-        )
+        val ourConfig =
+            listOf(
+                AdblockConfig("Test", "https://someendpoint.xyzabc"),
+                AdblockConfig("Test2", "https://someendpoint.xyzdef"),
+            )
         adblockProviderApiHelper.synchronizeAdblockProviderWithSettings(ourConfig)
         Assert.assertEquals(
             listOf("https://someendpoint.xyzabc", "https://someendpoint.xyzdef"),
-            getActiveUrls()
+            getActiveUrls(),
         )
     }
 
     @Test
     fun shouldRemoveDeletedRuntimeConfig() {
-        val ourConfig = listOf(
-            AdblockConfig("Test", "https://someendpoint.xyzabc"),
-            AdblockConfig("Test2", "https://someendpoint.xyzdef")
-        )
+        val ourConfig =
+            listOf(
+                AdblockConfig("Test", "https://someendpoint.xyzabc"),
+                AdblockConfig("Test2", "https://someendpoint.xyzdef"),
+            )
         adblockProviderApiHelper.synchronizeAdblockProviderWithSettings(ourConfig)
 
         adblockProviderApiHelper.synchronizeAdblockProviderWithSettings(emptyList())
         Assert.assertEquals(
             emptyList<AdblockConfig>(),
-            getActiveUrls()
+            getActiveUrls(),
         )
     }
-
 }

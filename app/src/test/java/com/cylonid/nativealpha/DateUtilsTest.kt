@@ -1,13 +1,16 @@
 package com.cylonid.nativealpha
 import com.cylonid.nativealpha.util.DateUtils
-
-import java.text.SimpleDateFormat
-import java.util.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.junit.Assert.*
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class DateUtilsTest {
-
     @Test
     fun `getTimeInSeconds returns current time in seconds`() {
         val expected = System.currentTimeMillis() / 1000
@@ -18,10 +21,11 @@ class DateUtilsTest {
     @Test
     fun `getHourMinFormat returns correct format`() {
         val format = DateUtils.getHourMinFormat()
-        val calendar = Calendar.getInstance().also {
-            it.set(Calendar.HOUR_OF_DAY, 9)
-            it.set(Calendar.MINUTE, 15)
-        }
+        val calendar =
+            Calendar.getInstance().also {
+                it.set(Calendar.HOUR_OF_DAY, 9)
+                it.set(Calendar.MINUTE, 15)
+            }
         assertEquals("09:15", format.format(calendar.time))
     }
 
@@ -47,7 +51,6 @@ class DateUtilsTest {
         val calendar = DateUtils.convertStringToCalendar("invalid")
         assertNull(calendar)
     }
-
 
     @Test
     fun `isInInterval returns true when time is within range`() {

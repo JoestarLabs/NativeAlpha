@@ -1,10 +1,12 @@
 package com.cylonid.nativealpha.util
 
 import android.content.Context
-import android.text.Html.ImageGetter
 import android.graphics.drawable.Drawable
+import android.text.Html.ImageGetter
 
-class ResourceImageGetter(private val context: Context) : ImageGetter {
+class ResourceImageGetter(
+    private val context: Context,
+) : ImageGetter {
     override fun getDrawable(source: String): Drawable {
         val resources = context.resources
         val resId = context.resIdByName(source, "drawable")

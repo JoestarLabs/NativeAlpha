@@ -298,7 +298,7 @@
                                 android:id="@+id/layoutTimeSpanDarkMode"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:orientation="horizontal"
+                                android:baselineAligned="false" android:orientation="horizontal"
                                 android:visibility="visible">
 
                                 <LinearLayout

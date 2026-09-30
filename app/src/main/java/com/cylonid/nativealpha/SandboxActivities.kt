@@ -4,11 +4,18 @@ package com.cylonid.nativealpha
  * Sandboxed container activity subclasses.
  * These run in isolated processes (:web_sandbox_0 to :web_sandbox_7) as declared in AndroidManifest.xml.
  */
-class __WebViewActivity_0 : WebViewActivity()
-class __WebViewActivity_1 : WebViewActivity()
-class __WebViewActivity_2 : WebViewActivity()
-class __WebViewActivity_3 : WebViewActivity()
-class __WebViewActivity_4 : WebViewActivity()
-class __WebViewActivity_5 : WebViewActivity()
-class __WebViewActivity_6 : WebViewActivity()
-class __WebViewActivity_7 : WebViewActivity()
+class WebSandboxActivity0 : WebViewActivity()
+
+class WebSandboxActivity1 : WebViewActivity()
+
+class WebSandboxActivity2 : WebViewActivity()
+
+class WebSandboxActivity3 : WebViewActivity()
+
+class WebSandboxActivity4 : WebViewActivity()
+
+class WebSandboxActivity5 : WebViewActivity()
+
+class WebSandboxActivity6 : WebViewActivity()
+
+class WebSandboxActivity7 : WebViewActivity()

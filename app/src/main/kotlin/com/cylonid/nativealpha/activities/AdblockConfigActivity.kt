@@ -8,7 +8,6 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import com.cylonid.nativealpha.R
 import com.cylonid.nativealpha.databinding.AdblockConfigActivityBinding
 import com.cylonid.nativealpha.databinding.AddAdblockConfigDialogBinding
@@ -18,7 +17,6 @@ import com.cylonid.nativealpha.model.DataManager
 import com.cylonid.nativealpha.util.Const
 import com.cylonid.nativealpha.util.NotificationUtils
 import com.cylonid.nativealpha.util.ProcessUtils
-
 
 class AdblockConfigActivity : ToolbarBaseActivity<AdblockConfigActivityBinding>() {
     private lateinit var adblockListFragment: AdblockListFragment
@@ -43,9 +41,8 @@ class AdblockConfigActivity : ToolbarBaseActivity<AdblockConfigActivityBinding>(
             supportFragmentManager.findFragmentById(R.id.adblock_fragment_container_view) as AdblockListFragment
     }
 
-    override fun inflateBinding(layoutInflater: LayoutInflater): AdblockConfigActivityBinding {
-        return AdblockConfigActivityBinding.inflate(layoutInflater)
-    }
+    override fun inflateBinding(layoutInflater: LayoutInflater): AdblockConfigActivityBinding =
+        AdblockConfigActivityBinding.inflate(layoutInflater)
 
     private fun updateAdblockList() {
         adblockListFragment.updateAdblockList()
@@ -53,46 +50,64 @@ class AdblockConfigActivity : ToolbarBaseActivity<AdblockConfigActivityBinding>(
 
     private fun showAddAdblockDialog() {
         val localBinding = AddAdblockConfigDialogBinding.inflate(layoutInflater)
-        val dialog = AlertDialog.Builder(this)
-            .setView(localBinding.root)
-            .setTitle(getString(R.string.add_a_new_adblock_provider))
-            .setPositiveButton(android.R.string.ok) { _: DialogInterface, _: Int ->
+        val dialog =
+            AlertDialog
+                .Builder(this)
+                .setView(localBinding.root)
+                .setTitle(getString(R.string.add_a_new_adblock_provider))
+                .setPositiveButton(android.R.string.ok) { _: DialogInterface, _: Int ->
 
-                val url = localBinding.addAdblockUrl.text.toString().trim()
+                    val url =
+                        localBinding.addAdblockUrl.text
+                            .toString()
+                            .trim()
 
-                val formattedUrl =
-                    if (url.startsWith("https://") || url.startsWith("http://")) url else "https://$url"
+                    val formattedUrl =
+                        if (url.startsWith("https://") || url.startsWith("http://")) url else "https://$url"
 
-                val urlAlreadyExists = DataManager.getInstance().settings.globalWebApp.adBlockSettings.any { it.value == formattedUrl}
-                if(urlAlreadyExists) {
-                    NotificationUtils.showToast(this, getString(R.string.entry_already_exists))
-                    return@setPositiveButton
-                }
+                    val urlAlreadyExists =
+                        DataManager
+                            .getInstance()
+                            .settings.globalWebApp.adBlockSettings
+                            .any { it.value == formattedUrl }
+                    if (urlAlreadyExists) {
+                        NotificationUtils.showToast(this, getString(R.string.entry_already_exists))
+                        return@setPositiveButton
+                    }
 
-                DataManager.getInstance().apply {
-                    val label =
-                        if (localBinding.addAdblockLabel.text.isNotEmpty()) localBinding.addAdblockLabel.text.toString() else url
-                    settings.globalWebApp.adBlockSettings += AdblockConfig(label, formattedUrl)
-                    saveGlobalSettings()
-                }
-                updateAdblockList()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .create()
+                    DataManager.getInstance().apply {
+                        val label =
+                            if (localBinding.addAdblockLabel.text.isNotEmpty()) localBinding.addAdblockLabel.text.toString() else url
+                        settings.globalWebApp.adBlockSettings += AdblockConfig(label, formattedUrl)
+                        saveGlobalSettings()
+                    }
+                    updateAdblockList()
+                }.setNegativeButton(android.R.string.cancel, null)
+                .create()
         dialog.show()
 
         val okButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
         okButton.isEnabled = false
-        localBinding.addAdblockUrl.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                okButton.isEnabled = !s.isNullOrBlank()
-            }
+        localBinding.addAdblockUrl.addTextChangedListener(
+            object : TextWatcher {
+                override fun afterTextChanged(s: Editable?) {
+                    okButton.isEnabled = !s.isNullOrBlank()
+                }
 
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-        })
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int,
+                ) {}
 
+                override fun onTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    before: Int,
+                    count: Int,
+                ) {}
+            },
+        )
     }
 }
-
-

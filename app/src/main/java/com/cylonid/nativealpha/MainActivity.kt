@@ -23,7 +23,6 @@ import com.cylonid.nativealpha.util.EntryPointUtils.entryPointReached
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import io.github.edsuns.adfilter.AdFilter
 
-
 class MainActivity : AppCompatActivity() {
     private lateinit var webAppListFragment: WebAppListFragment
 
@@ -44,12 +43,11 @@ class MainActivity : AppCompatActivity() {
         personalizeToolbar()
 
         AdblockLifecycleHelper(this).trySyncOperation({ AdFilter.create(applicationContext) })
-
     }
 
     override fun onResume() {
         super.onResume()
-        DataManager.getInstance().loadAppData();
+        DataManager.getInstance().loadAppData()
         updateWebAppList()
     }
 
@@ -75,6 +73,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun personalizeToolbar() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
+
         @StringRes val appName =
             if (BuildConfig.FLAVOR == "extended") R.string.app_name_plus else R.string.app_name
         toolbar.setTitle(appName)
@@ -108,83 +107,100 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun buildImportSuccessDialog() {
-        val message = """
+        val message =
+            """
             ${getString(R.string.import_success_dialog_txt2)}
-            
+
             ${getString(R.string.import_success_dialog_txt3)}
             """.trimIndent()
 
-        AlertDialog.Builder(this).setMessage(message)
+        AlertDialog
+            .Builder(this)
+            .setMessage(message)
             .setCancelable(false)
             .setTitle(
                 getString(
                     R.string.import_success,
-                    DataManager.getInstance().activeWebsitesCount
-                )
-            )
-            .setPositiveButton(getString(R.string.ok)) { _: DialogInterface?, _: Int ->
+                    DataManager.getInstance().activeWebsitesCount,
+                ),
+            ).setPositiveButton(getString(R.string.ok)) { _: DialogInterface?, _: Int ->
                 val webapps = DataManager.getInstance().activeWebsites
                 for (i in webapps.indices.reversed()) {
                     val webapp = webapps[i]
-                    val msg = Html.fromHtml(
-                        getString(R.string.restore_shortcut, webapp.title),
-                        Html.FROM_HTML_MODE_COMPACT
-                    )
-                    AlertDialog.Builder(this)
+                    val msg =
+                        Html.fromHtml(
+                            getString(R.string.restore_shortcut, webapp.title),
+                            Html.FROM_HTML_MODE_COMPACT,
+                        )
+                    AlertDialog
+                        .Builder(this)
                         .setMessage(msg)
                         .setPositiveButton(R.string.ok) { _: DialogInterface?, _: Int ->
                             val frag = ShortcutDialogFragment.newInstance(webapp)
                             frag.show(supportFragmentManager, "SCFetcher-" + webapp.ID)
-                        }
-                        .setNegativeButton(R.string.cancel) { _: DialogInterface?, _: Int -> }
+                        }.setNegativeButton(R.string.cancel) { _: DialogInterface?, _: Int -> }
                         .create()
                         .show()
-
                 }
-            }
-            .setNegativeButton(getString(R.string.cancel)) { _: DialogInterface?, _: Int -> }
-            .create().show()
+            }.setNegativeButton(getString(R.string.cancel)) { _: DialogInterface?, _: Int -> }
+            .create()
+            .show()
     }
 
     private fun buildAddWebsiteDialog(title: String) {
         val localBinding = AddWebsiteDialogueBinding.inflate(layoutInflater)
-        val dialog = AlertDialog.Builder(this@MainActivity)
-            .setView(localBinding.root)
-            .setTitle(title)
-            .setPositiveButton(R.string.ok) { _: DialogInterface, _: Int ->
-                val url = localBinding.websiteUrl.text.toString().trim()
-                val urlWithProtocol =
-                    if (url.startsWith("https://") || url.startsWith("http://")) url else "https://$url"
-                val newSite = WebApp(
-                    urlWithProtocol,
-                    DataManager.getInstance().incrementedID,
-                    DataManager.getInstance().incrementedOrder
-                )
-                newSite.applySettingsForNewWebApp()
-                DataManager.getInstance().addWebsite(newSite)
+        val dialog =
+            AlertDialog
+                .Builder(this@MainActivity)
+                .setView(localBinding.root)
+                .setTitle(title)
+                .setPositiveButton(R.string.ok) { _: DialogInterface, _: Int ->
+                    val url =
+                        localBinding.websiteUrl.text
+                            .toString()
+                            .trim()
+                    val urlWithProtocol =
+                        if (url.startsWith("https://") || url.startsWith("http://")) url else "https://$url"
+                    val newSite =
+                        WebApp(
+                            urlWithProtocol,
+                            DataManager.getInstance().incrementedID,
+                            DataManager.getInstance().incrementedOrder,
+                        )
+                    newSite.applySettingsForNewWebApp()
+                    DataManager.getInstance().addWebsite(newSite)
 
-                updateWebAppList()
-                if (localBinding.switchCreateShortcut.isChecked) {
-                    val frag = ShortcutDialogFragment.newInstance(newSite)
-                    frag.show(supportFragmentManager, "SCFetcher-" + newSite.ID)
-                }
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .create()
+                    updateWebAppList()
+                    if (localBinding.switchCreateShortcut.isChecked) {
+                        val frag = ShortcutDialogFragment.newInstance(newSite)
+                        frag.show(supportFragmentManager, "SCFetcher-" + newSite.ID)
+                    }
+                }.setNegativeButton(R.string.cancel, null)
+                .create()
 
         dialog.show()
         val okButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
         okButton.isEnabled = false
-        localBinding.websiteUrl.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                okButton.isEnabled = !s.isNullOrBlank()
-            }
+        localBinding.websiteUrl.addTextChangedListener(
+            object : TextWatcher {
+                override fun afterTextChanged(s: Editable?) {
+                    okButton.isEnabled = !s.isNullOrBlank()
+                }
 
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-        })
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int,
+                ) {}
 
+                override fun onTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    before: Int,
+                    count: Int,
+                ) {}
+            },
+        )
     }
 }
-
-
