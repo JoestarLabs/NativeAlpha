@@ -512,6 +512,7 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
         this.setDarkModeIfNeeded();
     }
 
+    @SuppressLint("MissingSuperCall")
     @Override
     public void onBackPressed() {
         WebApp webapp = DataManager.getInstance().getWebApp(webappID);
