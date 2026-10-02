@@ -68,6 +68,8 @@ androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling
 androidx-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-material3" }
 androidx-compose-material-icons = { module = "androidx.compose.material:material-icons-extended" }
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose" }
+androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 circularprogressbar = { module = "com.mikhaellopez:circularprogressbar", version.ref = "circularprogressbar" }
 dragdrop-swipe-recyclerview = { module = "com.ernestoyaquello.dragdropswiperecyclerview:drag-drop-swipe-recyclerview", version.ref = "dragdrop-swipe-recyclerview" }
 about-page = { module = "io.github.medyo:android-about-page", version.ref = "aboutpage" }
