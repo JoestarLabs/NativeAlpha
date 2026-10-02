@@ -54,6 +54,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.cylonid.nativealpha.MainActivity
 import com.cylonid.nativealpha.R
@@ -152,7 +153,10 @@ fun SettingsScreen(
                             stringResource(
                                 R.string.these_settings_are_applied_globally_and_override_app_specific_settings,
                             ),
-                        maxLines = 1,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {

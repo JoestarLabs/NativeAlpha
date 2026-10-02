@@ -2,6 +2,7 @@ package com.cylonid.nativealpha.ui.webapp
 
 import android.app.Activity
 import android.app.ActivityManager
+import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Process
@@ -19,18 +20,39 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.AppShortcut
+import androidx.compose.material.icons.rounded.Autorenew
+import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.Cookie
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.DataSaverOn
 import androidx.compose.material.icons.rounded.DesktopWindows
+import androidx.compose.material.icons.rounded.Fingerprint
+import androidx.compose.material.icons.rounded.Fullscreen
+import androidx.compose.material.icons.rounded.HideImage
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Javascript
+import androidx.compose.material.icons.rounded.Key
+import androidx.compose.material.icons.rounded.Layers
+import androidx.compose.material.icons.rounded.Lightbulb
+import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.OpenInBrowser
+import androidx.compose.material.icons.rounded.Place
+import androidx.compose.material.icons.rounded.Psychology
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,18 +78,25 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import com.cylonid.nativealpha.MainActivity
 import com.cylonid.nativealpha.R
 import com.cylonid.nativealpha.ShortcutDialogFragment
+import com.cylonid.nativealpha.helper.BiometricPromptHelper
 import com.cylonid.nativealpha.model.DataManager
+import com.cylonid.nativealpha.model.SandboxManager
 import com.cylonid.nativealpha.model.WebApp
 import com.cylonid.nativealpha.ui.components.RoundedCardContainer
 import com.cylonid.nativealpha.ui.components.SettingsActionItem
 import com.cylonid.nativealpha.ui.components.SettingsSectionHeader
 import com.cylonid.nativealpha.ui.components.SettingsSwitchItem
 import com.cylonid.nativealpha.util.Const
+import com.cylonid.nativealpha.util.DateUtils
 import com.cylonid.nativealpha.util.ProcessUtils
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -127,6 +156,47 @@ fun WebAppSettingsScreen(
         context.startActivity(intent)
     }
 
+    fun showTimePicker(
+        initialTime: String?,
+        onSelected: (String) -> Unit,
+    ) {
+        val cal = DateUtils.convertStringToCalendar(initialTime) ?: Calendar.getInstance()
+        TimePickerDialog(
+            context,
+            { _, hourOfDay, minute ->
+                val dt =
+                    Calendar.getInstance().apply {
+                        set(Calendar.HOUR_OF_DAY, hourOfDay)
+                        set(Calendar.MINUTE, minute)
+                    }
+                onSelected(DateUtils.getHourMinFormat().format(dt.time))
+            },
+            cal[Calendar.HOUR_OF_DAY],
+            cal[Calendar.MINUTE],
+            true,
+        ).show()
+    }
+
+    fun onBiometricToggle(enable: Boolean) {
+        val fragmentActivity = context as? FragmentActivity
+        if (fragmentActivity != null) {
+            val helper = BiometricPromptHelper(fragmentActivity)
+            val promptTitle =
+                if (enable) {
+                    context.getString(R.string.bioprompt_enable_restriction)
+                } else {
+                    context.getString(R.string.bioprompt_disable_restricition)
+                }
+            helper.showPrompt(
+                { webapp = webapp.copy().apply { isBiometricProtection = enable } },
+                {},
+                promptTitle,
+            )
+        } else {
+            webapp = webapp.copy().apply { isBiometricProtection = enable }
+        }
+    }
+
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     val screenTitle =
@@ -138,10 +208,12 @@ fun WebAppSettingsScreen(
 
     val screenSubtitle =
         if (isGlobalWebApp) {
-            "Defaults applied to all web apps"
+            null
         } else {
             webapp.baseUrl
         }
+
+    val isSettingsEnabled = isGlobalWebApp || webapp.isOverrideGlobalSettings
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -154,10 +226,13 @@ fun WebAppSettingsScreen(
                     )
                 },
                 subtitle = {
-                    Text(
-                        text = screenSubtitle,
-                        maxLines = 1,
-                    )
+                    screenSubtitle?.let { sub ->
+                        Text(
+                            text = sub,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 },
                 navigationIcon = {
                     IconButton(
@@ -228,7 +303,7 @@ fun WebAppSettingsScreen(
                 }
                 Spacer(Modifier.height(16.dp))
             } else {
-                // ── App Identity Section ──
+                // ── Web App Identity (Per-App Only) ──
                 SettingsSectionHeader("Web App Details")
 
                 RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
@@ -255,7 +330,7 @@ fun WebAppSettingsScreen(
                             onValueChange = { newUrl ->
                                 webapp = webapp.copy().apply { baseUrl = newUrl }
                             },
-                            label = { Text("Base URL") },
+                            label = { Text(stringResource(R.string.start_url)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -263,7 +338,7 @@ fun WebAppSettingsScreen(
 
                     SettingsActionItem(
                         title = "Re-create Shortcut",
-                        description = "Add or update home screen launcher shortcut",
+                        description = "Add or update launcher shortcut on home screen",
                         icon = Icons.Rounded.AppShortcut,
                         onClick = {
                             val activity = context as? AppCompatActivity
@@ -277,13 +352,13 @@ fun WebAppSettingsScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                // ── Override Switch ──
-                SettingsSectionHeader("Global Configuration Override")
+                // ── Global Configuration Override ──
+                SettingsSectionHeader("Configuration Override")
 
                 RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                     SettingsSwitchItem(
                         title = stringResource(R.string.override_global_settings),
-                        description = "Customize behavior specifically for this web app instead of following global defaults",
+                        description = "Customize settings for this web app instead of following global defaults",
                         checked = webapp.isOverrideGlobalSettings,
                         icon = Icons.Rounded.Tune,
                         onCheckedChange = { isChecked ->
@@ -295,15 +370,13 @@ fun WebAppSettingsScreen(
                 Spacer(Modifier.height(16.dp))
             }
 
-            val isSettingsEnabled = isGlobalWebApp || webapp.isOverrideGlobalSettings
-
-            // ── Browsing & Display ──
-            SettingsSectionHeader("Browsing & Display")
+            // ── Section 1: Browsing & Behavior ──
+            SettingsSectionHeader("Browsing & Navigation")
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
-                    title = "Allow JavaScript",
-                    description = "Enable JavaScript execution for interactive sites",
+                    title = stringResource(R.string.allow_javascript),
+                    description = "Execute JavaScript for web interactivity",
                     checked = webapp.isAllowJs,
                     icon = Icons.Rounded.Javascript,
                     enabled = isSettingsEnabled,
@@ -320,8 +393,8 @@ fun WebAppSettingsScreen(
                 )
 
                 SettingsSwitchItem(
-                    title = "Desktop Site",
-                    description = "Request desktop version of web pages",
+                    title = stringResource(R.string.request_website_in_desktop_version),
+                    description = "Request desktop view instead of mobile layouts",
                     checked = webapp.isRequestDesktop,
                     icon = Icons.Rounded.DesktopWindows,
                     enabled = isSettingsEnabled && webapp.isAllowJs,
@@ -338,7 +411,7 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.activate_two_finger_zoom),
-                    description = "Allow pinch gestures to zoom web content",
+                    description = "Allow pinch-to-zoom on web pages",
                     checked = webapp.isEnableZooming,
                     icon = Icons.Rounded.ZoomIn,
                     enabled = isSettingsEnabled,
@@ -346,17 +419,39 @@ fun WebAppSettingsScreen(
                         webapp = webapp.copy().apply { isEnableZooming = isChecked }
                     },
                 )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.open_external_links_in_browser_app),
+                    description = "Launch out-of-domain links in the default browser",
+                    checked = webapp.isOpenUrlExternal,
+                    icon = Icons.Rounded.OpenInBrowser,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isOpenUrlExternal = isChecked }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.use_standard_context_menu_permanently),
+                    description = "Use system default text selection menu instead of custom menus",
+                    checked = webapp.alwaysUseFallbackContextMenu,
+                    icon = Icons.Rounded.Menu,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { alwaysUseFallbackContextMenu = isChecked }
+                    },
+                )
             }
 
             Spacer(Modifier.height(16.dp))
 
-            // ── Privacy & Adblocking ──
+            // ── Section 2: Privacy & Security ──
             SettingsSectionHeader("Privacy & Security")
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
-                    title = "Allow Cookies",
-                    description = "Store first-party website session cookies",
+                    title = stringResource(R.string.accept_cookies),
+                    description = "Allow websites to store first-party session cookies",
                     checked = webapp.isAllowCookies,
                     icon = Icons.Rounded.Cookie,
                     enabled = isSettingsEnabled,
@@ -372,8 +467,8 @@ fun WebAppSettingsScreen(
                 )
 
                 SettingsSwitchItem(
-                    title = "Allow Third-Party Cookies",
-                    description = "Allow cookies from external cross-site domains",
+                    title = stringResource(R.string.accept_third_party_cookies),
+                    description = "Allow third-party cross-site cookies",
                     checked = webapp.isAllowThirdPartyCookies,
                     icon = Icons.Rounded.Cookie,
                     enabled = isSettingsEnabled && webapp.isAllowCookies,
@@ -384,7 +479,7 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.enable_adblock_experimental),
-                    description = "Filter ads and trackers using active adblock provider rules",
+                    description = "Filter intrusive ads and tracking scripts",
                     checked = webapp.isUseAdblock,
                     icon = Icons.Rounded.Block,
                     enabled = isSettingsEnabled && webapp.isAllowJs,
@@ -392,17 +487,186 @@ fun WebAppSettingsScreen(
                         webapp = webapp.copy().apply { isUseAdblock = isChecked }
                     },
                 )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.block_all_third_party_requests),
+                    description = "Prevent loading external scripts, trackers, and fonts",
+                    checked = webapp.isBlockThirdPartyRequests,
+                    icon = Icons.Rounded.Shield,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isBlockThirdPartyRequests = isChecked }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.allow_http),
+                    description = "Allow insecure, unencrypted HTTP connections",
+                    checked = webapp.isAllowHttp,
+                    icon = Icons.Rounded.LockOpen,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isAllowHttp = isChecked }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.allow_drm_content),
+                    description = "Allow playback of protected digital media",
+                    checked = webapp.isDrmAllowed,
+                    icon = Icons.Rounded.Key,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isDrmAllowed = isChecked }
+                    },
+                )
             }
 
             Spacer(Modifier.height(16.dp))
 
-            // ── Advanced Behavior ──
-            SettingsSectionHeader("Media & Controls")
+            // ── Section 3: Device Permissions & Security ──
+            SettingsSectionHeader("Hardware & Permissions")
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
-                    title = "Background Media Playback",
-                    description = "Continue playing audio when switching apps or locking the screen",
+                    title = stringResource(R.string.allow_location_access),
+                    description = "Grant web app access to GPS/location services",
+                    checked = webapp.isAllowLocationAccess,
+                    icon = Icons.Rounded.Place,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isAllowLocationAccess = isChecked }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.allow_camera_access),
+                    description = "Grant web app access to device cameras",
+                    checked = webapp.isCameraPermission,
+                    icon = Icons.Rounded.CameraAlt,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isCameraPermission = isChecked }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.allow_microphone_access),
+                    description = "Grant web app access to the microphone",
+                    checked = webapp.isMicrophonePermission,
+                    icon = Icons.Rounded.Mic,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isMicrophonePermission = isChecked }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.enable_access_restriction),
+                    description = "Require biometric verification or PIN to open",
+                    checked = webapp.isBiometricProtection,
+                    icon = Icons.Rounded.Fingerprint,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        onBiometricToggle(isChecked)
+                    },
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // ── Section 4: Display, Dark Mode & Kiosk ──
+            SettingsSectionHeader("Display & Dark Mode")
+
+            RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
+                SettingsSwitchItem(
+                    title = stringResource(R.string.force_dark_mode),
+                    description = "Invert and darken page content",
+                    checked = webapp.isForceDarkMode,
+                    icon = Icons.Rounded.DarkMode,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp =
+                            webapp.copy().apply {
+                                isForceDarkMode = isChecked
+                                if (!isChecked) {
+                                    isUseTimespanDarkMode = false
+                                }
+                            }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.limit_dark_mode_to_time_span),
+                    description = "Only activate dark mode between scheduled hours",
+                    checked = webapp.isUseTimespanDarkMode,
+                    icon = Icons.Rounded.Schedule,
+                    enabled = isSettingsEnabled && webapp.isForceDarkMode,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isUseTimespanDarkMode = isChecked }
+                    },
+                )
+
+                if (webapp.isUseTimespanDarkMode && webapp.isForceDarkMode) {
+                    SettingsActionItem(
+                        title = stringResource(R.string.begin),
+                        description = webapp.timespanDarkModeBegin ?: "22:00",
+                        icon = Icons.Rounded.Schedule,
+                        enabled = isSettingsEnabled,
+                        trailingIcon = Icons.AutoMirrored.Rounded.OpenInNew,
+                        onClick = {
+                            showTimePicker(webapp.timespanDarkModeBegin) { selected ->
+                                webapp = webapp.copy().apply { timespanDarkModeBegin = selected }
+                            }
+                        },
+                    )
+
+                    SettingsActionItem(
+                        title = stringResource(R.string.end),
+                        description = webapp.timespanDarkModeEnd ?: "06:00",
+                        icon = Icons.Rounded.Schedule,
+                        enabled = isSettingsEnabled,
+                        trailingIcon = Icons.AutoMirrored.Rounded.OpenInNew,
+                        onClick = {
+                            showTimePicker(webapp.timespanDarkModeEnd) { selected ->
+                                webapp = webapp.copy().apply { timespanDarkModeEnd = selected }
+                            }
+                        },
+                    )
+                }
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.show_fullscreen),
+                    description = "Hide system bars for an immersive web experience",
+                    checked = webapp.isShowFullscreen,
+                    icon = Icons.Rounded.Fullscreen,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isShowFullscreen = isChecked }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.keep_screen_awake),
+                    description = "Prevent the display from turning off while active",
+                    checked = webapp.isKeepAwake,
+                    icon = Icons.Rounded.Lightbulb,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isKeepAwake = isChecked }
+                    },
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // ── Section 5: Media Playback ──
+            SettingsSectionHeader("Media Playback")
+
+            RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
+                SettingsSwitchItem(
+                    title = stringResource(R.string.allow_media_playback_in_background),
+                    description = "Continue playing audio when app is minimized or screen is locked",
                     checked = webapp.isAllowMediaPlaybackInBackground,
                     icon = Icons.Rounded.MusicNote,
                     enabled = isSettingsEnabled,
@@ -413,20 +677,155 @@ fun WebAppSettingsScreen(
                             }
                     },
                 )
+            }
 
+            Spacer(Modifier.height(16.dp))
+
+            // ── Section 6: Data Saving & Auto-Reload ──
+            SettingsSectionHeader("Data Saving & Auto-Reload")
+
+            RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
-                    title = "Standard Context Menu",
-                    description = "Always use the system default text selection & context menu",
-                    checked = webapp.alwaysUseFallbackContextMenu,
-                    icon = Icons.Rounded.Menu,
+                    title = stringResource(R.string.request_data_saving_page),
+                    description = "Send Save-Data HTTP header to request lighter pages",
+                    checked = webapp.isSendSavedataRequest,
+                    icon = Icons.Rounded.DataSaverOn,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp =
-                            webapp.copy().apply {
-                                alwaysUseFallbackContextMenu = isChecked
-                            }
+                        webapp = webapp.copy().apply { isSendSavedataRequest = isChecked }
                     },
                 )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.do_not_load_images),
+                    description = "Block image downloads to conserve bandwidth",
+                    checked = webapp.isBlockImages,
+                    icon = Icons.Rounded.HideImage,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isBlockImages = isChecked }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.webapp_autoreload_switch),
+                    description = "Periodically reload the web page automatically",
+                    checked = webapp.isAutoreload,
+                    icon = Icons.Rounded.Autorenew,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isAutoreload = isChecked }
+                    },
+                )
+
+                if (webapp.isAutoreload) {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = if (webapp.timeAutoreload > 0) webapp.timeAutoreload.toString() else "",
+                            onValueChange = { str ->
+                                val intVal = str.filter { it.isDigit() }.toIntOrNull() ?: 0
+                                webapp = webapp.copy().apply { timeAutoreload = intVal }
+                            },
+                            label = { Text(stringResource(R.string.webapp_interval_for_reload)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            enabled = isSettingsEnabled,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // ── Section 7: Expert & Container Settings ──
+            SettingsSectionHeader("Expert Settings")
+
+            RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
+                SettingsSwitchItem(
+                    title = stringResource(R.string.show_expert_settings),
+                    description = "Reveal advanced container, user-agent, and SSL controls",
+                    checked = webapp.isShowExpertSettings,
+                    icon = Icons.Rounded.Psychology,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        webapp = webapp.copy().apply { isShowExpertSettings = isChecked }
+                    },
+                )
+
+                if (webapp.isShowExpertSettings) {
+                    if (!isGlobalWebApp) {
+                        SettingsSwitchItem(
+                            title = stringResource(R.string.enable_sandbox),
+                            description = "Isolate cookies, cache, and session in a dedicated container process",
+                            checked = webapp.isUseContainer,
+                            icon = Icons.Rounded.Layers,
+                            enabled = isSettingsEnabled,
+                            onCheckedChange = { isChecked ->
+                                webapp =
+                                    webapp.copy().apply {
+                                        isUseContainer = isChecked
+                                        containerId =
+                                            if (isChecked) {
+                                                SandboxManager.getInstance().calculateNextFreeContainerId()
+                                            } else {
+                                                Const.NO_CONTAINER
+                                            }
+                                    }
+                            },
+                        )
+                    }
+
+                    SettingsSwitchItem(
+                        title = stringResource(R.string.use_custom_user_agent),
+                        description = "Override the default browser User-Agent header",
+                        checked = webapp.isUseCustomUserAgent,
+                        icon = Icons.Rounded.Badge,
+                        enabled = isSettingsEnabled && !webapp.isRequestDesktop,
+                        onCheckedChange = { isChecked ->
+                            webapp = webapp.copy().apply { isUseCustomUserAgent = isChecked }
+                        },
+                    )
+
+                    if (webapp.isUseCustomUserAgent && !webapp.isRequestDesktop) {
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                        ) {
+                            OutlinedTextField(
+                                value = webapp.userAgent ?: "",
+                                onValueChange = { ua ->
+                                    webapp = webapp.copy().apply { userAgent = ua }
+                                },
+                                label = { Text("User Agent String") },
+                                singleLine = false,
+                                maxLines = 3,
+                                enabled = isSettingsEnabled,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+
+                    if (!isGlobalWebApp) {
+                        SettingsSwitchItem(
+                            title = stringResource(R.string.ignore_ssl_errors),
+                            description = "Proceed even when SSL certificate validation fails (Security Risk)",
+                            checked = webapp.isIgnoreSslErrors,
+                            icon = Icons.Rounded.Warning,
+                            enabled = isSettingsEnabled,
+                            onCheckedChange = { isChecked ->
+                                webapp = webapp.copy().apply { isIgnoreSslErrors = isChecked }
+                            },
+                        )
+                    }
+                }
             }
 
             Spacer(Modifier.height(32.dp))
