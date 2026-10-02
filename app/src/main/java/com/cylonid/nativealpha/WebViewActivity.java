@@ -12,6 +12,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
@@ -123,16 +124,30 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 	private AdblockLifecycleHelper adblockLifecycleHelper;
 	private Bitmap mCurrentTaskIcon = null;
 
-	@SuppressWarnings("deprecation")
 	private void updateTaskDescription(String title, Bitmap icon) {
 		if (title != null && !title.isEmpty()) {
 			setTitle(title);
 		}
 		try {
-			Bitmap scaledIcon = icon != null
-					? ShortcutIconUtils.downscaleIfNecessary(icon, ShortcutIconUtils.MAX_ICON_DIMENSION)
-					: null;
-			setTaskDescription(new ActivityManager.TaskDescription(title, scaledIcon));
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+				// On API 33+, TaskDescription(String,Bitmap) label is ignored;
+				// must use Builder.setLabel() to control the Recents card title.
+				ActivityManager.TaskDescription.Builder builder = new ActivityManager.TaskDescription.Builder()
+						.setLabel(title);
+				if (Build.VERSION.SDK_INT >= 37 && icon != null) {
+					Bitmap scaled = ShortcutIconUtils.downscaleIfNecessary(icon, ShortcutIconUtils.MAX_ICON_DIMENSION);
+					builder.setIcon(Icon.createWithBitmap(scaled));
+				}
+				setTaskDescription(builder.build());
+			} else {
+				// API < 33: deprecated constructor still respects the label.
+				Bitmap scaledIcon = icon != null
+						? ShortcutIconUtils.downscaleIfNecessary(icon, ShortcutIconUtils.MAX_ICON_DIMENSION)
+						: null;
+				@SuppressWarnings("deprecation")
+				ActivityManager.TaskDescription td = new ActivityManager.TaskDescription(title, scaledIcon);
+				setTaskDescription(td);
+			}
 		} catch (Exception e) {
 			// Ignore if OS does not support task description updates in current state
 		}
