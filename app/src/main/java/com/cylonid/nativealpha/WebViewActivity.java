@@ -125,15 +125,14 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 	private Bitmap mCurrentTaskIcon = null;
 
 	private void updateTaskDescription(String title, Bitmap icon) {
-		if (title != null && !title.isEmpty()) {
-			setTitle(title);
-		}
+		final String effectiveTitle = (title != null && !title.isEmpty()) ? title : getString(R.string.app_name);
+		setTitle(effectiveTitle);
 		try {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-				// On API 33+, TaskDescription(String,Bitmap) label is ignored;
-				// must use Builder.setLabel() to control the Recents card title.
+				// On API 33+, the deprecated TaskDescription(String,Bitmap) label is ignored;
+				// TaskDescription.Builder.setLabel() is the correct API.
 				ActivityManager.TaskDescription.Builder builder = new ActivityManager.TaskDescription.Builder()
-						.setLabel(title);
+						.setLabel(effectiveTitle);
 				if (Build.VERSION.SDK_INT >= 37 && icon != null) {
 					Bitmap scaled = ShortcutIconUtils.downscaleIfNecessary(icon, ShortcutIconUtils.MAX_ICON_DIMENSION);
 					builder.setIcon(Icon.createWithBitmap(scaled));
@@ -145,11 +144,12 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 						? ShortcutIconUtils.downscaleIfNecessary(icon, ShortcutIconUtils.MAX_ICON_DIMENSION)
 						: null;
 				@SuppressWarnings("deprecation")
-				ActivityManager.TaskDescription td = new ActivityManager.TaskDescription(title, scaledIcon);
+				ActivityManager.TaskDescription td = new ActivityManager.TaskDescription(effectiveTitle, scaledIcon);
 				setTaskDescription(td);
 			}
+			Log.d("TaskDesc", "setTaskDescription called: label=" + effectiveTitle);
 		} catch (Exception e) {
-			// Ignore if OS does not support task description updates in current state
+			Log.e("TaskDesc", "setTaskDescription failed", e);
 		}
 	}
 
@@ -598,6 +598,13 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 		if (new_id != webappID) {
 			WebApp new_webapp = DataManager.getInstance().getWebApp(new_id);
 			WebViewLauncher.startWebViewInNewProcess(new_webapp, this);
+		}
+
+		// Refresh task description on every resume — covers re-entry from back stack
+		// or system-restored tasks where the system may have reverted to the manifest
+		// label.
+		if (webapp != null) {
+			updateTaskDescription(webapp.getTitle(), mCurrentTaskIcon);
 		}
 
 		wv.onResume();
