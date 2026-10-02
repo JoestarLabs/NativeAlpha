@@ -6,6 +6,7 @@ import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Process
+import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -70,6 +71,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -123,7 +125,13 @@ fun WebAppSettingsScreen(
         return
     }
 
-    var webapp by remember { mutableStateOf(WebApp(initialWebApp)) }
+    var webapp by remember { mutableStateOf(WebApp(initialWebApp), policy = neverEqualPolicy()) }
+
+    fun updateWebApp(modify: WebApp.() -> Unit) {
+        val updated = WebApp(webapp)
+        updated.modify()
+        webapp = updated
+    }
 
     fun saveAndFinish() {
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
@@ -154,6 +162,10 @@ fun WebAppSettingsScreen(
             }
         (context as? Activity)?.finish()
         context.startActivity(intent)
+    }
+
+    BackHandler {
+        saveAndFinish()
     }
 
     fun showTimePicker(
@@ -188,12 +200,12 @@ fun WebAppSettingsScreen(
                     context.getString(R.string.bioprompt_disable_restricition)
                 }
             helper.showPrompt(
-                { webapp = webapp.copy().apply { isBiometricProtection = enable } },
+                { updateWebApp { isBiometricProtection = enable } },
                 {},
                 promptTitle,
             )
         } else {
-            webapp = webapp.copy().apply { isBiometricProtection = enable }
+            updateWebApp { isBiometricProtection = enable }
         }
     }
 
@@ -316,7 +328,7 @@ fun WebAppSettingsScreen(
                         OutlinedTextField(
                             value = webapp.title,
                             onValueChange = { newTitle ->
-                                webapp = webapp.copy().apply { title = newTitle }
+                                updateWebApp { title = newTitle }
                             },
                             label = { Text(stringResource(R.string.label)) },
                             singleLine = true,
@@ -328,7 +340,7 @@ fun WebAppSettingsScreen(
                         OutlinedTextField(
                             value = webapp.baseUrl,
                             onValueChange = { newUrl ->
-                                webapp = webapp.copy().apply { baseUrl = newUrl }
+                                updateWebApp { baseUrl = newUrl }
                             },
                             label = { Text(stringResource(R.string.start_url)) },
                             singleLine = true,
@@ -358,7 +370,7 @@ fun WebAppSettingsScreen(
                         checked = webapp.isOverrideGlobalSettings,
                         icon = Icons.Rounded.Tune,
                         onCheckedChange = { isChecked ->
-                            webapp = webapp.copy().apply { isOverrideGlobalSettings = isChecked }
+                            updateWebApp { isOverrideGlobalSettings = isChecked }
                         },
                     )
                 }
@@ -376,14 +388,13 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Javascript,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp =
-                            webapp.copy().apply {
-                                isAllowJs = isChecked
-                                if (!isChecked) {
-                                    isRequestDesktop = false
-                                    isUseAdblock = false
-                                }
+                        updateWebApp {
+                            isAllowJs = isChecked
+                            if (!isChecked) {
+                                isRequestDesktop = false
+                                isUseAdblock = false
                             }
+                        }
                     },
                 )
 
@@ -393,13 +404,12 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.DesktopWindows,
                     enabled = isSettingsEnabled && webapp.isAllowJs,
                     onCheckedChange = { isChecked ->
-                        webapp =
-                            webapp.copy().apply {
-                                isRequestDesktop = isChecked
-                                if (isChecked) {
-                                    isUseCustomUserAgent = false
-                                }
+                        updateWebApp {
+                            isRequestDesktop = isChecked
+                            if (isChecked) {
+                                isUseCustomUserAgent = false
                             }
+                        }
                     },
                 )
 
@@ -409,7 +419,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.ZoomIn,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isEnableZooming = isChecked }
+                        updateWebApp { isEnableZooming = isChecked }
                     },
                 )
 
@@ -419,7 +429,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.OpenInBrowser,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isOpenUrlExternal = isChecked }
+                        updateWebApp { isOpenUrlExternal = isChecked }
                     },
                 )
 
@@ -429,7 +439,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Menu,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { alwaysUseFallbackContextMenu = isChecked }
+                        updateWebApp { alwaysUseFallbackContextMenu = isChecked }
                     },
                 )
             }
@@ -446,13 +456,12 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Cookie,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp =
-                            webapp.copy().apply {
-                                isAllowCookies = isChecked
-                                if (!isChecked) {
-                                    isAllowThirdPartyCookies = false
-                                }
+                        updateWebApp {
+                            isAllowCookies = isChecked
+                            if (!isChecked) {
+                                isAllowThirdPartyCookies = false
                             }
+                        }
                     },
                 )
 
@@ -462,7 +471,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Cookie,
                     enabled = isSettingsEnabled && webapp.isAllowCookies,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isAllowThirdPartyCookies = isChecked }
+                        updateWebApp { isAllowThirdPartyCookies = isChecked }
                     },
                 )
 
@@ -472,7 +481,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Block,
                     enabled = isSettingsEnabled && webapp.isAllowJs,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isUseAdblock = isChecked }
+                        updateWebApp { isUseAdblock = isChecked }
                     },
                 )
 
@@ -482,7 +491,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Shield,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isBlockThirdPartyRequests = isChecked }
+                        updateWebApp { isBlockThirdPartyRequests = isChecked }
                     },
                 )
 
@@ -492,7 +501,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.LockOpen,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isAllowHttp = isChecked }
+                        updateWebApp { isAllowHttp = isChecked }
                     },
                 )
 
@@ -502,7 +511,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Key,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isDrmAllowed = isChecked }
+                        updateWebApp { isDrmAllowed = isChecked }
                     },
                 )
             }
@@ -519,7 +528,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Place,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isAllowLocationAccess = isChecked }
+                        updateWebApp { isAllowLocationAccess = isChecked }
                     },
                 )
 
@@ -529,7 +538,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.CameraAlt,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isCameraPermission = isChecked }
+                        updateWebApp { isCameraPermission = isChecked }
                     },
                 )
 
@@ -539,7 +548,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Mic,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isMicrophonePermission = isChecked }
+                        updateWebApp { isMicrophonePermission = isChecked }
                     },
                 )
 
@@ -566,13 +575,12 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.DarkMode,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp =
-                            webapp.copy().apply {
-                                isForceDarkMode = isChecked
-                                if (!isChecked) {
-                                    isUseTimespanDarkMode = false
-                                }
+                        updateWebApp {
+                            isForceDarkMode = isChecked
+                            if (!isChecked) {
+                                isUseTimespanDarkMode = false
                             }
+                        }
                     },
                 )
 
@@ -582,7 +590,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Schedule,
                     enabled = isSettingsEnabled && webapp.isForceDarkMode,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isUseTimespanDarkMode = isChecked }
+                        updateWebApp { isUseTimespanDarkMode = isChecked }
                     },
                 )
 
@@ -595,7 +603,7 @@ fun WebAppSettingsScreen(
                         trailingIcon = Icons.AutoMirrored.Rounded.OpenInNew,
                         onClick = {
                             showTimePicker(webapp.timespanDarkModeBegin) { selected ->
-                                webapp = webapp.copy().apply { timespanDarkModeBegin = selected }
+                                updateWebApp { timespanDarkModeBegin = selected }
                             }
                         },
                     )
@@ -608,7 +616,7 @@ fun WebAppSettingsScreen(
                         trailingIcon = Icons.AutoMirrored.Rounded.OpenInNew,
                         onClick = {
                             showTimePicker(webapp.timespanDarkModeEnd) { selected ->
-                                webapp = webapp.copy().apply { timespanDarkModeEnd = selected }
+                                updateWebApp { timespanDarkModeEnd = selected }
                             }
                         },
                     )
@@ -620,7 +628,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Fullscreen,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isShowFullscreen = isChecked }
+                        updateWebApp { isShowFullscreen = isChecked }
                     },
                 )
 
@@ -630,7 +638,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Lightbulb,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isKeepAwake = isChecked }
+                        updateWebApp { isKeepAwake = isChecked }
                     },
                 )
             }
@@ -647,10 +655,9 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.MusicNote,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp =
-                            webapp.copy().apply {
-                                isAllowMediaPlaybackInBackground = isChecked
-                            }
+                        updateWebApp {
+                            isAllowMediaPlaybackInBackground = isChecked
+                        }
                     },
                 )
             }
@@ -667,7 +674,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.DataSaverOn,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isSendSavedataRequest = isChecked }
+                        updateWebApp { isSendSavedataRequest = isChecked }
                     },
                 )
 
@@ -677,7 +684,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.HideImage,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isBlockImages = isChecked }
+                        updateWebApp { isBlockImages = isChecked }
                     },
                 )
 
@@ -687,7 +694,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Autorenew,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isAutoreload = isChecked }
+                        updateWebApp { isAutoreload = isChecked }
                     },
                 )
 
@@ -702,7 +709,7 @@ fun WebAppSettingsScreen(
                             value = if (webapp.timeAutoreload > 0) webapp.timeAutoreload.toString() else "",
                             onValueChange = { str ->
                                 val intVal = str.filter { it.isDigit() }.toIntOrNull() ?: 0
-                                webapp = webapp.copy().apply { timeAutoreload = intVal }
+                                updateWebApp { timeAutoreload = intVal }
                             },
                             label = { Text(stringResource(R.string.webapp_interval_for_reload)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -726,7 +733,7 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Psychology,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        webapp = webapp.copy().apply { isShowExpertSettings = isChecked }
+                        updateWebApp { isShowExpertSettings = isChecked }
                     },
                 )
 
@@ -738,16 +745,15 @@ fun WebAppSettingsScreen(
                             icon = Icons.Rounded.Layers,
                             enabled = isSettingsEnabled,
                             onCheckedChange = { isChecked ->
-                                webapp =
-                                    webapp.copy().apply {
-                                        isUseContainer = isChecked
-                                        containerId =
-                                            if (isChecked) {
-                                                SandboxManager.getInstance().calculateNextFreeContainerId()
-                                            } else {
-                                                Const.NO_CONTAINER
-                                            }
-                                    }
+                                updateWebApp {
+                                    isUseContainer = isChecked
+                                    containerId =
+                                        if (isChecked) {
+                                            SandboxManager.getInstance().calculateNextFreeContainerId()
+                                        } else {
+                                            Const.NO_CONTAINER
+                                        }
+                                }
                             },
                         )
                     }
@@ -758,7 +764,7 @@ fun WebAppSettingsScreen(
                         icon = Icons.Rounded.Badge,
                         enabled = isSettingsEnabled && !webapp.isRequestDesktop,
                         onCheckedChange = { isChecked ->
-                            webapp = webapp.copy().apply { isUseCustomUserAgent = isChecked }
+                            updateWebApp { isUseCustomUserAgent = isChecked }
                         },
                     )
 
@@ -772,7 +778,7 @@ fun WebAppSettingsScreen(
                             OutlinedTextField(
                                 value = webapp.userAgent ?: "",
                                 onValueChange = { ua ->
-                                    webapp = webapp.copy().apply { userAgent = ua }
+                                    updateWebApp { userAgent = ua }
                                 },
                                 label = { Text(stringResource(R.string.user_agent)) },
                                 singleLine = false,
@@ -791,7 +797,7 @@ fun WebAppSettingsScreen(
                             icon = Icons.Rounded.Warning,
                             enabled = isSettingsEnabled,
                             onCheckedChange = { isChecked ->
-                                webapp = webapp.copy().apply { isIgnoreSslErrors = isChecked }
+                                updateWebApp { isIgnoreSslErrors = isChecked }
                             },
                         )
                     }

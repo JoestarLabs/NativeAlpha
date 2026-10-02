@@ -46,6 +46,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -61,6 +62,7 @@ import com.cylonid.nativealpha.R
 import com.cylonid.nativealpha.WebAppSettingsActivity
 import com.cylonid.nativealpha.activities.AdblockConfigActivity
 import com.cylonid.nativealpha.model.DataManager
+import com.cylonid.nativealpha.model.GlobalSettings
 import com.cylonid.nativealpha.ui.components.RoundedCardContainer
 import com.cylonid.nativealpha.ui.components.SettingsActionItem
 import com.cylonid.nativealpha.ui.components.SettingsSectionHeader
@@ -82,12 +84,14 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val dataManager = remember { DataManager.getInstance() }
 
-    var settings by remember { mutableStateOf(dataManager.settings.copy()) }
+    var settings by remember { mutableStateOf(dataManager.settings.copy(), policy = neverEqualPolicy()) }
 
-    fun updateSettings(modify: () -> Unit) {
-        modify()
-        settings = settings.copy()
-        dataManager.settings = settings
+    fun updateSettings(modify: GlobalSettings.() -> Unit) {
+        val updated = settings.copy()
+        updated.modify()
+        settings = updated
+        dataManager.settings = updated
+        dataManager.saveGlobalSettings()
     }
 
     val exportLauncher =
@@ -243,7 +247,7 @@ fun SettingsScreen(
                     checked = settings.isClearCache,
                     icon = Icons.Rounded.CleaningServices,
                     onCheckedChange = { isChecked ->
-                        updateSettings { settings.isClearCache = isChecked }
+                        updateSettings { isClearCache = isChecked }
                     },
                 )
 
@@ -252,7 +256,7 @@ fun SettingsScreen(
                     checked = settings.isShowProgressbar,
                     icon = Icons.Rounded.HourglassTop,
                     onCheckedChange = { isChecked ->
-                        updateSettings { settings.isShowProgressbar = isChecked }
+                        updateSettings { isShowProgressbar = isChecked }
                     },
                 )
             }
@@ -265,7 +269,7 @@ fun SettingsScreen(
                     checked = settings.isMultitouchReload,
                     icon = Icons.Rounded.Refresh,
                     onCheckedChange = { isChecked ->
-                        updateSettings { settings.isMultitouchReload = isChecked }
+                        updateSettings { isMultitouchReload = isChecked }
                     },
                 )
 
@@ -277,7 +281,7 @@ fun SettingsScreen(
                     checked = settings.isTwoFingerMultitouch,
                     icon = Icons.Rounded.Swipe,
                     onCheckedChange = { isChecked ->
-                        updateSettings { settings.isTwoFingerMultitouch = isChecked }
+                        updateSettings { isTwoFingerMultitouch = isChecked }
                     },
                 )
 
@@ -289,7 +293,7 @@ fun SettingsScreen(
                     checked = settings.isThreeFingerMultitouch,
                     icon = Icons.Rounded.ViewCarousel,
                     onCheckedChange = { isChecked ->
-                        updateSettings { settings.isThreeFingerMultitouch = isChecked }
+                        updateSettings { isThreeFingerMultitouch = isChecked }
                     },
                 )
 
@@ -298,7 +302,7 @@ fun SettingsScreen(
                     checked = settings.alwaysShowSoftwareButtons,
                     icon = Icons.Rounded.SmartButton,
                     onCheckedChange = { isChecked ->
-                        updateSettings { settings.alwaysShowSoftwareButtons = isChecked }
+                        updateSettings { alwaysShowSoftwareButtons = isChecked }
                     },
                 )
             }

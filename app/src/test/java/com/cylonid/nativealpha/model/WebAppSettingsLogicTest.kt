@@ -1,6 +1,7 @@
 package com.cylonid.nativealpha.model
 
 import com.cylonid.nativealpha.util.Const
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -68,5 +69,79 @@ class WebAppSettingsLogicTest {
         assertTrue(modified.isClearCache)
         assertFalse(modified.isTwoFingerMultitouch)
         assertFalse("Original settings should remain unchanged", settings.isClearCache)
+    }
+
+    @Test
+    fun testWebAppCopyConstructorPreservesAllSettings() {
+        val original =
+            WebApp("https://example.com", 1, Const.getDefaultAdBlockConfig()).apply {
+                title = "Custom Title"
+                isOverrideGlobalSettings = false
+                isAllowJs = false
+                isClearCache = true
+                isForceDarkMode = true
+                isUseTimespanDarkMode = true
+                timespanDarkModeBegin = "21:00"
+                timespanDarkModeEnd = "07:00"
+                isAllowLocationAccess = true
+                isCameraPermission = true
+                isMicrophonePermission = true
+                isEnableZooming = true
+                isBiometricProtection = true
+                isAllowMediaPlaybackInBackground = true
+                isSendSavedataRequest = true
+                isBlockImages = true
+                isAutoreload = true
+                timeAutoreload = 60
+                isShowExpertSettings = true
+                isUseCustomUserAgent = true
+                userAgent = "CustomUA/1.0"
+                isIgnoreSslErrors = true
+            }
+
+        val copied = WebApp(original)
+
+        assertEquals("Custom Title", copied.title)
+        assertFalse(copied.isOverrideGlobalSettings)
+        assertFalse(copied.isAllowJs)
+        assertTrue(copied.isClearCache)
+        assertTrue(copied.isForceDarkMode)
+        assertTrue(copied.isUseTimespanDarkMode)
+        assertEquals("21:00", copied.timespanDarkModeBegin)
+        assertEquals("07:00", copied.timespanDarkModeEnd)
+        assertTrue(copied.isAllowLocationAccess)
+        assertTrue(copied.isCameraPermission)
+        assertTrue(copied.isMicrophonePermission)
+        assertTrue(copied.isEnableZooming)
+        assertTrue(copied.isBiometricProtection)
+        assertTrue(copied.isAllowMediaPlaybackInBackground)
+        assertTrue(copied.isSendSavedataRequest)
+        assertTrue(copied.isBlockImages)
+        assertTrue(copied.isAutoreload)
+        assertEquals(60, copied.timeAutoreload)
+        assertTrue(copied.isShowExpertSettings)
+        assertTrue(copied.isUseCustomUserAgent)
+        assertEquals("CustomUA/1.0", copied.userAgent)
+        assertTrue(copied.isIgnoreSslErrors)
+
+        // Mutating copy should not mutate original
+        copied.isOverrideGlobalSettings = true
+        assertFalse("Original should not be affected by copy mutation", original.isOverrideGlobalSettings)
+    }
+
+    @Test
+    fun testWebAppDeepCopyPreservesAllSettings() {
+        val original =
+            WebApp("https://example.com", 2, Const.getDefaultAdBlockConfig()).apply {
+                isOverrideGlobalSettings = true
+                isAllowCookies = false
+            }
+
+        val clone = original.deepCopy()
+        assertTrue(clone.isOverrideGlobalSettings)
+        assertFalse(clone.isAllowCookies)
+
+        clone.isOverrideGlobalSettings = false
+        assertTrue("Original must remain true", original.isOverrideGlobalSettings)
     }
 }
