@@ -182,5 +182,9 @@
     <string name="support_liberapay">Support me on Liberapay</string>
     <string name="adblock_warning_text">Your current ad blocker settings may cause problems or crashes. Unfortunately, not all filter lists work on every device.\n\nIt is recommended to clear the filter lists and repopulate them as a test.</string>
     <string name="warning">Warning</string>
+    <string name="theme">Theme</string>
+    <string name="material_you_theme">Material You</string>
+    <string name="material_you_theme_summary">Override signature red with dynamic colors from your device</string>
+    <string name="material_you_requires_android_12">Requires Android 12 or newer</string>
 
 </resources>

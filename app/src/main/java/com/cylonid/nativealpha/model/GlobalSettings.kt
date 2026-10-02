@@ -12,6 +12,7 @@ data class GlobalSettings(
     var globalWebApp: WebApp = WebApp("about:blank", Int.MAX_VALUE, Const.getDefaultAdBlockConfig()),
     var alwaysShowSoftwareButtons: Boolean = false,
     var clear_cookies: Boolean = false,
+    var isDynamicColor: Boolean = false,
 ) {
     fun setClearCookies(clear_cookies: Boolean) {
         this.clear_cookies = clear_cookies

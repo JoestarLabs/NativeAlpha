@@ -177,4 +177,8 @@
     <string name="support_liberapay">Unterstütze mich auf Liberapay</string>
     <string name="adblock_warning_text">Ihre aktuellen Adblocker-Einstellungen führen möglicherweise zu Problemen oder Abstürzen. Leider funktionieren nicht alle Filterlisten auf allen Geräten.\n\nEs wird empfohlen, die Filterlisten zu leeren und testweise neu zu befüllen.</string>
     <string name="warning">Warnung</string>
+    <string name="theme">Design</string>
+    <string name="material_you_theme">Material You</string>
+    <string name="material_you_theme_summary">Klassisches rotes Design durch dynamische Farben des Geräts ersetzen</string>
+    <string name="material_you_requires_android_12">Erfordert Android 12 oder neuer</string>
 </resources>

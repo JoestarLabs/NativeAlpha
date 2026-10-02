@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import com.cylonid.nativealpha.R
 import com.cylonid.nativealpha.model.DataManager
@@ -50,6 +51,7 @@ class SettingsScreenTest {
 
         val clearCacheStr = context.getString(R.string.clear_cache_after_usage)
         val clearCacheToggle = composeTestRule.onNodeWithText(clearCacheStr)
+        clearCacheToggle.performScrollTo()
         clearCacheToggle.assertIsDisplayed()
         clearCacheToggle.assertIsOff()
 
@@ -62,5 +64,54 @@ class SettingsScreenTest {
         clearCacheToggle.performClick()
         clearCacheToggle.assertIsOff()
         assertFalse("DataManager settings.isClearCache should be updated to false", dm.settings.isClearCache)
+    }
+
+    @Test
+    fun testMaterialYouToggleUpdatesModelAndTriggersCallback() {
+        val dm = DataManager.getInstance()
+        dm.settings.isDynamicColor = false
+
+        var callbackInvokedWith: Boolean? = null
+
+        composeTestRule.setContent {
+            NativeAlphaTheme {
+                SettingsScreen(
+                    onNavigateBack = {},
+                    onDynamicColorChanged = { callbackInvokedWith = it },
+                )
+            }
+        }
+
+        val dynamicThemeStr = context.getString(R.string.material_you_theme)
+        val dynamicThemeToggle = composeTestRule.onNodeWithText(dynamicThemeStr)
+        dynamicThemeToggle.assertIsDisplayed()
+        dynamicThemeToggle.assertIsOff()
+
+        // Toggle on
+        dynamicThemeToggle.performClick()
+        dynamicThemeToggle.assertIsOn()
+        assertTrue("DataManager settings.isDynamicColor should be updated to true", dm.settings.isDynamicColor)
+        assertTrue("Callback should be invoked with true", callbackInvokedWith == true)
+
+        // Toggle off
+        dynamicThemeToggle.performClick()
+        dynamicThemeToggle.assertIsOff()
+        assertFalse("DataManager settings.isDynamicColor should be updated to false", dm.settings.isDynamicColor)
+        assertTrue("Callback should be invoked with false", callbackInvokedWith == false)
+    }
+
+    @Test
+    @Config(sdk = [30])
+    fun testMaterialYouDisabledOnOlderAndroid() {
+        composeTestRule.setContent {
+            NativeAlphaTheme {
+                SettingsScreen(
+                    onNavigateBack = {},
+                )
+            }
+        }
+
+        val requiresAndroid12Str = context.getString(R.string.material_you_requires_android_12)
+        composeTestRule.onNodeWithText(requiresAndroid12Str).assertIsDisplayed()
     }
 }

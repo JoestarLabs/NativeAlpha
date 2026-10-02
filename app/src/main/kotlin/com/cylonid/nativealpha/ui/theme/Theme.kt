@@ -11,11 +11,12 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.cylonid.nativealpha.model.DataManager
 
 @Composable
 fun NativeAlphaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = runCatching { DataManager.getInstance().settings.isDynamicColor }.getOrDefault(false),
     content: @Composable () -> Unit,
 ) {
     val colorScheme =

@@ -2,6 +2,7 @@ package com.cylonid.nativealpha.ui.settings
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import android.webkit.CookieManager
 import android.webkit.WebStorage
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.HourglassTop
 import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.SmartButton
@@ -78,6 +80,7 @@ import java.util.Locale
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onDynamicColorChanged: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -238,7 +241,34 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // ── Section 2: Browsing & Gestures ──
+            // ── Section 2: Theme / Appearance ──
+            SettingsSectionHeader(stringResource(R.string.theme))
+
+            RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
+                val isAtLeastAndroid12 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                SettingsSwitchItem(
+                    title = stringResource(R.string.material_you_theme),
+                    description =
+                        stringResource(
+                            if (isAtLeastAndroid12) {
+                                R.string.material_you_theme_summary
+                            } else {
+                                R.string.material_you_requires_android_12
+                            },
+                        ),
+                    checked = isAtLeastAndroid12 && settings.isDynamicColor,
+                    enabled = isAtLeastAndroid12,
+                    icon = Icons.Rounded.Palette,
+                    onCheckedChange = { isChecked ->
+                        updateSettings { isDynamicColor = isChecked }
+                        onDynamicColorChanged(isChecked)
+                    },
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // ── Section 3: Browsing & Gestures ──
             SettingsSectionHeader(stringResource(R.string.webapp_section_misc))
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {

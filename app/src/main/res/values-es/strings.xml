@@ -182,4 +182,8 @@
     <string name="support_liberapay">Apóyame en Liberapay</string>
     <string name="adblock_warning_text">La configuración actual del bloqueador de anuncios puede causar problemas o fallos. Lamentablemente, no todas las listas de filtros funcionan en todos los dispositivos.\n\nSe recomienda vaciar las listas de filtros y volver a llenarlas como prueba.</string>
     <string name="warning">Advertencia</string>
+    <string name="theme">Tema</string>
+    <string name="material_you_theme">Material You</string>
+    <string name="material_you_theme_summary">Reemplazar el color rojo característico con colores dinámicos del dispositivo</string>
+    <string name="material_you_requires_android_12">Requiere Android 12 o superior</string>
 </resources>
