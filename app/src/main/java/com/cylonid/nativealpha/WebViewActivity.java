@@ -160,6 +160,13 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 			// Toast is shown in getWebApp method
 			finish();
 		} else {
+			// Set the task description as early as possible so Recent Apps shows
+			// the web app label instead of the generic app name.
+			mCurrentTaskIcon = ShortcutIconUtils.getIcon(this, webapp.getID());
+			if (mCurrentTaskIcon == null) {
+				mCurrentTaskIcon = ShortcutIconUtils.createMonogramIcon(webapp.getTitle(), 192);
+			}
+			updateTaskDescription(webapp.getTitle(), mCurrentTaskIcon);
 			if (webapp.isBiometricProtection()) {
 				new BiometricPromptHelper(WebViewActivity.this).showPrompt(() -> setupWebView(), () -> finish(),
 						getString(R.string.bioprompt_restricted_webapp));
@@ -195,12 +202,6 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 		}
 
 		setContentView(R.layout.full_webview);
-
-		mCurrentTaskIcon = ShortcutIconUtils.getIcon(this, webapp.getID());
-		if (mCurrentTaskIcon == null) {
-			mCurrentTaskIcon = ShortcutIconUtils.createMonogramIcon(webapp.getTitle(), 192);
-		}
-		updateTaskDescription(webapp.getTitle(), mCurrentTaskIcon);
 
 		if (webapp.isKeepAwake()) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
