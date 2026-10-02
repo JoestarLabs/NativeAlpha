@@ -16,6 +16,9 @@ work-runtime = "2.12.0"
 
 # UI / Material
 material = "1.14.0"
+compose-bom = "2026.02.01"
+activity-compose = "1.13.0"
+compose-material3 = "1.5.0-alpha21"
 circularprogressbar = "3.1.0"
 dragdrop-swipe-recyclerview = "1.2.0"
 aboutpage = "2.0.0"
@@ -56,6 +59,17 @@ androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "
 
 # Material & UI
 material = { module = "com.google.android.material:material", version.ref = "material" }
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
+androidx-compose-ui = { module = "androidx.compose.ui:ui" }
+androidx-compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
+androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-material3" }
+androidx-compose-material-icons = { module = "androidx.compose.material:material-icons-extended" }
+androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose" }
+androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 circularprogressbar = { module = "com.mikhaellopez:circularprogressbar", version.ref = "circularprogressbar" }
 dragdrop-swipe-recyclerview = { module = "com.ernestoyaquello.dragdropswiperecyclerview:drag-drop-swipe-recyclerview", version.ref = "dragdrop-swipe-recyclerview" }
 about-page = { module = "io.github.medyo:android-about-page", version.ref = "aboutpage" }
@@ -92,5 +106,6 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
 spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

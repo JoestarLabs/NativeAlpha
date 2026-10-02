@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.aboutlibraries)
+    alias(libs.plugins.kotlin.compose)
 }
 
 
@@ -51,6 +52,7 @@ android {
     }
 
     buildFeatures {
+        compose true
         buildConfig true
         dataBinding true
         viewBinding true
@@ -116,6 +118,17 @@ dependencies {
     implementation libs.androidx.biometric
     implementation libs.androidx.work.runtime
 
+    // Jetpack Compose & Material 3
+    implementation platform(libs.androidx.compose.bom)
+    implementation libs.androidx.activity.compose
+    implementation libs.androidx.compose.ui
+    implementation libs.androidx.compose.ui.graphics
+    implementation libs.androidx.compose.ui.tooling.preview
+    implementation libs.androidx.compose.material3
+    implementation libs.androidx.compose.material.icons
+    implementation libs.androidx.lifecycle.runtime.compose
+    debugImplementation libs.androidx.compose.ui.tooling
+
     implementation libs.material
     implementation libs.circularprogressbar
     implementation libs.dragdrop.swipe.recyclerview
@@ -145,6 +158,8 @@ dependencies {
     testImplementation libs.mockito.core
     testImplementation libs.mockito.android
     testImplementation libs.mockito.kotlin
+    testImplementation libs.androidx.compose.ui.test.junit4
+    debugImplementation libs.androidx.compose.ui.test.manifest
 
     androidTestImplementation libs.mockito.android
     androidTestImplementation libs.androidx.test.espresso.contrib

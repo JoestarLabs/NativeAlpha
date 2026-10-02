@@ -87,6 +87,8 @@ data class WebApp(
         copySettings(other)
     }
 
+    fun deepCopy(): WebApp = WebApp(this)
+
     // This part of the copy ctor should be callable independently from actual object construction to copy values of the global web app template
     fun copySettings(other: WebApp) {
         isOpenUrlExternal = other.isOpenUrlExternal
