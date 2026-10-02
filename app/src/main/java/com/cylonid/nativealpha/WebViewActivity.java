@@ -129,7 +129,10 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 			setTitle(title);
 		}
 		try {
-			setTaskDescription(new ActivityManager.TaskDescription(title, icon));
+			Bitmap scaledIcon = icon != null
+					? ShortcutIconUtils.downscaleIfNecessary(icon, ShortcutIconUtils.MAX_ICON_DIMENSION)
+					: null;
+			setTaskDescription(new ActivityManager.TaskDescription(title, scaledIcon));
 		} catch (Exception e) {
 			// Ignore if OS does not support task description updates in current state
 		}

@@ -89,7 +89,7 @@ public class ShortcutDialogFragment extends DialogFragment {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		if (faviconFetcherThread.isAlive()) {
+		if (faviconFetcherThread != null && faviconFetcherThread.isAlive()) {
 			faviconFetcherThread.interrupt();
 			Log.d("CLEANUP", "Stopped running faviconfetcher");
 		}
@@ -99,16 +99,18 @@ public class ShortcutDialogFragment extends DialogFragment {
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-		if (requestCode == CODE_OPEN_FILE && resultCode == RESULT_OK) {
+		if (requestCode == CODE_OPEN_FILE && resultCode == RESULT_OK && data != null) {
 			Uri uri = data.getData();
-			try {
-				bitmap = MediaStore.Images.Media.getBitmap(requireActivity().getContentResolver(), uri);
-				if (bitmap != null)
+			if (uri != null) {
+				Bitmap customIcon = ShortcutIconUtils.decodeSampledBitmapFromUri(requireActivity(), uri,
+						ShortcutIconUtils.MAX_ICON_DIMENSION, ShortcutIconUtils.MAX_ICON_DIMENSION);
+				if (customIcon != null) {
+					bitmap = customIcon;
 					applyNewBitmapToDialog();
-
-			} catch (IOException e) {
-				NotificationUtils.showToast(requireActivity(), getString(R.string.icon_not_found), Toast.LENGTH_SHORT);
-				e.printStackTrace();
+				} else {
+					NotificationUtils.showToast(requireActivity(), getString(R.string.icon_not_found),
+							Toast.LENGTH_SHORT);
+				}
 			}
 		}
 	}
@@ -158,22 +160,31 @@ public class ShortcutDialogFragment extends DialogFragment {
 		if (strUrl == null || strUrl.trim().isEmpty()) {
 			return null;
 		}
-		Bitmap bitmap;
+		Bitmap loaded = null;
+		HttpURLConnection con = null;
 		try {
 			URL url = new URL(strUrl);
-			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con = (HttpURLConnection) url.openConnection();
 			con.setConnectTimeout(3000);
 			con.setReadTimeout(3000);
 			con.setInstanceFollowRedirects(true);
-			InputStream is = con.getInputStream();
-			bitmap = BitmapFactory.decodeStream(is);
-			if (bitmap == null || bitmap.getWidth() < Const.FAVICON_MIN_WIDTH)
-				return null;
-
+			try (InputStream is = con.getInputStream()) {
+				loaded = BitmapFactory.decodeStream(is);
+			}
+			if (loaded != null) {
+				loaded = ShortcutIconUtils.downscaleIfNecessary(loaded, ShortcutIconUtils.MAX_ICON_DIMENSION);
+				if (loaded.getWidth() < Const.FAVICON_MIN_WIDTH) {
+					return null;
+				}
+			}
 		} catch (Exception e) {
-			bitmap = null;
+			loaded = null;
+		} finally {
+			if (con != null) {
+				con.disconnect();
+			}
 		}
-		return bitmap;
+		return loaded;
 	}
 	private TreeMap<Integer, String> buildIconMap() {
 		TreeMap<Integer, String> found_icons = new TreeMap<>();
@@ -352,7 +363,9 @@ public class ShortcutDialogFragment extends DialogFragment {
 			public void onTick(long millisUntilFinished) {
 			}
 			public void onFinish() {
-				faviconFetcherThread.interrupt();
+				if (faviconFetcherThread != null && faviconFetcherThread.isAlive()) {
+					faviconFetcherThread.interrupt();
+				}
 			}
 		}.start();
 

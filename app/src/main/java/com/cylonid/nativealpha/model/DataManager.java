@@ -174,6 +174,16 @@ public class DataManager {
 				this.saveWebAppData();
 		}
 
+		if (websites != null && App.getAppContext() != null) {
+			ArrayList<Integer> validIds = new ArrayList<>();
+			for (WebApp w : websites) {
+				if (w != null && w.isActiveEntry()) {
+					validIds.add(w.getID());
+				}
+			}
+			ShortcutIconUtils.cleanupOrphanedIcons(App.getAppContext(), validIds);
+		}
+
 		max_assigned_ID = appdata.getInt(shared_pref_max_id, max_assigned_ID);
 		if (SandboxManager.getInstance() != null)
 			SandboxManager.getInstance().setNextContainer(appdata.getInt(shared_pref_next_container, 0));

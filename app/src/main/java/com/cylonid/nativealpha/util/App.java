@@ -18,7 +18,20 @@ public class App extends Application {
 		if (!WorkManager.isInitialized()) {
 			WorkManager.initialize(this, new Configuration.Builder().build());
 		}
+	}
 
+	@Override
+	public void onTrimMemory(int level) {
+		super.onTrimMemory(level);
+		if (level >= TRIM_MEMORY_BACKGROUND || level == TRIM_MEMORY_UI_HIDDEN) {
+			ShortcutIconUtils.clearMemoryCache();
+		}
+	}
+
+	@Override
+	public void onLowMemory() {
+		super.onLowMemory();
+		ShortcutIconUtils.clearMemoryCache();
 	}
 
 	public static Context getAppContext() {

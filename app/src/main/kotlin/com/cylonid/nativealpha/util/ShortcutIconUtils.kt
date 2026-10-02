@@ -9,14 +9,21 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
+import android.net.Uri
+import android.util.LruCache
 import com.cylonid.nativealpha.R
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URI
 import kotlin.math.abs
+import kotlin.math.min
 
 object ShortcutIconUtils {
     private const val ICONS_DIR = "webapp_icons"
+    const val MAX_ICON_DIMENSION = 256
+
+    // In-memory LRU cache: cache up to 24 icons (~1-2MB RAM maximum)
+    private val memoryCache = LruCache<Int, Bitmap>(24)
 
     @JvmStatic
     fun getIconsDir(context: Context): File {
@@ -34,32 +41,118 @@ object ShortcutIconUtils {
     ): File = File(getIconsDir(context), "$webAppId.png")
 
     @JvmStatic
+    fun downscaleIfNecessary(
+        bitmap: Bitmap,
+        maxDimension: Int = MAX_ICON_DIMENSION,
+    ): Bitmap {
+        if (bitmap.width <= maxDimension && bitmap.height <= maxDimension) {
+            return bitmap
+        }
+        val ratio = min(maxDimension.toFloat() / bitmap.width, maxDimension.toFloat() / bitmap.height)
+        val targetWidth = (bitmap.width * ratio).toInt().coerceAtLeast(1)
+        val targetHeight = (bitmap.height * ratio).toInt().coerceAtLeast(1)
+        return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+    }
+
+    @JvmStatic
+    fun decodeSampledBitmapFromUri(
+        context: Context,
+        uri: Uri,
+        reqWidth: Int = MAX_ICON_DIMENSION,
+        reqHeight: Int = MAX_ICON_DIMENSION,
+    ): Bitmap? {
+        return runCatching {
+            val contentResolver = context.contentResolver
+            val options =
+                BitmapFactory.Options().apply {
+                    inJustDecodeBounds = true
+                }
+            contentResolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream, null, options)
+            }
+            if (options.outWidth <= 0 || options.outHeight <= 0) return null
+
+            var inSampleSize = 1
+            if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
+                val halfHeight = options.outHeight / 2
+                val halfWidth = options.outWidth / 2
+                while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                    inSampleSize *= 2
+                }
+            }
+
+            val decodeOptions =
+                BitmapFactory.Options().apply {
+                    this.inSampleSize = inSampleSize
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                }
+
+            val sampled =
+                contentResolver.openInputStream(uri)?.use { stream ->
+                    BitmapFactory.decodeStream(stream, null, decodeOptions)
+                } ?: return null
+
+            downscaleIfNecessary(sampled, maxDimension = min(reqWidth, reqHeight))
+        }.getOrNull()
+    }
+
+    @JvmStatic
     fun saveIcon(
         context: Context,
         webAppId: Int,
         bitmap: Bitmap,
-    ): Boolean =
-        runCatching {
+    ): Boolean {
+        if (webAppId < 0) return false
+        val downscaled = downscaleIfNecessary(bitmap)
+        memoryCache.put(webAppId, downscaled)
+
+        return runCatching {
             val file = getIconFile(context, webAppId)
-            FileOutputStream(file).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            val tmpFile = File(file.parentFile, "$webAppId.tmp")
+            FileOutputStream(tmpFile).use { out ->
+                downscaled.compress(Bitmap.CompressFormat.PNG, 100, out)
                 out.flush()
             }
-            true
+            if (tmpFile.renameTo(file)) {
+                true
+            } else {
+                tmpFile.copyTo(file, overwrite = true)
+                tmpFile.delete()
+                true
+            }
         }.getOrDefault(false)
+    }
 
     @JvmStatic
     fun getIcon(
         context: Context,
         webAppId: Int,
     ): Bitmap? {
+        if (webAppId < 0) return null
+        memoryCache.get(webAppId)?.let { return it }
+
         val file = getIconFile(context, webAppId)
-        if (!file.exists() || file.length() == 0L) {
+        if (!file.exists()) {
             return null
         }
-        return runCatching {
-            BitmapFactory.decodeFile(file.absolutePath)
-        }.getOrNull()
+        if (file.length() == 0L) {
+            file.delete()
+            return null
+        }
+        val loaded =
+            runCatching {
+                BitmapFactory.decodeFile(file.absolutePath)
+            }.getOrNull()
+
+        return if (loaded != null) {
+            val downscaled = downscaleIfNecessary(loaded)
+            memoryCache.put(webAppId, downscaled)
+            downscaled
+        } else {
+            // Corrupt file, clean it up
+            file.delete()
+            null
+        }
     }
 
     @JvmStatic
@@ -67,6 +160,8 @@ object ShortcutIconUtils {
         context: Context,
         webAppId: Int,
     ): Boolean {
+        if (webAppId < 0) return false
+        if (memoryCache.get(webAppId) != null) return true
         val file = getIconFile(context, webAppId)
         return file.exists() && file.length() > 0
     }
@@ -75,11 +170,39 @@ object ShortcutIconUtils {
     fun deleteIcon(
         context: Context,
         webAppId: Int,
-    ): Boolean =
-        runCatching {
+    ): Boolean {
+        if (webAppId < 0) return false
+        memoryCache.remove(webAppId)
+        return runCatching {
             val file = getIconFile(context, webAppId)
             if (file.exists()) file.delete() else true
         }.getOrDefault(false)
+    }
+
+    @JvmStatic
+    fun cleanupOrphanedIcons(
+        context: Context,
+        validWebAppIds: Collection<Int>,
+    ) {
+        runCatching {
+            val validIdStrings = validWebAppIds.filter { it >= 0 }.map { "$it.png" }.toSet()
+            val dir = getIconsDir(context)
+            dir.listFiles()?.forEach { file ->
+                if (file.isFile && (!validIdStrings.contains(file.name) || file.name.endsWith(".tmp"))) {
+                    file.delete()
+                    val id = file.name.substringBefore(".").toIntOrNull()
+                    if (id != null) {
+                        memoryCache.remove(id)
+                    }
+                }
+            }
+        }
+    }
+
+    @JvmStatic
+    fun clearMemoryCache() {
+        memoryCache.evictAll()
+    }
 
     @JvmStatic
     fun deleteShortcuts(
