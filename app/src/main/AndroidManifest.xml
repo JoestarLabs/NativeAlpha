@@ -221,10 +221,6 @@
             android:theme="@style/AppTheme">
         </activity>
 
-        <activity android:name="com.mikepenz.aboutlibraries.ui.LibsActivity"
-            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar">
-        </activity>
-
 
         <meta-data android:name="com.samsung.android.keepalive.density" android:value="true"/>
         <meta-data android:name="com.samsung.android.multidisplay.keep_process_alive" android:value="true"/>

@@ -21,7 +21,6 @@ activity-compose = "1.13.0"
 compose-material3 = "1.5.0-alpha29"
 circularprogressbar = "3.1.0"
 dragdrop-swipe-recyclerview = "1.2.0"
-aboutpage = "2.0.0"
 
 # Network & Utilities
 jsoup = "1.23.2"
@@ -72,8 +71,7 @@ androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4
 androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 circularprogressbar = { module = "com.mikhaellopez:circularprogressbar", version.ref = "circularprogressbar" }
 dragdrop-swipe-recyclerview = { module = "com.ernestoyaquello.dragdropswiperecyclerview:drag-drop-swipe-recyclerview", version.ref = "dragdrop-swipe-recyclerview" }
-about-page = { module = "io.github.medyo:android-about-page", version.ref = "aboutpage" }
-aboutlibraries = { module = "com.mikepenz:aboutlibraries", version.ref = "aboutlibraries" }
+aboutlibraries-compose = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 
 # Utilities

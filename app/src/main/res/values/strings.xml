@@ -186,5 +186,8 @@
     <string name="material_you_theme">Material You</string>
     <string name="material_you_theme_summary">Override signature red with dynamic colors from your device</string>
     <string name="material_you_requires_android_12">Requires Android 12 or newer</string>
+    <string name="about_section_community">Links &amp; Community</string>
+    <string name="support_development">Support Development</string>
+    <string name="open_source_dependencies_desc">Third-party libraries &amp; open source software</string>
 
 </resources>
