@@ -128,18 +128,20 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 		final String effectiveTitle = (title != null && !title.isEmpty()) ? title : getString(R.string.app_name);
 		setTitle(effectiveTitle);
 		try {
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-				// On API 33+, the deprecated TaskDescription(String,Bitmap) label is ignored;
-				// TaskDescription.Builder.setLabel() is the correct API.
+			if (Build.VERSION.SDK_INT >= 37) {
+				// On API 37+, TaskDescription.Builder supports setIcon(Icon).
 				ActivityManager.TaskDescription.Builder builder = new ActivityManager.TaskDescription.Builder()
 						.setLabel(effectiveTitle);
-				if (Build.VERSION.SDK_INT >= 37 && icon != null) {
+				if (icon != null) {
 					Bitmap scaled = ShortcutIconUtils.downscaleIfNecessary(icon, ShortcutIconUtils.MAX_ICON_DIMENSION);
 					builder.setIcon(Icon.createWithBitmap(scaled));
 				}
 				setTaskDescription(builder.build());
 			} else {
-				// API < 33: deprecated constructor still respects the label.
+				// On API < 37, TaskDescription.Builder only accepts a drawable resource ID
+				// (int).
+				// To provide a dynamic Bitmap icon, we use the TaskDescription(String, Bitmap)
+				// constructor.
 				Bitmap scaledIcon = icon != null
 						? ShortcutIconUtils.downscaleIfNecessary(icon, ShortcutIconUtils.MAX_ICON_DIMENSION)
 						: null;
