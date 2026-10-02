@@ -98,6 +98,11 @@ fun AdblockConfigScreen(
         dataManager.saveGlobalSettings()
     }
 
+    val undoLabel = stringResource(R.string.undo).uppercase()
+    val itemRemovedTemplate = stringResource(R.string.x_was_removed)
+    val entryAlreadyExistsMsg = stringResource(R.string.entry_already_exists)
+    val restoreStandardSettingMsg = stringResource(R.string.restore_standard_setting)
+
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
@@ -287,12 +292,8 @@ fun AdblockConfigScreen(
                                         coroutineScope.launch {
                                             val result =
                                                 snackbarHostState.showSnackbar(
-                                                    message =
-                                                        context.getString(
-                                                            R.string.x_was_removed,
-                                                            removedItem.label,
-                                                        ),
-                                                    actionLabel = context.getString(R.string.undo).uppercase(),
+                                                    message = String.format(itemRemovedTemplate, removedItem.label),
+                                                    actionLabel = undoLabel,
                                                     duration = SnackbarDuration.Short,
                                                 )
                                             if (result == SnackbarResult.ActionPerformed) {
@@ -377,7 +378,7 @@ fun AdblockConfigScreen(
                             }
 
                         if (adblockConfigs.any { it.value == formattedUrl }) {
-                            errorMessage = context.getString(R.string.entry_already_exists)
+                            errorMessage = entryAlreadyExistsMsg
                             return@TextButton
                         }
 
@@ -417,7 +418,7 @@ fun AdblockConfigScreen(
                         }
                         showRestoreDialog = false
                         coroutineScope.launch {
-                            snackbarHostState.showSnackbar(context.getString(R.string.restore_standard_setting))
+                            snackbarHostState.showSnackbar(restoreStandardSettingMsg)
                         }
                     },
                 ) {

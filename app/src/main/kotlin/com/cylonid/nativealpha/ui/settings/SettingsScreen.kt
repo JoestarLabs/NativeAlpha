@@ -97,6 +97,10 @@ fun SettingsScreen(
         dataManager.saveGlobalSettings()
     }
 
+    val exportSuccessMsg = stringResource(R.string.export_success)
+    val exportFailedMsg = stringResource(R.string.export_failed)
+    val importFailedMsg = stringResource(R.string.import_failed)
+
     val exportLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.CreateDocument("*/*"),
@@ -106,10 +110,7 @@ fun SettingsScreen(
                 val success = dataManager.saveSharedPreferencesToFile(uri)
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar(
-                        message =
-                            context.getString(
-                                if (success) R.string.export_success else R.string.export_failed,
-                            ),
+                        message = if (success) exportSuccessMsg else exportFailedMsg,
                     )
                 }
             }
@@ -124,7 +125,7 @@ fun SettingsScreen(
                 if (!success) {
                     coroutineScope.launch {
                         snackbarHostState.showSnackbar(
-                            message = context.getString(R.string.import_failed),
+                            message = importFailedMsg,
                         )
                     }
                 } else {

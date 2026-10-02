@@ -189,16 +189,14 @@ fun WebAppSettingsScreen(
         ).show()
     }
 
+    val enableBioPromptTitle = stringResource(R.string.bioprompt_enable_restriction)
+    val disableBioPromptTitle = stringResource(R.string.bioprompt_disable_restricition)
+
     fun onBiometricToggle(enable: Boolean) {
         val fragmentActivity = context as? FragmentActivity
         if (fragmentActivity != null) {
             val helper = BiometricPromptHelper(fragmentActivity)
-            val promptTitle =
-                if (enable) {
-                    context.getString(R.string.bioprompt_enable_restriction)
-                } else {
-                    context.getString(R.string.bioprompt_disable_restricition)
-                }
+            val promptTitle = if (enable) enableBioPromptTitle else disableBioPromptTitle
             helper.showPrompt(
                 { updateWebApp { isBiometricProtection = enable } },
                 {},
