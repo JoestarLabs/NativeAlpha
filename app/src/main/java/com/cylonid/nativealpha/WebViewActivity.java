@@ -2,6 +2,7 @@ package com.cylonid.nativealpha;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.app.Application;
 import android.app.DownloadManager;
 import android.content.ClipData;
@@ -11,6 +12,7 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
@@ -69,6 +71,7 @@ import com.cylonid.nativealpha.util.DateUtils;
 import com.cylonid.nativealpha.util.EntryPointUtils;
 import com.cylonid.nativealpha.util.LocaleUtils;
 import com.cylonid.nativealpha.util.NotificationUtils;
+import com.cylonid.nativealpha.util.ShortcutIconUtils;
 import com.cylonid.nativealpha.util.Utility;
 import com.cylonid.nativealpha.util.WebViewLauncher;
 import com.google.android.material.color.MaterialColors;
@@ -119,6 +122,37 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 
 	private AdblockProviderApiHelper adblockProviderApiHelper;
 	private AdblockLifecycleHelper adblockLifecycleHelper;
+	private Bitmap mCurrentTaskIcon = null;
+
+	private void updateTaskDescription(String title, Bitmap icon) {
+		final String effectiveTitle = (title != null && !title.isEmpty()) ? title : getString(R.string.app_name);
+		setTitle(effectiveTitle);
+		try {
+			if (Build.VERSION.SDK_INT >= 37) {
+				// On API 37+, TaskDescription.Builder supports setIcon(Icon).
+				ActivityManager.TaskDescription.Builder builder = new ActivityManager.TaskDescription.Builder()
+						.setLabel(effectiveTitle);
+				if (icon != null) {
+					Bitmap scaled = ShortcutIconUtils.downscaleIfNecessary(icon, ShortcutIconUtils.MAX_ICON_DIMENSION);
+					builder.setIcon(Icon.createWithBitmap(scaled));
+				}
+				setTaskDescription(builder.build());
+			} else {
+				// On API < 37, TaskDescription.Builder only accepts a drawable resource ID
+				// (int).
+				// To provide a dynamic Bitmap icon, we use the TaskDescription(String, Bitmap)
+				// constructor.
+				Bitmap scaledIcon = icon != null
+						? ShortcutIconUtils.downscaleIfNecessary(icon, ShortcutIconUtils.MAX_ICON_DIMENSION)
+						: null;
+				@SuppressWarnings("deprecation")
+				ActivityManager.TaskDescription td = new ActivityManager.TaskDescription(effectiveTitle, scaledIcon);
+				setTaskDescription(td);
+			}
+		} catch (Exception e) {
+			// Ignore if OS does not support task description updates in current state
+		}
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -142,6 +176,13 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 			// Toast is shown in getWebApp method
 			finish();
 		} else {
+			// Set the task description as early as possible so Recent Apps shows
+			// the web app label instead of the generic app name.
+			mCurrentTaskIcon = ShortcutIconUtils.getIcon(this, webapp.getID());
+			if (mCurrentTaskIcon == null) {
+				mCurrentTaskIcon = ShortcutIconUtils.createMonogramIcon(webapp.getTitle(), 192);
+			}
+			updateTaskDescription(webapp.getTitle(), mCurrentTaskIcon);
 			if (webapp.isBiometricProtection()) {
 				new BiometricPromptHelper(WebViewActivity.this).showPrompt(() -> setupWebView(), () -> finish(),
 						getString(R.string.bioprompt_restricted_webapp));
@@ -560,6 +601,13 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 			WebViewLauncher.startWebViewInNewProcess(new_webapp, this);
 		}
 
+		// Refresh task description on every resume — covers re-entry from back stack
+		// or system-restored tasks where the system may have reverted to the manifest
+		// label.
+		if (webapp != null) {
+			updateTaskDescription(webapp.getTitle(), mCurrentTaskIcon);
+		}
+
 		wv.onResume();
 		wv.resumeTimers();
 		this.setDarkModeIfNeeded();
@@ -783,6 +831,29 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 		private String getPermissionRequestStringResource(String prefix, String variable, String suffix) {
 			return getString(WebViewActivity.this.getResources().getIdentifier(prefix + variable + suffix, "string",
 					WebViewActivity.this.getPackageName()));
+		}
+
+		@Override
+		public void onReceivedTitle(WebView view, String title) {
+			super.onReceivedTitle(view, title);
+			if (title != null && !title.isEmpty() && !title.startsWith("http://") && !title.startsWith("https://")) {
+				updateTaskDescription(title, mCurrentTaskIcon);
+			}
+		}
+
+		@Override
+		public void onReceivedIcon(WebView view, Bitmap icon) {
+			super.onReceivedIcon(view, icon);
+			if (icon != null && webapp != null) {
+				mCurrentTaskIcon = icon;
+				if (!ShortcutIconUtils.hasIcon(WebViewActivity.this, webapp.getID())) {
+					ShortcutIconUtils.saveIcon(WebViewActivity.this, webapp.getID(), icon);
+				}
+				String currentTitle = getTitle() != null && !getTitle().toString().isEmpty()
+						? getTitle().toString()
+						: webapp.getTitle();
+				updateTaskDescription(currentTitle, icon);
+			}
 		}
 
 		@Override
