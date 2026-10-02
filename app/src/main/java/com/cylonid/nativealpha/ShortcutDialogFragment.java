@@ -155,10 +155,16 @@ public class ShortcutDialogFragment extends DialogFragment {
 	}
 
 	private Bitmap loadBitmap(String strUrl) {
+		if (strUrl == null || strUrl.trim().isEmpty()) {
+			return null;
+		}
 		Bitmap bitmap;
 		try {
 			URL url = new URL(strUrl);
 			HttpURLConnection con = (HttpURLConnection) url.openConnection();
+			con.setConnectTimeout(3000);
+			con.setReadTimeout(3000);
+			con.setInstanceFollowRedirects(true);
 			InputStream is = con.getInputStream();
 			bitmap = BitmapFactory.decodeStream(is);
 			if (bitmap == null || bitmap.getWidth() < Const.FAVICON_MIN_WIDTH)
@@ -166,7 +172,6 @@ public class ShortcutDialogFragment extends DialogFragment {
 
 		} catch (Exception e) {
 			bitmap = null;
-			e.printStackTrace();
 		}
 		return bitmap;
 	}
@@ -306,7 +311,30 @@ public class ShortcutDialogFragment extends DialogFragment {
 
 		faviconFetcherThread = new Thread(() -> {
 			String[] webappdata = fetchWebappData();
-			bitmap = loadBitmap(webappdata[IconFetchResult.FAVICON.index]);
+			String iconUrl = webappdata[IconFetchResult.FAVICON.index];
+			bitmap = iconUrl != null ? loadBitmap(iconUrl) : null;
+
+			// Step 4: Fallback to well-known favicon endpoints if not found or failed
+			if (bitmap == null) {
+				java.util.List<String> fallbacks = ShortcutIconUtils.getFallbackIconUrls(base_url);
+				for (String fallbackUrl : fallbacks) {
+					bitmap = loadBitmap(fallbackUrl);
+					if (bitmap != null) {
+						break;
+					}
+				}
+			}
+
+			// Step 5: Fallback to high-quality monogram icon if website doesn't offer an
+			// icon
+			if (bitmap == null) {
+				String title = webappdata[IconFetchResult.TITLE.index] != null
+						&& !webappdata[IconFetchResult.TITLE.index].isEmpty()
+								? webappdata[IconFetchResult.TITLE.index]
+								: webapp.getTitle();
+				bitmap = ShortcutIconUtils.createMonogramIcon(title, 192);
+			}
+
 			if (isAdded()) {
 				requireActivity().runOnUiThread(() -> {
 
@@ -331,6 +359,19 @@ public class ShortcutDialogFragment extends DialogFragment {
 	}
 
 	private void addShortcutToHomeScreen(Bitmap bitmap) {
+		String final_title = uiTitle.getText().toString();
+		if (final_title.equals(""))
+			final_title = webapp.getTitle();
+		if (webapp.getTitle().equals("")) {
+			final_title = "Unknown";
+		}
+		webapp.setTitle(final_title);
+		DataManager.getInstance().saveWebAppData();
+
+		if (bitmap != null) {
+			ShortcutIconUtils.saveIcon(requireActivity(), webapp.getID(), bitmap);
+		}
+
 		Intent intent = WebViewLauncher.createWebViewIntent(webapp, requireActivity());
 
 		IconCompat icon;
@@ -338,13 +379,6 @@ public class ShortcutDialogFragment extends DialogFragment {
 			icon = IconCompat.createWithBitmap(bitmap);
 		else
 			icon = IconCompat.createWithResource(requireActivity(), R.mipmap.native_alpha_shortcut);
-
-		String final_title = uiTitle.getText().toString();
-		if (final_title.equals(""))
-			final_title = webapp.getTitle();
-		if (webapp.getTitle().equals("")) {
-			final_title = "Unknown";
-		}
 
 		if (ShortcutManagerCompat.isRequestPinShortcutSupported(requireActivity())) {
 

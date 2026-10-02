@@ -2,6 +2,7 @@ package com.cylonid.nativealpha;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.app.Application;
 import android.app.DownloadManager;
 import android.content.ClipData;
@@ -69,6 +70,7 @@ import com.cylonid.nativealpha.util.DateUtils;
 import com.cylonid.nativealpha.util.EntryPointUtils;
 import com.cylonid.nativealpha.util.LocaleUtils;
 import com.cylonid.nativealpha.util.NotificationUtils;
+import com.cylonid.nativealpha.util.ShortcutIconUtils;
 import com.cylonid.nativealpha.util.Utility;
 import com.cylonid.nativealpha.util.WebViewLauncher;
 import com.google.android.material.color.MaterialColors;
@@ -119,6 +121,19 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 
 	private AdblockProviderApiHelper adblockProviderApiHelper;
 	private AdblockLifecycleHelper adblockLifecycleHelper;
+	private Bitmap mCurrentTaskIcon = null;
+
+	@SuppressWarnings("deprecation")
+	private void updateTaskDescription(String title, Bitmap icon) {
+		if (title != null && !title.isEmpty()) {
+			setTitle(title);
+		}
+		try {
+			setTaskDescription(new ActivityManager.TaskDescription(title, icon));
+		} catch (Exception e) {
+			// Ignore if OS does not support task description updates in current state
+		}
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -177,6 +192,12 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 		}
 
 		setContentView(R.layout.full_webview);
+
+		mCurrentTaskIcon = ShortcutIconUtils.getIcon(this, webapp.getID());
+		if (mCurrentTaskIcon == null) {
+			mCurrentTaskIcon = ShortcutIconUtils.createMonogramIcon(webapp.getTitle(), 192);
+		}
+		updateTaskDescription(webapp.getTitle(), mCurrentTaskIcon);
 
 		if (webapp.isKeepAwake()) {
 			getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -783,6 +804,29 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 		private String getPermissionRequestStringResource(String prefix, String variable, String suffix) {
 			return getString(WebViewActivity.this.getResources().getIdentifier(prefix + variable + suffix, "string",
 					WebViewActivity.this.getPackageName()));
+		}
+
+		@Override
+		public void onReceivedTitle(WebView view, String title) {
+			super.onReceivedTitle(view, title);
+			if (title != null && !title.isEmpty() && !title.startsWith("http://") && !title.startsWith("https://")) {
+				updateTaskDescription(title, mCurrentTaskIcon);
+			}
+		}
+
+		@Override
+		public void onReceivedIcon(WebView view, Bitmap icon) {
+			super.onReceivedIcon(view, icon);
+			if (icon != null && webapp != null) {
+				mCurrentTaskIcon = icon;
+				if (!ShortcutIconUtils.hasIcon(WebViewActivity.this, webapp.getID())) {
+					ShortcutIconUtils.saveIcon(WebViewActivity.this, webapp.getID(), icon);
+				}
+				String currentTitle = getTitle() != null && !getTitle().toString().isEmpty()
+						? getTitle().toString()
+						: webapp.getTitle();
+				updateTaskDescription(currentTitle, icon);
+			}
 		}
 
 		@Override
