@@ -149,9 +149,8 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 				ActivityManager.TaskDescription td = new ActivityManager.TaskDescription(effectiveTitle, scaledIcon);
 				setTaskDescription(td);
 			}
-			Log.d("TaskDesc", "setTaskDescription called: label=" + effectiveTitle);
 		} catch (Exception e) {
-			Log.e("TaskDesc", "setTaskDescription failed", e);
+			// Ignore if OS does not support task description updates in current state
 		}
 	}
 
