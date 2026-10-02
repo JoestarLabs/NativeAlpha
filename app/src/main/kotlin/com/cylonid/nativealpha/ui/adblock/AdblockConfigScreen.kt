@@ -110,12 +110,6 @@ fun AdblockConfigScreen(
                         fontWeight = FontWeight.Bold,
                     )
                 },
-                subtitle = {
-                    Text(
-                        text = "${adblockConfigs.size} of 8 filter lists active",
-                        maxLines = 1,
-                    )
-                },
                 navigationIcon = {
                     IconButton(
                         onClick = onNavigateBack,
@@ -208,7 +202,7 @@ fun AdblockConfigScreen(
             Spacer(Modifier.height(16.dp))
 
             SettingsSectionHeader(
-                title = "Filter Sources (${adblockConfigs.size}/8)",
+                title = stringResource(R.string.adblock_config),
             )
 
             if (adblockConfigs.isEmpty()) {
@@ -228,7 +222,7 @@ fun AdblockConfigScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
-                            text = "No ad-blocking filters configured",
+                            text = stringResource(R.string.adblock_warning_text),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -316,7 +310,7 @@ fun AdblockConfigScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Rounded.DeleteOutline,
-                                        contentDescription = "Delete filter",
+                                        contentDescription = stringResource(R.string.question_delete_item),
                                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
@@ -351,7 +345,7 @@ fun AdblockConfigScreen(
                     OutlinedTextField(
                         value = label,
                         onValueChange = { label = it },
-                        label = { Text("Label (Optional)") },
+                        label = { Text(stringResource(R.string.label)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -362,8 +356,7 @@ fun AdblockConfigScreen(
                             url = it
                             errorMessage = null
                         },
-                        label = { Text("Filter URL") },
-                        placeholder = { Text("https://example.com/easylist.txt") },
+                        label = { Text(stringResource(R.string.url)) },
                         singleLine = true,
                         isError = errorMessage != null,
                         supportingText = errorMessage?.let { { Text(it) } },
@@ -411,7 +404,7 @@ fun AdblockConfigScreen(
             onDismissRequest = { showRestoreDialog = false },
             title = { Text(stringResource(R.string.restore_standard_setting)) },
             text = {
-                Text("Restore the standard ad-blocking filter lists? This will restart active web apps.")
+                Text(stringResource(R.string.adblock_warning_text))
             },
             confirmButton = {
                 TextButton(
@@ -424,7 +417,7 @@ fun AdblockConfigScreen(
                         }
                         showRestoreDialog = false
                         coroutineScope.launch {
-                            snackbarHostState.showSnackbar("Standard filters restored.")
+                            snackbarHostState.showSnackbar(context.getString(R.string.restore_standard_setting))
                         }
                     },
                 ) {

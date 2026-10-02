@@ -234,8 +234,8 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // ── Section 2: Browsing & Privacy ──
-            SettingsSectionHeader("Browsing & Display")
+            // ── Section 2: Browsing & Gestures ──
+            SettingsSectionHeader(stringResource(R.string.webapp_section_misc))
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
@@ -258,9 +258,6 @@ fun SettingsScreen(
             }
 
             Spacer(Modifier.height(16.dp))
-
-            // ── Section 3: Gestures & Navigation ──
-            SettingsSectionHeader("Gestures & Controls")
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(

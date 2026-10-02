@@ -304,7 +304,7 @@ fun WebAppSettingsScreen(
                 Spacer(Modifier.height(16.dp))
             } else {
                 // ── Web App Identity (Per-App Only) ──
-                SettingsSectionHeader("Web App Details")
+                SettingsSectionHeader(stringResource(R.string.web_app_settings))
 
                 RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                     Column(
@@ -318,7 +318,7 @@ fun WebAppSettingsScreen(
                             onValueChange = { newTitle ->
                                 webapp = webapp.copy().apply { title = newTitle }
                             },
-                            label = { Text("Web App Title") },
+                            label = { Text(stringResource(R.string.label)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -337,8 +337,8 @@ fun WebAppSettingsScreen(
                     }
 
                     SettingsActionItem(
-                        title = "Re-create Shortcut",
-                        description = "Add or update launcher shortcut on home screen",
+                        title = stringResource(R.string.re_create_shortcut),
+                        description = stringResource(R.string.create_shortcut_on_home_screen),
                         icon = Icons.Rounded.AppShortcut,
                         onClick = {
                             val activity = context as? AppCompatActivity
@@ -352,13 +352,9 @@ fun WebAppSettingsScreen(
 
                 Spacer(Modifier.height(16.dp))
 
-                // ── Global Configuration Override ──
-                SettingsSectionHeader("Configuration Override")
-
                 RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                     SettingsSwitchItem(
                         title = stringResource(R.string.override_global_settings),
-                        description = "Customize settings for this web app instead of following global defaults",
                         checked = webapp.isOverrideGlobalSettings,
                         icon = Icons.Rounded.Tune,
                         onCheckedChange = { isChecked ->
@@ -371,12 +367,11 @@ fun WebAppSettingsScreen(
             }
 
             // ── Section 1: Browsing & Behavior ──
-            SettingsSectionHeader("Browsing & Navigation")
+            SettingsSectionHeader(stringResource(R.string.webapp_section_misc))
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
                     title = stringResource(R.string.allow_javascript),
-                    description = "Execute JavaScript for web interactivity",
                     checked = webapp.isAllowJs,
                     icon = Icons.Rounded.Javascript,
                     enabled = isSettingsEnabled,
@@ -394,7 +389,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.request_website_in_desktop_version),
-                    description = "Request desktop view instead of mobile layouts",
                     checked = webapp.isRequestDesktop,
                     icon = Icons.Rounded.DesktopWindows,
                     enabled = isSettingsEnabled && webapp.isAllowJs,
@@ -411,7 +405,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.activate_two_finger_zoom),
-                    description = "Allow pinch-to-zoom on web pages",
                     checked = webapp.isEnableZooming,
                     icon = Icons.Rounded.ZoomIn,
                     enabled = isSettingsEnabled,
@@ -422,7 +415,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.open_external_links_in_browser_app),
-                    description = "Launch out-of-domain links in the default browser",
                     checked = webapp.isOpenUrlExternal,
                     icon = Icons.Rounded.OpenInBrowser,
                     enabled = isSettingsEnabled,
@@ -433,7 +425,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.use_standard_context_menu_permanently),
-                    description = "Use system default text selection menu instead of custom menus",
                     checked = webapp.alwaysUseFallbackContextMenu,
                     icon = Icons.Rounded.Menu,
                     enabled = isSettingsEnabled,
@@ -446,12 +437,11 @@ fun WebAppSettingsScreen(
             Spacer(Modifier.height(16.dp))
 
             // ── Section 2: Privacy & Security ──
-            SettingsSectionHeader("Privacy & Security")
+            SettingsSectionHeader(stringResource(R.string.webapp_section_cookies))
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
                     title = stringResource(R.string.accept_cookies),
-                    description = "Allow websites to store first-party session cookies",
                     checked = webapp.isAllowCookies,
                     icon = Icons.Rounded.Cookie,
                     enabled = isSettingsEnabled,
@@ -468,7 +458,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.accept_third_party_cookies),
-                    description = "Allow third-party cross-site cookies",
                     checked = webapp.isAllowThirdPartyCookies,
                     icon = Icons.Rounded.Cookie,
                     enabled = isSettingsEnabled && webapp.isAllowCookies,
@@ -479,7 +468,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.enable_adblock_experimental),
-                    description = "Filter intrusive ads and tracking scripts",
                     checked = webapp.isUseAdblock,
                     icon = Icons.Rounded.Block,
                     enabled = isSettingsEnabled && webapp.isAllowJs,
@@ -490,7 +478,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.block_all_third_party_requests),
-                    description = "Prevent loading external scripts, trackers, and fonts",
                     checked = webapp.isBlockThirdPartyRequests,
                     icon = Icons.Rounded.Shield,
                     enabled = isSettingsEnabled,
@@ -501,7 +488,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.allow_http),
-                    description = "Allow insecure, unencrypted HTTP connections",
                     checked = webapp.isAllowHttp,
                     icon = Icons.Rounded.LockOpen,
                     enabled = isSettingsEnabled,
@@ -512,7 +498,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.allow_drm_content),
-                    description = "Allow playback of protected digital media",
                     checked = webapp.isDrmAllowed,
                     icon = Icons.Rounded.Key,
                     enabled = isSettingsEnabled,
@@ -525,12 +510,11 @@ fun WebAppSettingsScreen(
             Spacer(Modifier.height(16.dp))
 
             // ── Section 3: Device Permissions & Security ──
-            SettingsSectionHeader("Hardware & Permissions")
+            SettingsSectionHeader(stringResource(R.string.webapp_section_security))
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
                     title = stringResource(R.string.allow_location_access),
-                    description = "Grant web app access to GPS/location services",
                     checked = webapp.isAllowLocationAccess,
                     icon = Icons.Rounded.Place,
                     enabled = isSettingsEnabled,
@@ -541,7 +525,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.allow_camera_access),
-                    description = "Grant web app access to device cameras",
                     checked = webapp.isCameraPermission,
                     icon = Icons.Rounded.CameraAlt,
                     enabled = isSettingsEnabled,
@@ -552,7 +535,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.allow_microphone_access),
-                    description = "Grant web app access to the microphone",
                     checked = webapp.isMicrophonePermission,
                     icon = Icons.Rounded.Mic,
                     enabled = isSettingsEnabled,
@@ -563,7 +545,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.enable_access_restriction),
-                    description = "Require biometric verification or PIN to open",
                     checked = webapp.isBiometricProtection,
                     icon = Icons.Rounded.Fingerprint,
                     enabled = isSettingsEnabled,
@@ -576,12 +557,11 @@ fun WebAppSettingsScreen(
             Spacer(Modifier.height(16.dp))
 
             // ── Section 4: Display, Dark Mode & Kiosk ──
-            SettingsSectionHeader("Display & Dark Mode")
+            SettingsSectionHeader(stringResource(R.string.dark_mode))
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
                     title = stringResource(R.string.force_dark_mode),
-                    description = "Invert and darken page content",
                     checked = webapp.isForceDarkMode,
                     icon = Icons.Rounded.DarkMode,
                     enabled = isSettingsEnabled,
@@ -598,7 +578,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.limit_dark_mode_to_time_span),
-                    description = "Only activate dark mode between scheduled hours",
                     checked = webapp.isUseTimespanDarkMode,
                     icon = Icons.Rounded.Schedule,
                     enabled = isSettingsEnabled && webapp.isForceDarkMode,
@@ -637,7 +616,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.show_fullscreen),
-                    description = "Hide system bars for an immersive web experience",
                     checked = webapp.isShowFullscreen,
                     icon = Icons.Rounded.Fullscreen,
                     enabled = isSettingsEnabled,
@@ -648,7 +626,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.keep_screen_awake),
-                    description = "Prevent the display from turning off while active",
                     checked = webapp.isKeepAwake,
                     icon = Icons.Rounded.Lightbulb,
                     enabled = isSettingsEnabled,
@@ -661,12 +638,11 @@ fun WebAppSettingsScreen(
             Spacer(Modifier.height(16.dp))
 
             // ── Section 5: Media Playback ──
-            SettingsSectionHeader("Media Playback")
+            SettingsSectionHeader(stringResource(R.string.allow_media_playback_in_background))
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
                     title = stringResource(R.string.allow_media_playback_in_background),
-                    description = "Continue playing audio when app is minimized or screen is locked",
                     checked = webapp.isAllowMediaPlaybackInBackground,
                     icon = Icons.Rounded.MusicNote,
                     enabled = isSettingsEnabled,
@@ -682,12 +658,11 @@ fun WebAppSettingsScreen(
             Spacer(Modifier.height(16.dp))
 
             // ── Section 6: Data Saving & Auto-Reload ──
-            SettingsSectionHeader("Data Saving & Auto-Reload")
+            SettingsSectionHeader(stringResource(R.string.webapp_section_datasaving))
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
                     title = stringResource(R.string.request_data_saving_page),
-                    description = "Send Save-Data HTTP header to request lighter pages",
                     checked = webapp.isSendSavedataRequest,
                     icon = Icons.Rounded.DataSaverOn,
                     enabled = isSettingsEnabled,
@@ -698,7 +673,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.do_not_load_images),
-                    description = "Block image downloads to conserve bandwidth",
                     checked = webapp.isBlockImages,
                     icon = Icons.Rounded.HideImage,
                     enabled = isSettingsEnabled,
@@ -709,7 +683,6 @@ fun WebAppSettingsScreen(
 
                 SettingsSwitchItem(
                     title = stringResource(R.string.webapp_autoreload_switch),
-                    description = "Periodically reload the web page automatically",
                     checked = webapp.isAutoreload,
                     icon = Icons.Rounded.Autorenew,
                     enabled = isSettingsEnabled,
@@ -744,12 +717,11 @@ fun WebAppSettingsScreen(
             Spacer(Modifier.height(16.dp))
 
             // ── Section 7: Expert & Container Settings ──
-            SettingsSectionHeader("Expert Settings")
+            SettingsSectionHeader(stringResource(R.string.expert_settings))
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                 SettingsSwitchItem(
                     title = stringResource(R.string.show_expert_settings),
-                    description = "Reveal advanced container, user-agent, and SSL controls",
                     checked = webapp.isShowExpertSettings,
                     icon = Icons.Rounded.Psychology,
                     enabled = isSettingsEnabled,
@@ -762,7 +734,6 @@ fun WebAppSettingsScreen(
                     if (!isGlobalWebApp) {
                         SettingsSwitchItem(
                             title = stringResource(R.string.enable_sandbox),
-                            description = "Isolate cookies, cache, and session in a dedicated container process",
                             checked = webapp.isUseContainer,
                             icon = Icons.Rounded.Layers,
                             enabled = isSettingsEnabled,
@@ -783,7 +754,6 @@ fun WebAppSettingsScreen(
 
                     SettingsSwitchItem(
                         title = stringResource(R.string.use_custom_user_agent),
-                        description = "Override the default browser User-Agent header",
                         checked = webapp.isUseCustomUserAgent,
                         icon = Icons.Rounded.Badge,
                         enabled = isSettingsEnabled && !webapp.isRequestDesktop,
@@ -804,7 +774,7 @@ fun WebAppSettingsScreen(
                                 onValueChange = { ua ->
                                     webapp = webapp.copy().apply { userAgent = ua }
                                 },
-                                label = { Text("User Agent String") },
+                                label = { Text(stringResource(R.string.user_agent)) },
                                 singleLine = false,
                                 maxLines = 3,
                                 enabled = isSettingsEnabled,
@@ -816,7 +786,7 @@ fun WebAppSettingsScreen(
                     if (!isGlobalWebApp) {
                         SettingsSwitchItem(
                             title = stringResource(R.string.ignore_ssl_errors),
-                            description = "Proceed even when SSL certificate validation fails (Security Risk)",
+                            description = stringResource(R.string.ssl_permanent_warning),
                             checked = webapp.isIgnoreSslErrors,
                             icon = Icons.Rounded.Warning,
                             enabled = isSettingsEnabled,
