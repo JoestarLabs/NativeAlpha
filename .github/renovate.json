@@ -5,20 +5,28 @@
   ],
   "packageRules": [
     {
-      "matchPackagePatterns": ["^androidx\\."],
-      "groupName": "AndroidX dependencies"
+      "groupName": "AndroidX dependencies",
+      "matchPackageNames": [
+        "/^androidx\\./"
+      ]
     },
     {
-      "matchPackagePatterns": ["^org\\.jetbrains\\.kotlin"],
-      "groupName": "Kotlin dependencies"
+      "groupName": "Kotlin dependencies",
+      "matchPackageNames": [
+        "/^org\\.jetbrains\\.kotlin/"
+      ]
     },
     {
-      "matchPackagePatterns": ["^com\\.android\\.tools\\.build"],
-      "groupName": "Android Gradle Plugin"
+      "groupName": "Android Gradle Plugin",
+      "matchPackageNames": [
+        "/^com\\.android\\.tools\\.build/"
+      ]
     },
     {
-      "matchPackagePatterns": ["^com\\.mikepenz"],
-      "groupName": "AboutLibraries dependencies"
+      "groupName": "AboutLibraries dependencies",
+      "matchPackageNames": [
+        "/^com\\.mikepenz/"
+      ]
     }
   ]
 }
