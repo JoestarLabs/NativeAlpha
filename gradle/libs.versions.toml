@@ -29,7 +29,7 @@ gson = "2.14.0"
 hasher = "1.2"
 process-phoenix = "3.0.0"
 easypermissions = "3.0.0"
-adfilter = "v0.9.1"
+adfilter = "0.9.1"
 timber = "5.0.1"
 
 # Testing
