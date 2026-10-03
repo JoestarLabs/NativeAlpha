@@ -189,5 +189,9 @@
     <string name="about_section_community">Links &amp; Community</string>
     <string name="support_development">Support Development</string>
     <string name="open_source_dependencies_desc">Third-party libraries &amp; open source software</string>
+    <string name="about_maintained_by">Maintained by %1$s</string>
+    <string name="about_originally_by">Originally created by %1$s</string>
+    <string name="about_fork_repo">GitHub (Fork)</string>
+    <string name="about_upstream_repo">Upstream Repository</string>
 
 </resources>

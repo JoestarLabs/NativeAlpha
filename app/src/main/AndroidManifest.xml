@@ -206,6 +206,14 @@
         </activity>
 
         <activity
+            android:name="com.cylonid.nativealpha.DependenciesActivity"
+            android:parentActivityName=".AboutActivity"
+            android:icon="@mipmap/native_alpha"
+            android:roundIcon="@mipmap/native_alpha"
+            android:theme="@style/AppTheme">
+        </activity>
+
+        <activity
             android:name="com.cylonid.nativealpha.activities.NewsActivity"
             android:parentActivityName=".MainActivity"
             android:icon="@mipmap/native_alpha"
