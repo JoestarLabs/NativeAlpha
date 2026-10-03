@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/JoestarLabs/NativeAlpha/compare/NativeAlpha-v1.6.0...NativeAlpha-v1.6.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* enable R8 minification and resource shrinking for release builds ([9a271d1](https://github.com/JoestarLabs/NativeAlpha/commit/9a271d13f789c47bd6f46ed9e52ad93bd439b340))
+
 ## [1.6.0](https://github.com/JoestarLabs/NativeAlpha/compare/NativeAlpha-v1.5.2...NativeAlpha-v1.6.0) (2026-10-03)
 
 
