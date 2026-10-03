@@ -59,6 +59,10 @@ android {
         resValues true
     }
 
+    composeCompiler {
+        includeComposeMappingFile = false
+    }
+
 
     signingConfigs {
         release {
@@ -75,7 +79,8 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.release.storeFile ? signingConfigs.release : signingConfigs.debug
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
