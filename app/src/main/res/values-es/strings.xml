@@ -186,4 +186,11 @@
     <string name="material_you_theme">Material You</string>
     <string name="material_you_theme_summary">Reemplazar el color rojo característico con colores dinámicos del dispositivo</string>
     <string name="material_you_requires_android_12">Requiere Android 12 o superior</string>
+    <string name="about_section_community">Enlaces &amp; Comunidad</string>
+    <string name="support_development">Apoyar el desarrollo</string>
+    <string name="open_source_dependencies_desc">Bibliotecas de terceros &amp; software de código abierto</string>
+    <string name="about_maintained_by">Mantenido por %1$s</string>
+    <string name="about_originally_by">Creado originalmente por %1$s</string>
+    <string name="about_fork_repo">GitHub (Fork)</string>
+    <string name="about_upstream_repo">Repositorio original</string>
 </resources>
