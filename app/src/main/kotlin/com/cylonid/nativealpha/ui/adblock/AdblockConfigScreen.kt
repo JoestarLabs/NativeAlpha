@@ -245,7 +245,7 @@ fun AdblockConfigScreen(
                 RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
                     adblockConfigs.forEachIndexed { index, config ->
                         ListItem(
-                            headlineContent = {
+                            content = {
                                 Text(
                                     text = config.label,
                                     style = MaterialTheme.typography.bodyLarge,

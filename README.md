@@ -1,10 +1,8 @@
 # <img src="graphics/logo.png" width="48px" alt="Native Alpha Logo" style="vertical-align: middle;"> Native Alpha
 
 [![GitHub release](https://img.shields.io/github/v/release/JoestarLabs/NativeAlpha?color=blueviolet&style=flat)](https://github.com/JoestarLabs/NativeAlpha/releases)
-[![License](https://img.shields.io/github/license/JoestarLabs/NativeAlpha?color=orange&style=flat)](LICENSE)
 [![Min SDK](https://img.shields.io/badge/Min%20SDK-26-blue?style=flat)](https://developer.android.com)
 [![Target SDK](https://img.shields.io/badge/Target%20SDK-37-green?style=flat)](https://developer.android.com)
-[![16 KB Pages](https://img.shields.io/badge/16%20KB%20Pages-Compatible-brightgreen?style=flat)](https://developer.android.com/guide/practices/page-sizes)
 
 **Native Alpha** turns web applications and websites into distraction-free, borderless, full-screen native Android applications powered by Android System WebView.
 
@@ -27,6 +25,9 @@ Run your favorite web services with granular privacy controls, ad blocking, cust
 ---
 
 ## Download
+
+> [!IMPORTANT]
+> **Migrating from upstream Native Alpha**: Due to a new release signing key, this build cannot be installed directly over the upstream version. Please export a backup of your web apps and settings via **Settings → Backup & Restore** in the old app first, then restore the file after installing this build.
 
 ### Install via Obtainium
 

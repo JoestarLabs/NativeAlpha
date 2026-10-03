@@ -76,7 +76,7 @@ fun SettingsActionItem(
     onClick: () -> Unit,
 ) {
     ListItem(
-        headlineContent = {
+        content = {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
@@ -153,7 +153,7 @@ fun SettingsSwitchItem(
     val interactionSource = remember { MutableInteractionSource() }
 
     ListItem(
-        headlineContent = {
+        content = {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,

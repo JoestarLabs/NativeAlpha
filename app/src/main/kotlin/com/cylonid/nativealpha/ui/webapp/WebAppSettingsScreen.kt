@@ -1,12 +1,9 @@
 package com.cylonid.nativealpha.ui.webapp
 
-import android.app.Activity
 import android.app.ActivityManager
 import android.app.TimePickerDialog
 import android.content.Context
-import android.content.Intent
 import android.os.Process
-import androidx.activity.compose.BackHandler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -69,6 +66,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.neverEqualPolicy
@@ -84,7 +82,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
-import com.cylonid.nativealpha.MainActivity
 import com.cylonid.nativealpha.R
 import com.cylonid.nativealpha.ShortcutDialogFragment
 import com.cylonid.nativealpha.helper.BiometricPromptHelper
@@ -133,7 +130,7 @@ fun WebAppSettingsScreen(
         webapp = updated
     }
 
-    fun saveAndFinish() {
+    fun saveSettings() {
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
         if (isGlobalWebApp) {
             if (activityManager != null) {
@@ -155,17 +152,12 @@ fun WebAppSettingsScreen(
             }
             dataManager.replaceWebApp(webapp)
         }
-
-        val intent =
-            Intent(context, MainActivity::class.java).apply {
-                putExtra(Const.INTENT_WEBAPP_CHANGED, true)
-            }
-        (context as? Activity)?.finish()
-        context.startActivity(intent)
     }
 
-    BackHandler {
-        saveAndFinish()
+    DisposableEffect(Unit) {
+        onDispose {
+            saveSettings()
+        }
     }
 
     fun showTimePicker(
@@ -246,7 +238,7 @@ fun WebAppSettingsScreen(
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = { saveAndFinish() },
+                        onClick = onNavigateBack,
                         shapes =
                             IconButtonDefaults.shapes(
                                 shape = CircleShape,
