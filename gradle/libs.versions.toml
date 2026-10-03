@@ -1,7 +1,7 @@
 [versions]
 agp = "9.4.1"
 kotlin = "2.4.20"
-aboutlibraries = "14.2.1"
+aboutlibraries = "15.2.0"
 spotless = "8.10.3"
 
 # AndroidX
