@@ -389,6 +389,7 @@ private fun ShortcutDialogContent(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
+    val iconNotFoundMsg = stringResource(R.string.icon_not_found)
     var titleText by remember { mutableStateOf(webapp?.title.orEmpty()) }
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -412,11 +413,11 @@ private fun ShortcutDialogContent(
                     if (activity != null) {
                         NotificationUtils.showToast(
                             activity,
-                            context.getString(R.string.icon_not_found),
+                            iconNotFoundMsg,
                             Toast.LENGTH_SHORT,
                         )
                     } else {
-                        Toast.makeText(context, R.string.icon_not_found, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, iconNotFoundMsg, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
