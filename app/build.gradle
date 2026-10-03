@@ -130,7 +130,6 @@ dependencies {
     debugImplementation libs.androidx.compose.ui.tooling
 
     implementation libs.material
-    implementation libs.circularprogressbar
     implementation libs.aboutlibraries.compose
     implementation libs.aboutlibraries.core
 

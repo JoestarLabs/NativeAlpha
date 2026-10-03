@@ -1,5 +1,6 @@
 *.iml
 .gradle
+.kotlin
 /local.properties
 .idea/
 .DS_Store
@@ -11,3 +12,6 @@ app/release/**
 app/standard/**
 app/extended/**
 app/extendedGithub/**
+*.jks
+*.keystore
+*.base64
