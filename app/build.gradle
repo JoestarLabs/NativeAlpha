@@ -132,8 +132,7 @@ dependencies {
     implementation libs.material
     implementation libs.circularprogressbar
     implementation libs.dragdrop.swipe.recyclerview
-    implementation libs.about.page
-    implementation libs.aboutlibraries
+    implementation libs.aboutlibraries.compose
     implementation libs.aboutlibraries.core
 
     implementation libs.jsoup

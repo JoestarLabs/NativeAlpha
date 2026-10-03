@@ -8,10 +8,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.cylonid.nativealpha.model.DataManager
-import com.cylonid.nativealpha.ui.about.AboutScreen
+import com.cylonid.nativealpha.ui.about.DependenciesScreen
 import com.cylonid.nativealpha.ui.theme.NativeAlphaTheme
 
-class AboutActivity : ComponentActivity() {
+class DependenciesActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -24,7 +24,9 @@ class AboutActivity : ComponentActivity() {
             }
 
             NativeAlphaTheme(dynamicColor = isDynamicColor) {
-                AboutScreen(onNavigateBack = { finish() })
+                DependenciesScreen(
+                    onNavigateBack = { finish() },
+                )
             }
         }
     }
