@@ -131,7 +131,6 @@ dependencies {
 
     implementation libs.material
     implementation libs.circularprogressbar
-    implementation libs.dragdrop.swipe.recyclerview
     implementation libs.aboutlibraries.compose
     implementation libs.aboutlibraries.core
 

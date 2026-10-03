@@ -190,4 +190,14 @@
     <string name="about_originally_by">Creato originariamente da %1$s</string>
     <string name="about_fork_repo">GitHub (Fork)</string>
     <string name="about_upstream_repo">Repository originale</string>
+    <string name="search_webapps">Cerca app web</string>
+    <string name="no_webapps_found">Nessuna app web trovata</string>
+    <string name="empty_webapps_title">Nessuna app web</string>
+    <string name="empty_webapps_subtitle">Aggiungi un sito web per eseguirlo senza distrazioni</string>
+    <string name="active_webapps_count">%1$d app web attive</string>
+    <string name="active_webapps_single">1 app web attiva</string>
+    <string name="drag_to_reorder">Trascina per riordinare</string>
+    <string name="open_settings">Apri impostazioni</string>
+    <string name="create_shortcut">Crea scorciatoia</string>
+    <string name="delete">Elimina</string>
 </resources>

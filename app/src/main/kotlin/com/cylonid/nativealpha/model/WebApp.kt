@@ -1,6 +1,6 @@
 package com.cylonid.nativealpha.model
 
-import android.app.Activity
+import android.content.Context
 import android.view.View
 import android.widget.CompoundButton
 import android.widget.EditText
@@ -144,11 +144,11 @@ data class WebApp(
         isOverrideGlobalSettings = false
     }
 
-    fun markInactive(activity: Activity) {
+    fun markInactive(context: Context) {
         isActiveEntry = false
         ShortcutIconUtils.deleteShortcuts(
             listOf(ID),
-            activity,
+            context,
         )
     }
 

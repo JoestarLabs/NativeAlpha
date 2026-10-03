@@ -193,5 +193,14 @@
     <string name="about_originally_by">Originally created by %1$s</string>
     <string name="about_fork_repo">GitHub (Fork)</string>
     <string name="about_upstream_repo">Upstream Repository</string>
-
+    <string name="search_webapps">Search web apps</string>
+    <string name="no_webapps_found">No web apps match your search</string>
+    <string name="empty_webapps_title">No web apps yet</string>
+    <string name="empty_webapps_subtitle">Add a website to run it in a clean, distraction-free environment</string>
+    <string name="active_webapps_count">%1$d active web apps</string>
+    <string name="active_webapps_single">1 active web app</string>
+    <string name="drag_to_reorder">Drag to reorder</string>
+    <string name="open_settings">Open settings</string>
+    <string name="create_shortcut">Create shortcut</string>
+    <string name="delete">Delete</string>
 </resources>

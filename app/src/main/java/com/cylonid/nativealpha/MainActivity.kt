@@ -3,44 +3,69 @@ package com.cylonid.nativealpha
 import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
-import android.text.Editable
 import android.text.Html
-import android.text.TextWatcher
-import android.view.Menu
-import android.view.MenuItem
-import androidx.annotation.StringRes
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
-import com.cylonid.nativealpha.databinding.AddWebsiteDialogueBinding
-import com.cylonid.nativealpha.fragments.webapplist.WebAppListFragment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import com.cylonid.nativealpha.helper.AdblockLifecycleHelper
 import com.cylonid.nativealpha.model.DataManager
-import com.cylonid.nativealpha.model.WebApp
+import com.cylonid.nativealpha.ui.theme.NativeAlphaTheme
+import com.cylonid.nativealpha.ui.webapplist.WebAppListScreen
+import com.cylonid.nativealpha.ui.webapplist.WebAppListViewModel
 import com.cylonid.nativealpha.util.Const
 import com.cylonid.nativealpha.util.EntryPointUtils.entryPointReached
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.cylonid.nativealpha.util.WebViewLauncher
 import io.github.edsuns.adfilter.AdFilter
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var webAppListFragment: WebAppListFragment
+    private val viewModel: WebAppListViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.AppTheme)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        webAppListFragment =
-            supportFragmentManager.findFragmentById(R.id.fragment_container_view) as WebAppListFragment
+        enableEdgeToEdge()
         entryPointReached(this)
 
-        if (DataManager.getInstance().websites.size == 0) {
-            buildAddWebsiteDialog(getString(R.string.welcome_msg))
-        }
+        setContent {
+            val isDynamicColor by remember {
+                mutableStateOf(
+                    runCatching { DataManager.getInstance().settings.isDynamicColor }.getOrDefault(false),
+                )
+            }
 
-        val fab = findViewById<FloatingActionButton>(R.id.fab)
-        fab.setOnClickListener { buildAddWebsiteDialog(getString(R.string.add_webapp)) }
-        personalizeToolbar()
+            NativeAlphaTheme(dynamicColor = isDynamicColor) {
+                WebAppListScreen(
+                    viewModel = viewModel,
+                    onNavigateToSettings = {
+                        startActivity(Intent(this, SettingsActivity::class.java))
+                    },
+                    onNavigateToAbout = {
+                        startActivity(Intent(this, AboutActivity::class.java))
+                    },
+                    onOpenWebApp = { webApp ->
+                        WebViewLauncher.startWebView(webApp, this)
+                    },
+                    onOpenWebAppSettings = { webApp ->
+                        val intent =
+                            Intent(this, WebAppSettingsActivity::class.java).apply {
+                                putExtra(Const.INTENT_WEBAPPID, webApp.ID)
+                                action = Intent.ACTION_VIEW
+                            }
+                        startActivity(intent)
+                    },
+                    onRequestCreateShortcut = { webApp ->
+                        val frag = ShortcutDialogFragment.newInstance(webApp)
+                        frag.show(supportFragmentManager, "SCFetcher-" + webApp.ID)
+                    },
+                )
+            }
+        }
 
         AdblockLifecycleHelper(this).trySyncOperation({ AdFilter.create(applicationContext) })
     }
@@ -48,62 +73,26 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         DataManager.getInstance().loadAppData()
-        updateWebAppList()
+        viewModel.loadWebApps()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (intent.getBooleanExtra(Const.INTENT_BACKUP_RESTORED, false)) {
-            updateWebAppList()
-
+            viewModel.loadWebApps()
             buildImportSuccessDialog()
             intent.putExtra(Const.INTENT_BACKUP_RESTORED, false)
             intent.putExtra(Const.INTENT_REFRESH_NEW_THEME, false)
         }
         if (intent.getBooleanExtra(Const.INTENT_WEBAPP_CHANGED, false)) {
-            updateWebAppList()
+            viewModel.loadWebApps()
             intent.putExtra(Const.INTENT_WEBAPP_CHANGED, false)
         }
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     fun updateWebAppList() {
-        webAppListFragment.updateWebAppList()
-    }
-
-    private fun personalizeToolbar() {
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-
-        @StringRes val appName =
-            if (BuildConfig.FLAVOR == "extended") R.string.app_name_plus else R.string.app_name
-        toolbar.setTitle(appName)
-        setSupportActionBar(toolbar)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        val id = item.itemId
-
-        if (id == R.id.action_settings) {
-            val intent = Intent(this, SettingsActivity::class.java)
-            startActivity(intent)
-            return true
-        }
-        if (id == R.id.action_about) {
-            val intent = Intent(this, AboutActivity::class.java)
-            startActivity(intent)
-            return true
-        }
-
-        return super.onOptionsItemSelected(item)
+        viewModel.loadWebApps()
     }
 
     private fun buildImportSuccessDialog() {
@@ -145,62 +134,5 @@ class MainActivity : AppCompatActivity() {
             }.setNegativeButton(getString(R.string.cancel)) { _: DialogInterface?, _: Int -> }
             .create()
             .show()
-    }
-
-    private fun buildAddWebsiteDialog(title: String) {
-        val localBinding = AddWebsiteDialogueBinding.inflate(layoutInflater)
-        val dialog =
-            AlertDialog
-                .Builder(this@MainActivity)
-                .setView(localBinding.root)
-                .setTitle(title)
-                .setPositiveButton(R.string.ok) { _: DialogInterface, _: Int ->
-                    val url =
-                        localBinding.websiteUrl.text
-                            .toString()
-                            .trim()
-                    val urlWithProtocol =
-                        if (url.startsWith("https://") || url.startsWith("http://")) url else "https://$url"
-                    val newSite =
-                        WebApp(
-                            urlWithProtocol,
-                            DataManager.getInstance().incrementedID,
-                            DataManager.getInstance().incrementedOrder,
-                        )
-                    newSite.applySettingsForNewWebApp()
-                    DataManager.getInstance().addWebsite(newSite)
-
-                    updateWebAppList()
-                    if (localBinding.switchCreateShortcut.isChecked) {
-                        val frag = ShortcutDialogFragment.newInstance(newSite)
-                        frag.show(supportFragmentManager, "SCFetcher-" + newSite.ID)
-                    }
-                }.setNegativeButton(R.string.cancel, null)
-                .create()
-
-        dialog.show()
-        val okButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-        okButton.isEnabled = false
-        localBinding.websiteUrl.addTextChangedListener(
-            object : TextWatcher {
-                override fun afterTextChanged(s: Editable?) {
-                    okButton.isEnabled = !s.isNullOrBlank()
-                }
-
-                override fun beforeTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    count: Int,
-                    after: Int,
-                ) {}
-
-                override fun onTextChanged(
-                    s: CharSequence?,
-                    start: Int,
-                    before: Int,
-                    count: Int,
-                ) {}
-            },
-        )
     }
 }
