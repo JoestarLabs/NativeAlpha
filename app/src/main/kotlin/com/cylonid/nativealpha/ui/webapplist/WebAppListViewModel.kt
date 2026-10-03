@@ -1,10 +1,13 @@
 package com.cylonid.nativealpha.ui.webapplist
 
 import android.content.Context
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cylonid.nativealpha.model.DataManager
 import com.cylonid.nativealpha.model.WebApp
+import com.cylonid.nativealpha.util.ShortcutIconUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +20,7 @@ data class WebAppListUiState(
     val searchQuery: String = "",
     val isSearchActive: Boolean = false,
     val isLoading: Boolean = false,
-    val lastDeletedWebApp: Pair<WebApp, Int>? = null,
+    val lastDeletedWebApp: Triple<WebApp, Int, Bitmap?>? = null,
 )
 
 class WebAppListViewModel(
@@ -97,14 +100,18 @@ class WebAppListViewModel(
         webApp: WebApp,
     ) {
         val originalIndex = _uiState.value.allWebApps.indexOfFirst { it.ID == webApp.ID }
+        val cachedIcon = ShortcutIconUtils.getIcon(context, webApp.ID)
         webApp.markInactive(context)
+        val storedApp = dataManager.websites.firstOrNull { it.ID == webApp.ID }
+        storedApp?.markInactive(context)
 
-        val updatedActive = dataManager.activeWebsites.sortedBy { it.order }
+        val updatedActive =
+            dataManager.websites
+                .filter { it.isActiveEntry && it.ID != webApp.ID }
+                .sortedBy { it.order }
+
         for ((index, app) in updatedActive.withIndex()) {
-            val stored = dataManager.websites.firstOrNull { it.ID == app.ID }
-            if (stored != null) {
-                stored.order = index
-            }
+            app.order = index
         }
         dataManager.saveWebAppData()
 
@@ -112,22 +119,51 @@ class WebAppListViewModel(
             current.copy(
                 allWebApps = updatedActive,
                 filteredWebApps = filterList(updatedActive, current.searchQuery),
-                lastDeletedWebApp = if (originalIndex >= 0) Pair(webApp, originalIndex) else null,
+                lastDeletedWebApp =
+                    if (originalIndex >= 0) {
+                        Triple(webApp, originalIndex, cachedIcon)
+                    } else {
+                        null
+                    },
             )
         }
     }
 
-    fun undoDelete() {
+    fun undoDelete(context: Context? = null) {
         val lastDeleted = _uiState.value.lastDeletedWebApp ?: return
         val webApp = lastDeleted.first
+        val originalIndex = lastDeleted.second
+        val cachedIcon = lastDeleted.third
         webApp.isActiveEntry = true
+        val storedApp =
+            dataManager.websites.firstOrNull { it.ID == webApp.ID }
+                ?: webApp.also { dataManager.websites.add(it) }
+        storedApp.isActiveEntry = true
+
+        val otherActive =
+            dataManager.websites
+                .filter { it.isActiveEntry && it.ID != storedApp.ID }
+                .sortedBy { it.order }
+                .toMutableList()
+        val insertIndex = originalIndex.coerceIn(0, otherActive.size)
+        otherActive.add(insertIndex, storedApp)
+        for ((index, app) in otherActive.withIndex()) {
+            app.order = index
+        }
         dataManager.saveWebAppData()
+
+        if (context != null && cachedIcon != null) {
+            ShortcutIconUtils.saveIcon(context, webApp.ID, cachedIcon)
+        }
 
         loadWebApps()
         _uiState.update { it.copy(lastDeletedWebApp = null) }
     }
 
-    fun addWebApp(url: String): WebApp {
+    fun addWebApp(
+        url: String,
+        context: Context? = null,
+    ): WebApp {
         val trimmed = url.trim()
         val urlWithProtocol =
             if (trimmed.startsWith("https://") || trimmed.startsWith("http://")) {
@@ -145,6 +181,12 @@ class WebAppListViewModel(
         newSite.applySettingsForNewWebApp()
         dataManager.addWebsite(newSite)
         dataManager.saveWebAppData()
+
+        if (context != null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                ShortcutIconUtils.autoFetchAndSaveFavicon(context, newSite.ID, newSite.baseUrl)
+            }
+        }
 
         loadWebApps()
         return newSite

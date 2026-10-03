@@ -12,9 +12,14 @@ import android.graphics.Typeface
 import android.net.Uri
 import android.util.LruCache
 import com.cylonid.nativealpha.R
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import java.io.File
 import java.io.FileOutputStream
+import java.net.HttpURLConnection
 import java.net.URI
+import java.net.URL
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -24,6 +29,11 @@ object ShortcutIconUtils {
 
     // In-memory LRU cache: cache up to 24 icons (~1-2MB RAM maximum)
     private val memoryCache = LruCache<Int, Bitmap>(24)
+
+    private val _iconUpdates = MutableSharedFlow<Int>(extraBufferCapacity = 64)
+
+    @JvmField
+    val iconUpdates: SharedFlow<Int> = _iconUpdates.asSharedFlow()
 
     @JvmStatic
     fun getIconsDir(context: Context): File {
@@ -106,21 +116,27 @@ object ShortcutIconUtils {
         val downscaled = downscaleIfNecessary(bitmap)
         memoryCache.put(webAppId, downscaled)
 
-        return runCatching {
-            val file = getIconFile(context, webAppId)
-            val tmpFile = File(file.parentFile, "$webAppId.tmp")
-            FileOutputStream(tmpFile).use { out ->
-                downscaled.compress(Bitmap.CompressFormat.PNG, 100, out)
-                out.flush()
-            }
-            if (tmpFile.renameTo(file)) {
-                true
-            } else {
-                tmpFile.copyTo(file, overwrite = true)
-                tmpFile.delete()
-                true
-            }
-        }.getOrDefault(false)
+        val success =
+            runCatching {
+                val file = getIconFile(context, webAppId)
+                val tmpFile = File(file.parentFile, "$webAppId.tmp")
+                FileOutputStream(tmpFile).use { out ->
+                    downscaled.compress(Bitmap.CompressFormat.PNG, 100, out)
+                    out.flush()
+                }
+                if (tmpFile.renameTo(file)) {
+                    true
+                } else {
+                    tmpFile.copyTo(file, overwrite = true)
+                    tmpFile.delete()
+                    true
+                }
+            }.getOrDefault(false)
+
+        if (success) {
+            _iconUpdates.tryEmit(webAppId)
+        }
+        return success
     }
 
     @JvmStatic
@@ -173,10 +189,13 @@ object ShortcutIconUtils {
     ): Boolean {
         if (webAppId < 0) return false
         memoryCache.remove(webAppId)
-        return runCatching {
-            val file = getIconFile(context, webAppId)
-            if (file.exists()) file.delete() else true
-        }.getOrDefault(false)
+        val success =
+            runCatching {
+                val file = getIconFile(context, webAppId)
+                if (file.exists()) file.delete() else true
+            }.getOrDefault(false)
+        _iconUpdates.tryEmit(webAppId)
+        return success
     }
 
     @JvmStatic
@@ -311,5 +330,53 @@ object ShortcutIconUtils {
         canvas.drawText(initial, radius, radius - yOffset, textPaint)
 
         return bitmap
+    }
+
+    @JvmStatic
+    fun fetchBitmapFromNetwork(strUrl: String): Bitmap? {
+        if (strUrl.isBlank()) return null
+        var con: HttpURLConnection? = null
+        return try {
+            val url = URL(strUrl)
+            con =
+                (url.openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 3000
+                    readTimeout = 3000
+                    instanceFollowRedirects = true
+                    setRequestProperty(
+                        "User-Agent",
+                        "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+                    )
+                }
+            con.inputStream
+                .use { stream ->
+                    BitmapFactory.decodeStream(stream)
+                }?.let { loaded ->
+                    val downscaled = downscaleIfNecessary(loaded, MAX_ICON_DIMENSION)
+                    if (downscaled.width >= 16) downscaled else null
+                }
+        } catch (_: Exception) {
+            null
+        } finally {
+            con?.disconnect()
+        }
+    }
+
+    @JvmStatic
+    fun autoFetchAndSaveFavicon(
+        context: Context,
+        webAppId: Int,
+        baseUrl: String,
+    ): Bitmap? {
+        if (hasIcon(context, webAppId)) return getIcon(context, webAppId)
+        val candidates = getFallbackIconUrls(baseUrl)
+        for (url in candidates) {
+            val bitmap = fetchBitmapFromNetwork(url)
+            if (bitmap != null) {
+                saveIcon(context, webAppId, bitmap)
+                return bitmap
+            }
+        }
+        return null
     }
 }

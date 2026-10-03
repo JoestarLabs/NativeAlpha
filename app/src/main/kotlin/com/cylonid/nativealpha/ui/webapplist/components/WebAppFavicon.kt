@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,11 +49,26 @@ fun WebAppFavicon(
     size: Dp = 44.dp,
 ) {
     val context = LocalContext.current
-    val iconBitmap by produceState<Bitmap?>(initialValue = null, key1 = webApp.ID) {
-        value =
-            withContext(Dispatchers.IO) {
-                ShortcutIconUtils.getIcon(context, webApp.ID)
+    var iconBitmap by remember(webApp.ID) {
+        mutableStateOf<Bitmap?>(ShortcutIconUtils.getIcon(context, webApp.ID))
+    }
+
+    LaunchedEffect(webApp.ID, webApp.baseUrl) {
+        if (iconBitmap == null) {
+            iconBitmap =
+                withContext(Dispatchers.IO) {
+                    ShortcutIconUtils.getIcon(context, webApp.ID)
+                        ?: ShortcutIconUtils.autoFetchAndSaveFavicon(context, webApp.ID, webApp.baseUrl)
+                }
+        }
+        ShortcutIconUtils.iconUpdates.collect { updatedId ->
+            if (updatedId == webApp.ID) {
+                iconBitmap =
+                    withContext(Dispatchers.IO) {
+                        ShortcutIconUtils.getIcon(context, webApp.ID)
+                    }
             }
+        }
     }
 
     val currentBitmap = iconBitmap

@@ -55,7 +55,6 @@ class MainActivity : AppCompatActivity() {
                         val intent =
                             Intent(this, WebAppSettingsActivity::class.java).apply {
                                 putExtra(Const.INTENT_WEBAPPID, webApp.ID)
-                                action = Intent.ACTION_VIEW
                             }
                         startActivity(intent)
                     },

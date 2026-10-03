@@ -64,9 +64,16 @@ fun WebAppListItem(
 
     val dismissState = rememberSwipeToDismissBoxState()
 
+    LaunchedEffect(webApp.ID) {
+        if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+        }
+    }
+
     LaunchedEffect(dismissState.currentValue) {
         if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
             onDelete()
+            dismissState.snapTo(SwipeToDismissBoxValue.Settled)
         }
     }
 

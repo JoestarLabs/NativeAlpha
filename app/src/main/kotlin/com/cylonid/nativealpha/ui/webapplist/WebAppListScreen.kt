@@ -98,6 +98,15 @@ fun WebAppListScreen(
             },
         )
 
+    val nestedScrollConnection =
+        remember(reorderState.isDragging, scrollBehavior) {
+            if (reorderState.isDragging) {
+                object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {}
+            } else {
+                scrollBehavior.nestedScrollConnection
+            }
+        }
+
     val isFabExpanded by remember {
         derivedStateOf {
             listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset < 30
@@ -108,7 +117,7 @@ fun WebAppListScreen(
     val undoLabel = stringResource(R.string.undo)
 
     Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier.nestedScroll(nestedScrollConnection),
         topBar = {
             if (uiState.isSearchActive) {
                 TopAppBar(
@@ -297,6 +306,7 @@ fun WebAppListScreen(
                             items = uiState.filteredWebApps,
                             key = { _, item -> item.ID },
                         ) { index, webApp ->
+                            val isDraggingThisItem = reorderState.draggedIndex == index
                             WebAppListItem(
                                 webApp = webApp,
                                 onClick = { onOpenWebApp(webApp) },
@@ -312,13 +322,13 @@ fun WebAppListScreen(
                                                 duration = SnackbarDuration.Short,
                                             )
                                         if (result == SnackbarResult.ActionPerformed) {
-                                            viewModel.undoDelete()
+                                            viewModel.undoDelete(context)
                                         }
                                     }
                                 },
                                 modifier =
                                     Modifier
-                                        .animateItem()
+                                        .then(if (isDraggingThisItem) Modifier else Modifier.animateItem())
                                         .reorderableItem(reorderState, index),
                                 dragHandleModifier = Modifier.dragHandle(reorderState, index),
                                 isReordering = reorderState.isDragging,
@@ -334,7 +344,7 @@ fun WebAppListScreen(
         AddWebAppDialog(
             onConfirm = { url, createShortcut ->
                 showAddDialog = false
-                val newApp = viewModel.addWebApp(url)
+                val newApp = viewModel.addWebApp(url, context)
                 if (createShortcut) {
                     onRequestCreateShortcut(newApp)
                 }
