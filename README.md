@@ -41,8 +41,8 @@ Recommended for automated background updates directly from GitHub releases:
 
 Download release APKs directly from the [GitHub Releases](https://github.com/JoestarLabs/NativeAlpha/releases) page:
 
-- **Universal APK**: Works across all supported Android architectures.
-- **ABI-specific APKs**: `arm64-v8a`, `armeabi-v7a` for optimized file sizes.
+- **Universal APK**: Compatible with all devices (recommended for most users).
+- **ARM64 APK** (`arm64-v8a`): Optimized build for modern 64-bit devices.
 
 ---
 

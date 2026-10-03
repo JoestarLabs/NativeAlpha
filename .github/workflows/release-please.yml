@@ -69,7 +69,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ needs.release-please.outputs.tag_name }}"
-          for apk in app/build/outputs/apk/standard/release/*.apk; do
+          for apk in app/build/outputs/apk/standard/release/*universal*.apk app/build/outputs/apk/standard/release/*arm64-v8a*.apk; do
             if [ -f "$apk" ]; then
               gh release upload "$TAG" "$apk" --clobber
             fi
