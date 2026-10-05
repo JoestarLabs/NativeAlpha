@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.2](https://github.com/JoestarLabs/NativeAlpha/compare/NativeAlpha-v1.6.1...NativeAlpha-v1.6.2) (2026-10-05)
+
+
+### Bug Fixes
+
+* fix adblock crash, improve adblock initialization safety and add robust unit tests ([4bac466](https://github.com/JoestarLabs/NativeAlpha/commit/4bac46634b8bbbcafdb1391cef24b4dd55bbf865))
+* fix adblock crash, improve adblock initialization safety and add… ([d829054](https://github.com/JoestarLabs/NativeAlpha/commit/d829054016edfda9cfb2035a7efb8590015289bd))
+
 ## [1.6.1](https://github.com/JoestarLabs/NativeAlpha/compare/NativeAlpha-v1.6.0...NativeAlpha-v1.6.1) (2026-10-03)
 
 
