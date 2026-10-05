@@ -91,6 +91,8 @@ import java.util.stream.Stream;
 
 import io.github.edsuns.adfilter.AdFilter;
 import io.github.edsuns.adfilter.Filter;
+import io.github.edsuns.adfilter.FilterResult;
+import timber.log.Timber;
 import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.cylonid.nativealpha.util.Const.CODE_OPEN_FILE;
@@ -159,7 +161,19 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 		super.onCreate(savedInstanceState);
 
 		adblockLifecycleHelper = new AdblockLifecycleHelper(this);
-		adblockLifecycleHelper.trySyncOperation(() -> adFilter = AdFilter.Companion.get(getApplicationContext()));
+		adblockLifecycleHelper.trySyncOperation(() -> {
+			try {
+				adFilter = AdFilter.Companion.get(getApplicationContext());
+			} catch (Throwable t) {
+				adFilter = AdFilter.Companion.create(getApplicationContext());
+			}
+		});
+		if (adFilter == null) {
+			try {
+				adFilter = AdFilter.Companion.get(getApplicationContext());
+			} catch (Throwable ignored) {
+			}
+		}
 
 		adblockProviderApiHelper = new AdblockProviderApiHelper(adFilter);
 		webappID = getIntent().getIntExtra(Const.INTENT_WEBAPPID, -1);
@@ -230,22 +244,33 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 
 		List<AdblockConfig> adblockConfigs = DataManager.getInstance().getSettings().getGlobalWebApp()
 				.getAdBlockSettings();
-		if (webapp.isUseAdblock() && !adblockConfigs.isEmpty()) {
+		if (webapp.isUseAdblock() && !adblockConfigs.isEmpty() && adFilter != null) {
 			wv.setVisibility(View.GONE);
 			wv = findViewById(R.id.adblockwebview);
 			wv.setVisibility(View.VISIBLE);
 
-			adFilter.setupWebView(wv);
-			adblockLifecycleHelper.beforeAdblockOperation(
-					() -> adblockProviderApiHelper.synchronizeAdblockProviderWithSettings(adblockConfigs));
-
-			adFilter.getViewModel().getOnDirty().observe(this, none -> wv.clearCache(false));
-
-			adFilter.getViewModel().getEnabledFilterCount().observe(this, count -> {
-				if (count == adblockConfigs.size()) {
-					adblockLifecycleHelper.afterAdblockOperation();
+			try {
+				adFilter.setupWebView(wv);
+				if (adblockProviderApiHelper != null) {
+					adblockLifecycleHelper.trySyncOperation(
+							() -> adblockProviderApiHelper.synchronizeAdblockProviderWithSettings(adblockConfigs));
 				}
-			});
+
+				if (adFilter.getViewModel() != null) {
+					if (adFilter.getViewModel().getOnDirty() != null) {
+						adFilter.getViewModel().getOnDirty().observe(this, none -> wv.clearCache(false));
+					}
+					if (adFilter.getViewModel().getEnabledFilterCount() != null) {
+						adFilter.getViewModel().getEnabledFilterCount().observe(this, count -> {
+							if (count != null && count == adblockConfigs.size()) {
+								adblockLifecycleHelper.afterAdblockOperation();
+							}
+						});
+					}
+				}
+			} catch (Throwable t) {
+				Timber.e(t, "Error configuring adblock for WebView");
+			}
 		}
 
 		String fieldName = Stream.of(WebViewActivity.class.getDeclaredFields())
@@ -455,34 +480,38 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 				|| (!webapp.isUseTimespanDarkMode() && webapp.isForceDarkMode());
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-			if (needsForcedDarkMode) {
-				wv.setBackgroundColor(Color.BLACK);
-				wv.setForceDarkAllowed(true);
-				getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-				if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
-					WebSettingsCompat.setForceDark(wv.getSettings(), WebSettingsCompat.FORCE_DARK_ON);
-				}
-				if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
-					WebSettingsCompat.setForceDarkStrategy(wv.getSettings(),
-							WebSettingsCompat.DARK_STRATEGY_PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING);
-				}
-				if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
-					WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), true);
-				}
-			} else {
-				getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-				wv.setBackgroundColor(Color.WHITE);
+			try {
+				if (needsForcedDarkMode) {
+					wv.setBackgroundColor(Color.BLACK);
+					wv.setForceDarkAllowed(true);
+					getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+					if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
+						WebSettingsCompat.setForceDark(wv.getSettings(), WebSettingsCompat.FORCE_DARK_ON);
+					}
+					if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
+						WebSettingsCompat.setForceDarkStrategy(wv.getSettings(),
+								WebSettingsCompat.DARK_STRATEGY_PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING);
+					}
+					if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
+						WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), true);
+					}
+				} else {
+					getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+					wv.setBackgroundColor(Color.WHITE);
 
-				if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
-					WebSettingsCompat.setForceDark(wv.getSettings(), WebSettingsCompat.FORCE_DARK_OFF);
+					if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
+						WebSettingsCompat.setForceDark(wv.getSettings(), WebSettingsCompat.FORCE_DARK_OFF);
+					}
+					if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
+						WebSettingsCompat.setForceDarkStrategy(wv.getSettings(),
+								WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY);
+					}
+					if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
+						WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), false);
+					}
 				}
-				if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
-					WebSettingsCompat.setForceDarkStrategy(wv.getSettings(),
-							WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY);
-				}
-				if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
-					WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), false);
-				}
+			} catch (Exception e) {
+				Timber.w(e, "Dark mode web settings not supported on this device/environment");
 			}
 		}
 	}
@@ -551,11 +580,22 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 				return true;
 			} else if (itemId == R.id.cmShowAdblockProviders) {
 				StringBuilder message = new StringBuilder();
-				for (Map.Entry<String, Filter> entry : Objects
-						.requireNonNull(AdFilter.Companion.get().getViewModel().getFilters().getValue()).entrySet()) {
-					Filter filter = entry.getValue();
-					message.append(filter.getUrl()).append(" has downloaded: ").append(filter.hasDownloaded())
-							.append("\n\n");
+				try {
+					AdFilter filterInstance = adFilter != null
+							? adFilter
+							: AdFilter.Companion.get(getApplicationContext());
+					if (filterInstance != null && filterInstance.getViewModel() != null
+							&& filterInstance.getViewModel().getFilters() != null
+							&& filterInstance.getViewModel().getFilters().getValue() != null) {
+						for (Map.Entry<String, Filter> entry : filterInstance.getViewModel().getFilters().getValue()
+								.entrySet()) {
+							Filter filter = entry.getValue();
+							message.append(filter.getUrl()).append(" has downloaded: ").append(filter.hasDownloaded())
+									.append("\n\n");
+						}
+					}
+				} catch (Throwable t) {
+					Timber.e(t, "Error showing adblock providers");
 				}
 				NotificationUtils.showToast(this, message.toString());
 				return true;
@@ -978,8 +1018,6 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 
 	private class CustomBrowser extends WebViewClient {
 
-		private AdFilter adFilter = AdFilter.Companion.get();
-
 		@Override
 		public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
 			showHttpAuthDialog(handler, host, realm);
@@ -999,24 +1037,40 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 
 		@Override
 		public void onPageStarted(WebView view, String url, Bitmap favicon) {
-			adFilter.performScript(view, url);
+			try {
+				if (adFilter != null && webapp != null && webapp.isUseAdblock()) {
+					adFilter.performScript(view, url);
+				}
+			} catch (Throwable t) {
+				Timber.e(t, "Error performing adblock script");
+			}
 			super.onPageStarted(view, url, favicon);
 		}
 
 		@Nullable
 		@Override
 		public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-			if (urlOnFirstPageload.equals(""))
+			if (request == null) {
+				return null;
+			}
+			if (urlOnFirstPageload.equals("") && request.getUrl() != null)
 				urlOnFirstPageload = request.getUrl().toString();
 
-			if (webapp.isUseAdblock()) {
-				return (adFilter.shouldIntercept(view, request)).getResourceResponse();
+			if (webapp != null && webapp.isUseAdblock() && adFilter != null && request != null) {
+				try {
+					FilterResult filterResult = adFilter.shouldIntercept(view, request);
+					if (filterResult != null && filterResult.getResourceResponse() != null) {
+						return filterResult.getResourceResponse();
+					}
+				} catch (Throwable t) {
+					Timber.e(t, "Error intercepting adblock request");
+				}
 			}
-			if (webapp.isBlockThirdPartyRequests()) {
+			if (webapp != null && webapp.isBlockThirdPartyRequests() && request != null) {
 				Uri uri = request.getUrl();
 				Uri webapp_uri = Uri.parse(webapp.getBaseUrl());
 
-				if (uri.getHost() != null) {
+				if (uri != null && uri.getHost() != null && webapp_uri != null && webapp_uri.getHost() != null) {
 					if (!uri.getHost().endsWith(webapp_uri.getHost())) {
 						return new WebResourceResponse("text/plain", "utf-8", null);
 					}

@@ -16,3 +16,7 @@
 -keep class io.github.edsuns.adblockclient.** { *; }
 -keepclassmembers class io.github.edsuns.adblockclient.** { *; }
 
+# AdFilter Library
+-keep class io.github.edsuns.adfilter.** { *; }
+-keepclassmembers class io.github.edsuns.adfilter.** { *; }
+
