@@ -143,17 +143,23 @@ class WebViewActivityAdblockTest {
 
     @Test
     fun testMatchResultBinaryCompatibility() {
-        val result = io.github.edsuns.adblockclient.MatchResult(false, null, null)
+        val result =
+            io.github.edsuns.adblockclient
+                .MatchResult(false, null, null)
         org.junit.Assert.assertFalse(result.isException)
         org.junit.Assert.assertFalse(result.hasException)
 
-        val exceptionResult = io.github.edsuns.adblockclient.MatchResult(false, null, "@@||example.com")
+        val exceptionResult =
+            io.github.edsuns.adblockclient
+                .MatchResult(false, null, "@@||example.com")
         org.junit.Assert.assertTrue(exceptionResult.isException)
         org.junit.Assert.assertTrue(exceptionResult.hasException)
 
         // Verify the exact static method expected by ad-filter DetectorImpl.shouldBlock exists
-        val method = Class.forName("io.github.edsuns.adblockclient.MatchResultKt")
-            .getMethod("isException", io.github.edsuns.adblockclient.MatchResult::class.java)
+        val method =
+            Class
+                .forName("io.github.edsuns.adblockclient.MatchResultKt")
+                .getMethod("isException", io.github.edsuns.adblockclient.MatchResult::class.java)
         org.junit.Assert.assertNotNull(method)
         org.junit.Assert.assertTrue(method.invoke(null, exceptionResult) as Boolean)
     }
