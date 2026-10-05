@@ -143,6 +143,7 @@ dependencies {
     implementation libs.hasher
     implementation libs.process.phoenix
     implementation libs.easypermissions
+    implementation libs.timber
     configurations.configureEach {
         resolutionStrategy.dependencySubstitution {
             substitute module('com.github.Edsuns.AdblockAndroid:adblock-client') using project(':adblock-client')

@@ -18,4 +18,6 @@ data class MatchResult(
     val matchedExceptionRule: String?,
 )
 
-val MatchResult.hasException: Boolean get() = matchedExceptionRule != null
+val MatchResult.isException: Boolean get() = matchedExceptionRule != null
+
+val MatchResult.hasException: Boolean get() = isException
