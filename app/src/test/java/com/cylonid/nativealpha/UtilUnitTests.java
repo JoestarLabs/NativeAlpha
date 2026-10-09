@@ -45,6 +45,16 @@ public class UtilUnitTests {
 	}
 
 	@Test
+	public void faviconFromMoodleTum() {
+		WebApp webapp = new WebApp("https://moodle.tum.de", Integer.MAX_VALUE);
+		ShortcutDialogFragment frag = ShortcutDialogFragment.newInstance(webapp);
+		String[] result = frag.fetchWebappData();
+		String favicon = result[IconFetchResult.FAVICON.index];
+		assertNotNull(favicon);
+		assertTrue("Favicon URL should contain favicon: " + favicon, favicon.contains("favicon"));
+	}
+
+	@Test
 	public void faviconNull() {
 		testShortcutHelper("https://tugraz.at", null, IconFetchResult.FAVICON.index);
 	}

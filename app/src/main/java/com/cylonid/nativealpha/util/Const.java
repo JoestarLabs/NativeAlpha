@@ -22,7 +22,7 @@ public class Const {
 	public static final int CODE_OPEN_FILE = 512;
 	public static final int CODE_WRITE_FILE = 4096;
 
-	public static final int FAVICON_MIN_WIDTH = 96;
+	public static final int FAVICON_MIN_WIDTH = 16;
 
 	public static ArrayList<AdblockConfig> getDefaultAdBlockConfig() {
 		ArrayList<AdblockConfig> list = new ArrayList<>();

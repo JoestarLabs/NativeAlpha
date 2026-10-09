@@ -1,6 +1,7 @@
 package com.cylonid.nativealpha.util
 
 import android.content.Context
+import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -9,6 +10,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
+import android.graphics.drawable.Icon
 import android.net.Uri
 import android.util.LruCache
 import com.cylonid.nativealpha.R
@@ -135,6 +137,7 @@ object ShortcutIconUtils {
 
         if (success) {
             _iconUpdates.tryEmit(webAppId)
+            updatePinnedShortcuts(context, webAppId, downscaled)
         }
         return success
     }
@@ -247,6 +250,37 @@ object ShortcutIconUtils {
     }
 
     @JvmStatic
+    fun updatePinnedShortcuts(
+        context: Context,
+        webAppId: Int,
+        bitmap: Bitmap,
+    ) {
+        if (webAppId < 0) return
+        runCatching {
+            val scManager = context.getSystemService(ShortcutManager::class.java) ?: return
+            val downscaled = downscaleIfNecessary(bitmap)
+            val matching =
+                scManager.pinnedShortcuts.filter { info ->
+                    info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) == webAppId
+                }
+            if (matching.isNotEmpty()) {
+                val updates =
+                    matching.map { info ->
+                        val builder =
+                            ShortcutInfo
+                                .Builder(context, info.id)
+                                .setIcon(Icon.createWithBitmap(downscaled))
+                        info.shortLabel?.let { builder.setShortLabel(it) }
+                        info.longLabel?.let { builder.setLongLabel(it) }
+                        info.intent?.let { builder.setIntent(it) }
+                        builder.build()
+                    }
+                scManager.updateShortcuts(updates)
+            }
+        }
+    }
+
+    @JvmStatic
     fun getWidthFromIcon(sizeString: String): Int {
         var xIndex = sizeString.indexOf("x")
         if (xIndex == -1) xIndex = sizeString.indexOf("×")
@@ -340,12 +374,12 @@ object ShortcutIconUtils {
             val url = URL(strUrl)
             con =
                 (url.openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 3000
-                    readTimeout = 3000
+                    connectTimeout = 5000
+                    readTimeout = 5000
                     instanceFollowRedirects = true
                     setRequestProperty(
                         "User-Agent",
-                        "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36",
+                        Const.DESKTOP_USER_AGENT,
                     )
                 }
             con.inputStream
@@ -353,7 +387,7 @@ object ShortcutIconUtils {
                     BitmapFactory.decodeStream(stream)
                 }?.let { loaded ->
                     val downscaled = downscaleIfNecessary(loaded, MAX_ICON_DIMENSION)
-                    if (downscaled.width >= 16) downscaled else null
+                    if (downscaled.width >= Const.FAVICON_MIN_WIDTH) downscaled else null
                 }
         } catch (_: Exception) {
             null
