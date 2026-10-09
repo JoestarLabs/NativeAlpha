@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.3](https://github.com/JoestarLabs/NativeAlpha/compare/NativeAlpha-v1.6.2...NativeAlpha-v1.6.3) (2026-10-09)
+
+
+### Bug Fixes
+
+* **deps:** update dependency androidx.compose.material3:material3 to v1.5.0-beta01 ([5894f07](https://github.com/JoestarLabs/NativeAlpha/commit/5894f07e1cf9913b571a59d46632318f0d8d1546))
+* **deps:** update dependency androidx.compose.material3:material3 to v1.5.0-beta01 ([cbad7f9](https://github.com/JoestarLabs/NativeAlpha/commit/cbad7f926b3dae28649f011c4eda034b543301fa))
+* resolve favicon loading for websites with standard dimensions on shortcut creation ([7e23424](https://github.com/JoestarLabs/NativeAlpha/commit/7e23424bb6559f002c8a2f2175da6c8da077fffe))
+* resolve favicon loading for websites with standard dimensions on… ([b0af677](https://github.com/JoestarLabs/NativeAlpha/commit/b0af6771823ac671d51be4186778f99f6cda1e21))
+
 ## [1.6.2](https://github.com/JoestarLabs/NativeAlpha/compare/NativeAlpha-v1.6.1...NativeAlpha-v1.6.2) (2026-10-05)
 
 
