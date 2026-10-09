@@ -3,7 +3,6 @@ package com.cylonid.nativealpha
 import android.app.Activity
 import android.content.pm.ShortcutManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -82,7 +81,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONException
 import org.json.JSONObject
 import org.jsoup.Jsoup
-import java.net.HttpURLConnection
 import java.net.URL
 import java.util.TreeMap
 import java.util.regex.Pattern
@@ -159,35 +157,13 @@ class ShortcutDialogFragment : DialogFragment() {
                         },
                         fetchWebappData = { fetchWebappData() },
                         loadBitmap = { url -> loadBitmap(url) },
+                        getCandidateIconUrls = { candidateIconUrls },
                     )
                 }
             }
         }
 
-    private fun loadBitmap(strUrl: String?): Bitmap? {
-        if (strUrl.isNullOrBlank()) return null
-        var con: HttpURLConnection? = null
-        return try {
-            val url = URL(strUrl)
-            con =
-                (url.openConnection() as HttpURLConnection).apply {
-                    connectTimeout = 3000
-                    readTimeout = 3000
-                    instanceFollowRedirects = true
-                    setRequestProperty("User-Agent", Const.DESKTOP_USER_AGENT)
-                }
-            val loaded =
-                con.inputStream.use { stream ->
-                    BitmapFactory.decodeStream(stream)
-                } ?: return null
-            val downscaled = ShortcutIconUtils.downscaleIfNecessary(loaded, ShortcutIconUtils.MAX_ICON_DIMENSION)
-            if (downscaled.width < Const.FAVICON_MIN_WIDTH) null else downscaled
-        } catch (_: Exception) {
-            null
-        } finally {
-            con?.disconnect()
-        }
-    }
+    fun loadBitmap(strUrl: String?): Bitmap? = ShortcutIconUtils.fetchBitmapFromNetwork(strUrl.orEmpty())
 
     private fun buildIconMap(): TreeMap<Int, String> {
         val foundIcons = TreeMap<Int, String>()
@@ -219,9 +195,16 @@ class ShortcutDialogFragment : DialogFragment() {
         return foundIcons
     }
 
+    var candidateIconUrls: List<String> = emptyList()
+        private set
+
     fun fetchWebappData(): Array<String?> {
         val result = arrayOfNulls<String>(3)
-        val foundIcons = buildIconMap()
+        val foundIcons = TreeMap<Int, MutableList<String>>(compareByDescending { it })
+
+        for ((width, url) in buildIconMap()) {
+            foundIcons.getOrPut(width) { mutableListOf() }.add(url)
+        }
 
         try {
             var doc =
@@ -231,6 +214,11 @@ class ShortcutDialogFragment : DialogFragment() {
                     .userAgent(Const.DESKTOP_USER_AGENT)
                     .followRedirects(true)
                     .get()
+
+            val docLocation = doc.location()
+            if (!docLocation.isNullOrBlank()) {
+                baseUrl = docLocation
+            }
 
             // Step 1: Check for META Redirect
             val metaTags = doc.select("meta[http-equiv=refresh]")
@@ -243,6 +231,10 @@ class ShortcutDialogFragment : DialogFragment() {
                 if (!redirectUrl.isNullOrEmpty()) {
                     baseUrl = redirectUrl
                     doc = Jsoup.connect(baseUrl).followRedirects(true).get()
+                    val newLocation = doc.location()
+                    if (!newLocation.isNullOrBlank()) {
+                        baseUrl = newLocation
+                    }
                 }
             }
 
@@ -280,7 +272,7 @@ class ShortcutDialogFragment : DialogFragment() {
                             val width = ShortcutIconUtils.getWidthFromIcon(sizes)
                             val manifestBaseUrl = URL(mf.absUrl("href"))
                             val fullUrl = URL(manifestBaseUrl, iconHref)
-                            foundIcons[width] = fullUrl.toString()
+                            foundIcons.getOrPut(width) { mutableListOf() }.add(fullUrl.toString())
                         }
                     } catch (e: JSONException) {
                         e.printStackTrace()
@@ -288,42 +280,40 @@ class ShortcutDialogFragment : DialogFragment() {
                 }
             }
 
-            // Step 3: Fallback to PNG icons
-            if (foundIcons.isEmpty()) {
-                val htmlTitle = doc.select("title")
-                if (!htmlTitle.isEmpty()) {
-                    result[IconFetchResult.TITLE.index] = htmlTitle.first()?.text()
-                }
+            // Step 3: Check HTML Title
+            val htmlTitle = doc.select("title")
+            if (!htmlTitle.isEmpty() && result[IconFetchResult.TITLE.index].isNullOrBlank()) {
+                result[IconFetchResult.TITLE.index] = htmlTitle.first()?.text()
+            }
 
-                val icons = doc.select("link[rel=icon]")
-                icons.addAll(doc.select("link[rel=shortcut icon]"))
-                if (icons.size < 3) {
-                    val appleIcons = doc.select("link[rel=apple-touch-icon]")
-                    val appleIconsPrec = doc.select("link[rel=apple-touch-icon-precomposed]")
-                    icons.addAll(appleIcons)
-                    icons.addAll(appleIconsPrec)
-                }
+            // Step 4: Check HTML icons
+            val icons = doc.select("link[rel=icon]")
+            icons.addAll(doc.select("link[rel=shortcut icon]"))
+            if (icons.size < 3) {
+                val appleIcons = doc.select("link[rel=apple-touch-icon]")
+                val appleIconsPrec = doc.select("link[rel=apple-touch-icon-precomposed]")
+                icons.addAll(appleIcons)
+                icons.addAll(appleIconsPrec)
+            }
 
-                for (icon in icons) {
-                    val iconHref = icon.absUrl("href")
-                    val sizes = icon.attr("sizes")
-                    if (sizes.isNotEmpty()) {
-                        val width = ShortcutIconUtils.getWidthFromIcon(sizes)
-                        foundIcons[width] = iconHref
-                    } else {
-                        foundIcons[1] = iconHref
-                    }
+            for (icon in icons) {
+                val iconHref = icon.absUrl("href")
+                if (iconHref.isBlank()) continue
+                val sizes = icon.attr("sizes")
+                if (sizes.isNotEmpty()) {
+                    val width = ShortcutIconUtils.getWidthFromIcon(sizes)
+                    foundIcons.getOrPut(width) { mutableListOf() }.add(iconHref)
+                } else {
+                    foundIcons.getOrPut(1) { mutableListOf() }.add(iconHref)
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        if (foundIcons.isNotEmpty()) {
-            val bestFit = foundIcons.lastEntry()
-            if (bestFit != null) {
-                result[IconFetchResult.FAVICON.index] = bestFit.value
-            }
+        candidateIconUrls = foundIcons.values.flatten().distinct()
+        if (candidateIconUrls.isNotEmpty()) {
+            result[IconFetchResult.FAVICON.index] = candidateIconUrls.first()
         }
 
         return result
@@ -386,13 +376,27 @@ private fun ShortcutDialogContent(
     onConfirm: (title: String, bitmap: Bitmap?) -> Unit,
     fetchWebappData: () -> Array<String?>,
     loadBitmap: (String?) -> Bitmap?,
+    getCandidateIconUrls: () -> List<String> = { emptyList() },
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
     val iconNotFoundMsg = stringResource(R.string.icon_not_found)
+    val initialIcon = remember(webapp?.ID) { webapp?.let { ShortcutIconUtils.getIcon(context, it.ID) } }
     var titleText by remember { mutableStateOf(webapp?.title.orEmpty()) }
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
+    var bitmap by remember(webapp?.ID) { mutableStateOf(initialIcon) }
+    var isLoading by remember(webapp?.ID) { mutableStateOf(initialIcon == null) }
+
+    LaunchedEffect(webapp?.ID) {
+        ShortcutIconUtils.iconUpdates.collect { updatedId ->
+            if (updatedId == webapp?.ID && bitmap == null) {
+                val loaded = ShortcutIconUtils.getIcon(context, updatedId)
+                if (loaded != null) {
+                    bitmap = loaded
+                    isLoading = false
+                }
+            }
+        }
+    }
 
     val iconPickerLauncher =
         rememberLauncherForActivityResult(
@@ -426,22 +430,33 @@ private fun ShortcutDialogContent(
     LaunchedEffect(Unit) {
         val webAppData =
             withContext(Dispatchers.IO) {
-                withTimeoutOrNull(5000L) {
+                withTimeoutOrNull(10000L) {
                     fetchWebappData()
                 }
             }
 
         var fetchedBitmap: Bitmap? = null
-        val iconUrl = webAppData?.getOrNull(IconFetchResult.FAVICON.index)
-        if (!iconUrl.isNullOrBlank()) {
+        val candidates = getCandidateIconUrls()
+        val allCandidates =
+            if (candidates.isNotEmpty()) {
+                candidates
+            } else {
+                listOfNotNull(webAppData?.getOrNull(IconFetchResult.FAVICON.index))
+            }
+
+        if (bitmap == null && allCandidates.isNotEmpty()) {
             fetchedBitmap =
                 withContext(Dispatchers.IO) {
-                    loadBitmap(iconUrl)
+                    for (candidate in allCandidates) {
+                        val b = loadBitmap(candidate)
+                        if (b != null) return@withContext b
+                    }
+                    null
                 }
         }
 
-        // Fallback to well-known favicon endpoints
-        if (fetchedBitmap == null) {
+        // Fallback to well-known favicon endpoints if no icon fetched yet and no existing icon
+        if (fetchedBitmap == null && bitmap == null) {
             fetchedBitmap =
                 withContext(Dispatchers.IO) {
                     val fallbacks = ShortcutIconUtils.getFallbackIconUrls(baseUrl)
@@ -453,8 +468,8 @@ private fun ShortcutDialogContent(
                 }
         }
 
-        // Fallback to monogram if none found
-        if (fetchedBitmap == null) {
+        // Fallback to monogram if none found and no existing icon
+        if (fetchedBitmap == null && bitmap == null) {
             val fallbackTitle =
                 webAppData?.getOrNull(IconFetchResult.TITLE.index)?.takeIf { it.isNotBlank() }
                     ?: webapp?.title?.takeIf { it.isNotBlank() }
@@ -477,7 +492,9 @@ private fun ShortcutDialogContent(
             titleText = fetchedTitle
         }
 
-        bitmap = fetchedBitmap
+        if (fetchedBitmap != null) {
+            bitmap = fetchedBitmap
+        }
         isLoading = false
     }
 

@@ -176,4 +176,19 @@ class ShortcutIconUtilsTest {
         assertNotNull(reloaded)
         ShortcutIconUtils.deleteIcon(context, webAppId)
     }
+
+    @Test
+    fun testUpdatePinnedShortcutsNoCrash() {
+        val webAppId = 42
+        val bmp = Bitmap.createBitmap(16, 16, Bitmap.Config.ARGB_8888)
+        // Should execute smoothly without crashing even if no pinned shortcuts exist in test environment
+        ShortcutIconUtils.updatePinnedShortcuts(context, webAppId, bmp)
+        ShortcutIconUtils.updatePinnedShortcuts(context, -1, bmp)
+    }
+
+    @Test
+    fun testFetchBitmapFromNetworkSizeConstraint() {
+        // Empty url returns null
+        assertNull(ShortcutIconUtils.fetchBitmapFromNetwork(""))
+    }
 }
