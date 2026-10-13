@@ -26,7 +26,7 @@ If applicable, add screenshots to help explain your problem.
 
 **Smartphone (please complete the following information):**
  - Device: [e.g. Pixel 11 Pro]
- - OS: [e.g. Android 17]
+ - Android version: [e.g. Android 17]
  - App version [In the About (i) screen, e.g. v1.6.3]
 
 **Additional context**
