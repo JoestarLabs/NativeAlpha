@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Extension
@@ -59,6 +60,8 @@ import androidx.compose.ui.unit.dp
 import com.cylonid.nativealpha.BuildConfig
 import com.cylonid.nativealpha.DependenciesActivity
 import com.cylonid.nativealpha.R
+import com.cylonid.nativealpha.model.ReleaseNotesRepository
+import com.cylonid.nativealpha.ui.components.ReleaseNotesBottomSheet
 import com.cylonid.nativealpha.ui.components.RoundedCardContainer
 import com.cylonid.nativealpha.ui.components.SettingsActionItem
 import com.cylonid.nativealpha.ui.components.SettingsSectionHeader
@@ -70,9 +73,11 @@ fun AboutScreen(
     modifier: Modifier = Modifier,
 ) {
     var showEulaDialog by remember { mutableStateOf(false) }
+    var showReleaseNotesSheet by remember { mutableStateOf(false) }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val context = LocalContext.current
+    val releaseNotes = remember { ReleaseNotesRepository.load(context) }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -204,6 +209,14 @@ fun AboutScreen(
             SettingsSectionHeader(stringResource(R.string.about_section_community))
 
             RoundedCardContainer(modifier = Modifier.fillMaxWidth()) {
+                SettingsActionItem(
+                    title = stringResource(R.string.whats_new),
+                    description = "Version v${BuildConfig.VERSION_NAME}",
+                    icon = Icons.Rounded.AutoAwesome,
+                    trailingIcon = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                    onClick = { showReleaseNotesSheet = true },
+                )
+
                 SettingsActionItem(
                     title = stringResource(R.string.about_fork_repo),
                     description = "JoestarLabs/NativeAlpha",
@@ -340,6 +353,13 @@ fun AboutScreen(
                 }
             },
             shape = RoundedCornerShape(28.dp),
+        )
+    }
+
+    if (showReleaseNotesSheet) {
+        ReleaseNotesBottomSheet(
+            releaseNotes = releaseNotes,
+            onDismiss = { showReleaseNotesSheet = false },
         )
     }
 }

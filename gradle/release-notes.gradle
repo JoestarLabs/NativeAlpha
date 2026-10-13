@@ -1,0 +1,84 @@
+import groovy.json.JsonOutput
+
+def appVersionName = android.defaultConfig.versionName
+
+def generateReleaseNotesTask = tasks.register("generateReleaseNotesAsset") {
+    def changelogFile = rootProject.file("CHANGELOG.md")
+    def outputDir = layout.buildDirectory.dir("generated/release_notes/assets").get().asFile
+    def outputFile = new File(outputDir, "release_notes.json")
+
+    inputs.file(changelogFile).optional(true)
+    inputs.property("versionName", appVersionName)
+    outputs.file(outputFile)
+
+    doLast {
+        outputDir.mkdirs()
+        def currentVersion = appVersionName
+        def releaseUrl = "https://github.com/JoestarLabs/NativeAlpha/releases/tag/v${currentVersion}"
+        def sections = []
+
+        if (changelogFile.exists()) {
+            def content = changelogFile.text
+            def pattern = ~/##\s+\[\Q${currentVersion}\E\][^\n]*\n([\s\S]*?)(?=\n##\s+\[|\Z)/
+            def matcher = content =~ pattern
+            def sectionText = ""
+            if (matcher.find()) {
+                sectionText = matcher.group(1).trim()
+            } else {
+                def fallbackPattern = ~/##\s+\[([0-9.]+)\][^\n]*\n([\s\S]*?)(?=\n##\s+\[|\Z)/
+                def fallbackMatcher = content =~ fallbackPattern
+                if (fallbackMatcher.find()) {
+                    sectionText = fallbackMatcher.group(2).trim()
+                }
+            }
+
+            if (sectionText) {
+                def currentSectionTitle = null
+                def currentItems = []
+
+                sectionText.eachLine { line ->
+                    def trimmed = line.trim()
+                    if (trimmed.startsWith("###")) {
+                        if (currentSectionTitle && !currentItems.isEmpty()) {
+                            sections << [title: currentSectionTitle, items: new ArrayList(currentItems)]
+                            currentItems.clear()
+                        }
+                        currentSectionTitle = trimmed.replaceFirst(/^###\s+/, "")
+                            .replace("⚠", "").trim()
+                    } else if (trimmed.startsWith("*")) {
+                        def itemText = trimmed.replaceFirst(/^\*\s+/, "")
+                        itemText = itemText.replaceAll(/\(\[[a-f0-9]{7}\]\([^)]+\)\)/, "").trim()
+                        itemText = itemText.replaceAll(/,?\s*closes\s*\[#[0-9]+\]\([^)]+\)/, "").trim()
+                        itemText = itemText.replaceAll(/,\s*$/, "").trim()
+                        if (itemText && !currentItems.contains(itemText)) {
+                            currentItems << itemText
+                        }
+                    }
+                }
+                if (currentSectionTitle && !currentItems.isEmpty()) {
+                    sections << [title: currentSectionTitle, items: new ArrayList(currentItems)]
+                }
+            }
+        }
+
+        def data = [
+            versionName: currentVersion,
+            releaseUrl: releaseUrl,
+            sections: sections
+        ]
+
+        outputFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(data))
+    }
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(generateReleaseNotesTask)
+}
+
+android {
+    sourceSets {
+        main {
+            assets.srcDirs += files(layout.buildDirectory.dir("generated/release_notes/assets"))
+        }
+    }
+}

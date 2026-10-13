@@ -120,6 +120,8 @@ android {
     }
 }
 
+apply from: "$rootDir/gradle/release-notes.gradle"
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 

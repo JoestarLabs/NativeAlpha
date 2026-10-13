@@ -203,4 +203,10 @@
     <string name="open_settings">Open settings</string>
     <string name="create_shortcut">Create shortcut</string>
     <string name="delete">Delete</string>
+    <string name="whats_new">What\'s New</string>
+    <string name="release_notes_title">What\'s New in Native Alpha</string>
+    <string name="view_on_github">GitHub</string>
+    <string name="got_it">Got it</string>
+    <string name="release_notes_fallback">Release notes for this version are available on GitHub.</string>
+    <string name="support_liberapay_desc">You are using the extended release with all Plus features free of charge. Consider supporting development on Liberapay.</string>
 </resources>

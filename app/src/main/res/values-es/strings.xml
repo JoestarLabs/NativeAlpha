@@ -203,4 +203,10 @@
     <string name="open_settings">Abrir ajustes</string>
     <string name="create_shortcut">Crear acceso directo</string>
     <string name="delete">Eliminar</string>
+    <string name="whats_new">Novedades</string>
+    <string name="release_notes_title">Novedades en Native Alpha</string>
+    <string name="view_on_github">GitHub</string>
+    <string name="got_it">Entendido</string>
+    <string name="release_notes_fallback">Las notas de la versión están disponibles en GitHub.</string>
+    <string name="support_liberapay_desc">Estás utilizando la versión extendida con todas las funciones Plus gratis. Considera apoyar el desarrollo en Liberapay.</string>
 </resources>
