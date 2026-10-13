@@ -470,10 +470,6 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 	}
 
 	private void setDarkModeIfNeeded() {
-		if (!BuildConfig.FLAVOR.contains("extended")) {
-			return;
-		}
-
 		boolean needsForcedDarkMode = webapp.isUseTimespanDarkMode()
 				&& DateUtils.isInInterval(DateUtils.convertStringToCalendar(webapp.getTimespanDarkModeBegin()),
 						Calendar.getInstance(), DateUtils.convertStringToCalendar(webapp.getTimespanDarkModeEnd()))

@@ -144,7 +144,7 @@ fun WebAppSettingsScreen(
                     val id = task.taskInfo?.baseIntent?.getIntExtra(Const.INTENT_WEBAPPID, -1) ?: -1
                     if (id == webappId) task.finishAndRemoveTask()
                 }
-                for (processInfo in activityManager.runningAppProcesses) {
+                for (processInfo in activityManager.runningAppProcesses ?: emptyList()) {
                     if (processInfo.processName.contains("web_sandbox_" + webapp.containerId)) {
                         Process.killProcess(processInfo.pid)
                     }
