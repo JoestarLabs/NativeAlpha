@@ -227,7 +227,7 @@ fun AboutScreen(
                 if (BuildConfig.FLAVOR != "extended") {
                     SettingsActionItem(
                         title = "Google Play",
-                        description = "Native Alpha Plus",
+                        description = "Native Alpha Plus (Support original dev)",
                         icon = Icons.Rounded.ShoppingBag,
                         trailingIcon = Icons.AutoMirrored.Rounded.OpenInNew,
                         onClick = {

@@ -3,8 +3,6 @@ package com.cylonid.nativealpha.model;
 import android.util.Log;
 import androidx.annotation.NonNull;
 
-import com.cylonid.nativealpha.BuildConfig;
-
 import java.util.stream.IntStream;
 
 public class SandboxManager {
@@ -19,12 +17,11 @@ public class SandboxManager {
 		IntStream.range(0, NUM_OF_SANDBOXES).forEach(x -> sandboxes[x] = new Sandbox(x));
 	}
 
-	public static SandboxManager getInstance() {
-		if (BuildConfig.FLAVOR.contains("extended")) {
-			instance = instance == null ? new SandboxManager() : instance;
-			return instance;
+	public static synchronized SandboxManager getInstance() {
+		if (instance == null) {
+			instance = new SandboxManager();
 		}
-		return null;
+		return instance;
 	}
 
 	public int calculateNextFreeContainerId() {

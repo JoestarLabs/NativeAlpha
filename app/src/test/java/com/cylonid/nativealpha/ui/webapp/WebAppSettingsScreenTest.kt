@@ -103,4 +103,36 @@ class WebAppSettingsScreenTest {
         zoomToggle.performClick()
         zoomToggle.assertIsOff()
     }
+
+    @Test
+    fun testEnablingSandboxAllocatesContainerIdWithoutCrashing() {
+        composeTestRule.setContent {
+            NativeAlphaTheme {
+                WebAppSettingsScreen(
+                    webappId = testWebAppId,
+                    onNavigateBack = {},
+                )
+            }
+        }
+
+        val expertSettingsStr = context.getString(R.string.show_expert_settings)
+        val sandboxStr = context.getString(R.string.enable_sandbox)
+
+        val expertToggle = composeTestRule.onNodeWithText(expertSettingsStr).performScrollTo()
+        expertToggle.assertIsDisplayed()
+        expertToggle.assertIsOff()
+
+        expertToggle.performClick()
+        expertToggle.assertIsOn()
+
+        val sandboxToggle = composeTestRule.onNodeWithText(sandboxStr).performScrollTo()
+        sandboxToggle.assertIsDisplayed()
+        sandboxToggle.assertIsOff()
+
+        sandboxToggle.performClick()
+        sandboxToggle.assertIsOn()
+
+        sandboxToggle.performClick()
+        sandboxToggle.assertIsOff()
+    }
 }

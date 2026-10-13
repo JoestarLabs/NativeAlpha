@@ -144,4 +144,35 @@ class WebAppSettingsLogicTest {
         clone.isOverrideGlobalSettings = false
         assertTrue("Original must remain true", original.isOverrideGlobalSettings)
     }
+
+    @Test
+    fun testSandboxManagerLifecycleAndContainerAllocation() {
+        val manager = SandboxManager.getInstance()
+        org.junit.Assert.assertNotNull("SandboxManager instance should not be null", manager)
+
+        manager.nextContainer = 0
+        for (i in 0 until 8) {
+            val containerId = manager.calculateNextFreeContainerId()
+            assertEquals("Container ID should match index in sequence", i, containerId)
+        }
+        val wrappedContainerId = manager.calculateNextFreeContainerId()
+        assertEquals("Container ID should wrap around to 0 after 8 containers", 0, wrappedContainerId)
+    }
+
+    @Test
+    fun testWebAppSandboxContainerToggling() {
+        val webApp = WebApp("https://example.com", 3, Const.getDefaultAdBlockConfig())
+        assertFalse(webApp.isUseContainer)
+        assertEquals(Const.NO_CONTAINER, webApp.containerId)
+
+        webApp.isUseContainer = true
+        webApp.containerId = SandboxManager.getInstance().calculateNextFreeContainerId()
+        assertTrue(webApp.isUseContainer)
+        assertTrue(webApp.containerId in 0..7)
+
+        webApp.isUseContainer = false
+        webApp.containerId = Const.NO_CONTAINER
+        assertFalse(webApp.isUseContainer)
+        assertEquals(Const.NO_CONTAINER, webApp.containerId)
+    }
 }
