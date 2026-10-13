@@ -10,11 +10,17 @@ import androidx.activity.viewModels
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import com.cylonid.nativealpha.helper.AdblockLifecycleHelper
 import com.cylonid.nativealpha.model.DataManager
+import com.cylonid.nativealpha.model.ReleaseNotesRepository
+import com.cylonid.nativealpha.ui.components.ReleaseNotesBottomSheet
 import com.cylonid.nativealpha.ui.theme.NativeAlphaTheme
 import com.cylonid.nativealpha.ui.webapplist.WebAppListScreen
 import com.cylonid.nativealpha.ui.webapplist.WebAppListViewModel
@@ -33,6 +39,20 @@ class MainActivity : AppCompatActivity() {
         entryPointReached(this)
 
         setContent {
+            val context = LocalContext.current
+            var showReleaseNotesSheet by rememberSaveable { mutableStateOf(false) }
+            val releaseNotes = remember { ReleaseNotesRepository.load(context) }
+
+            LaunchedEffect(Unit) {
+                val lastShown = DataManager.getInstance().lastShownUpdate
+                val currentVersion = BuildConfig.VERSION_CODE
+                if (lastShown != 0 && lastShown < currentVersion) {
+                    showReleaseNotesSheet = true
+                } else if (lastShown == 0) {
+                    DataManager.getInstance().lastShownUpdate = currentVersion
+                }
+            }
+
             val isDynamicColor by remember {
                 mutableStateOf(
                     runCatching { DataManager.getInstance().settings.isDynamicColor }.getOrDefault(false),
@@ -63,6 +83,16 @@ class MainActivity : AppCompatActivity() {
                         frag.show(supportFragmentManager, "SCFetcher-" + webApp.ID)
                     },
                 )
+
+                if (showReleaseNotesSheet) {
+                    ReleaseNotesBottomSheet(
+                        releaseNotes = releaseNotes,
+                        onDismiss = {
+                            DataManager.getInstance().lastShownUpdate = BuildConfig.VERSION_CODE
+                            showReleaseNotesSheet = false
+                        },
+                    )
+                }
             }
         }
 

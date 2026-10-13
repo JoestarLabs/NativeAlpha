@@ -198,4 +198,10 @@
     <string name="open_settings">Einstellungen öffnen</string>
     <string name="create_shortcut">Verknüpfung erstellen</string>
     <string name="delete">Löschen</string>
+    <string name="whats_new">Was ist neu</string>
+    <string name="release_notes_title">Was ist neu in Native Alpha</string>
+    <string name="view_on_github">GitHub</string>
+    <string name="got_it">Verstanden</string>
+    <string name="release_notes_fallback">Versionshinweise für diese Version sind auf GitHub verfügbar.</string>
+    <string name="support_liberapay_desc">Sie verwenden die erweiterte Version mit allen Plus-Funktionen kostenlos. Unterstützen Sie die Weiterentwicklung auf Liberapay.</string>
 </resources>

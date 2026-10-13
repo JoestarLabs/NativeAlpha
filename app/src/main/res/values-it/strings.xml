@@ -200,4 +200,10 @@
     <string name="open_settings">Apri impostazioni</string>
     <string name="create_shortcut">Crea scorciatoia</string>
     <string name="delete">Elimina</string>
+    <string name="whats_new">Novità</string>
+    <string name="release_notes_title">Novità in Native Alpha</string>
+    <string name="view_on_github">GitHub</string>
+    <string name="got_it">Ho capito</string>
+    <string name="release_notes_fallback">Le note di rilascio sono disponibili su GitHub.</string>
+    <string name="support_liberapay_desc">Stai utilizzando la versione estesa con tutte le funzionalità Plus gratuite. Considera di supportare lo sviluppo su Liberapay.</string>
 </resources>
