@@ -5,6 +5,16 @@ plugins {
 }
 
 
+def calculateVersionCode(String version) {
+    if (!version) return 1
+    def clean = version.split('-')[0].trim()
+    def parts = clean.split('\\.').collect { it.isInteger() ? it.toInteger() : 0 }
+    def major = parts.size() > 0 ? parts[0] : 0
+    def minor = parts.size() > 1 ? parts[1] : 0
+    def patch = parts.size() > 2 ? parts[2] : 0
+    return major * 10000 + minor * 100 + patch
+}
+
 android {
     namespace 'com.cylonid.nativealpha'
     compileSdk 37
@@ -44,8 +54,8 @@ android {
         applicationId "com.cylonid.nativealpha"
         minSdkVersion 28
         targetSdkVersion 35
-        versionCode 1520
         versionName "1.6.3" // x-release-please-version
+        versionCode calculateVersionCode(versionName)
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'

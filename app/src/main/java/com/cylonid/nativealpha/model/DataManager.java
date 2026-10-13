@@ -22,8 +22,8 @@ import com.google.gson.reflect.TypeToken;
 import com.himanshurawat.hasher.HashType;
 import com.himanshurawat.hasher.Hasher;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -298,33 +298,37 @@ public class DataManager {
 		return c;
 	}
 
-	public boolean saveSharedPreferencesToFile(Uri uri) {
-		boolean result = false;
-		try (FileOutputStream fos = (FileOutputStream) App.getAppContext().getContentResolver().openOutputStream(uri);
-				Base64OutputStream b64os = new Base64OutputStream(fos, Base64.DEFAULT);
+	public boolean saveSharedPreferences(OutputStream os) {
+		try (Base64OutputStream b64os = new Base64OutputStream(os, Base64.DEFAULT);
 				ObjectOutputStream oos = new ObjectOutputStream(b64os)) {
 			appdata = App.getAppContext().getSharedPreferences(SHARED_PREF_KEY, MODE_PRIVATE);
 			TreeMap<String, ?> shared_pref_map = new TreeMap<>(appdata.getAll());
 
 			oos.writeObject(Hasher.Companion.hash(shared_pref_map.toString(), HashType.SHA_256));
 			oos.writeObject(shared_pref_map);
-
-			result = true;
+			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
+			return false;
 		}
-		return result;
 	}
 
-	public boolean loadSharedPreferencesFromFile(Uri uri) {
-		boolean result = false;
-		try (FileInputStream fis = (FileInputStream) App.getAppContext().getContentResolver().openInputStream(uri);
-				Base64InputStream b64is = new Base64InputStream(fis, Base64.DEFAULT);
+	public boolean saveSharedPreferencesToFile(Uri uri) {
+		try (OutputStream os = App.getAppContext().getContentResolver().openOutputStream(uri)) {
+			if (os == null) {
+				return false;
+			}
+			return saveSharedPreferences(os);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean loadSharedPreferences(InputStream is) {
+		try (Base64InputStream b64is = new Base64InputStream(is, Base64.DEFAULT);
 				ObjectInputStream ois = new ObjectInputStream(b64is)) {
 
-			SharedPreferences.Editor prefEdit = App.getAppContext().getSharedPreferences(SHARED_PREF_KEY, MODE_PRIVATE)
-					.edit();
-			prefEdit.clear();
 			String checksum = (String) ois.readObject();
 			Object readObj = ois.readObject();
 			if (!(readObj instanceof Map<?, ?>)) {
@@ -333,8 +337,13 @@ public class DataManager {
 			Map<?, ?> shared_pref_map = (Map<?, ?>) readObj;
 			String new_checksum = Hasher.Companion.hash(shared_pref_map.toString(), HashType.SHA_256);
 
-			if (!checksum.equals(new_checksum))
+			if (!checksum.equals(new_checksum)) {
 				throw new InvalidChecksumException("Checksums between backup and restored settings do not match.");
+			}
+
+			SharedPreferences.Editor prefEdit = App.getAppContext().getSharedPreferences(SHARED_PREF_KEY, MODE_PRIVATE)
+					.edit();
+			prefEdit.clear();
 			for (Map.Entry<?, ?> entry : shared_pref_map.entrySet()) {
 				Object v = entry.getValue();
 				String key = String.valueOf(entry.getKey());
@@ -351,13 +360,24 @@ public class DataManager {
 					prefEdit.putString(key, ((String) v));
 			}
 			prefEdit.apply();
-			result = true;
+			return true;
 
 		} catch (InvalidChecksumException | IOException | ClassNotFoundException e) {
 			e.printStackTrace();
+			return false;
 		}
+	}
 
-		return result;
+	public boolean loadSharedPreferencesFromFile(Uri uri) {
+		try (InputStream is = App.getAppContext().getContentResolver().openInputStream(uri)) {
+			if (is == null) {
+				return false;
+			}
+			return loadSharedPreferences(is);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 	private String checkDataFormat(int dataFormat, String jsonInput) {

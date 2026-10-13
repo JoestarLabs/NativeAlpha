@@ -43,13 +43,6 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Update version metadata
-        run: |
-          VERSION="${{ needs.release-please.outputs.version }}"
-          VERSION_CODE=$(date +%s)
-          sed -i "s/versionName \".*\"/versionName \"$VERSION\"/" app/build.gradle
-          sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" app/build.gradle
-
       - name: Decode release signing keystore
         if: env.SIGNING_KEYSTORE != ''
         env:
