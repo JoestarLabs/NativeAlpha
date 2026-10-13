@@ -73,151 +73,167 @@ fun ReleaseNotesBottomSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp)
                     .navigationBarsPadding(),
         ) {
-            // ── Header ──
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 12.dp),
+            // ── Scrollable Body ──
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp),
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(48.dp),
+                // ── Header ──
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 12.dp),
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Rounded.AutoAwesome,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(24.dp),
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(48.dp),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Rounded.AutoAwesome,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.width(16.dp))
+
+                    Column {
+                        Text(
+                            text = stringResource(R.string.release_notes_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = "v${releaseNotes.versionName}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.SemiBold,
                         )
                     }
                 }
 
-                Spacer(Modifier.width(16.dp))
-
-                Column {
-                    Text(
-                        text = stringResource(R.string.release_notes_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "v${releaseNotes.versionName}",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-            }
-
-            // ── Squiggly Divider ──
-            ExpressiveSquigglyDivider(
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                modifier = Modifier.padding(vertical = 8.dp),
-            )
-
-            // ── Release Notes Content ──
-            if (releaseNotes.sections.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.release_notes_fallback),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 16.dp),
+                // ── Squiggly Divider ──
+                ExpressiveSquigglyDivider(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(vertical = 8.dp),
                 )
-            } else {
-                releaseNotes.sections.forEach { section ->
-                    Spacer(Modifier.height(12.dp))
-                    ReleaseNotesSectionView(
-                        title = section.title,
-                        items = section.items,
-                    )
-                }
-            }
 
-            // ── Liberapay Callout (for GitHub / Izzy extended builds) ──
-            if (BuildConfig.FLAVOR == "extendedGithub") {
-                Spacer(Modifier.height(16.dp))
-                Surface(
-                    onClick = { openUrl("https://liberapay.com/cylonid") },
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.VolunteerActivism,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                            modifier = Modifier.size(22.dp),
+                // ── Release Notes Content ──
+                if (releaseNotes.sections.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.release_notes_fallback),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 16.dp),
+                    )
+                } else {
+                    releaseNotes.sections.forEach { section ->
+                        Spacer(Modifier.height(12.dp))
+                        ReleaseNotesSectionView(
+                            title = section.title,
+                            items = section.items,
                         )
-                        Spacer(Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.support_liberapay),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    }
+                }
+
+                // ── Liberapay Callout (for GitHub / Izzy extended builds) ──
+                if (BuildConfig.FLAVOR == "extendedGithub") {
+                    Spacer(Modifier.height(16.dp))
+                    Surface(
+                        onClick = { openUrl("https://liberapay.com/cylonid") },
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.VolunteerActivism,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.size(22.dp),
                             )
-                            Spacer(Modifier.height(2.dp))
-                            Text(
-                                text = stringResource(R.string.support_liberapay_desc),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f),
+                            Spacer(Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = stringResource(R.string.support_liberapay),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    text = stringResource(R.string.support_liberapay_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f),
+                                )
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
+                                modifier = Modifier.size(18.dp),
                             )
                         }
-                        Spacer(Modifier.width(8.dp))
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+            }
+
+            // ── Sticky Actions Footer ──
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+            ) {
+                ExpressiveSquigglyDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(top = 4.dp, bottom = 12.dp),
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    OutlinedButton(
+                        onClick = { openUrl(releaseNotes.releaseUrl) },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f),
                             modifier = Modifier.size(18.dp),
                         )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.view_on_github),
+                            maxLines = 1,
+                        )
                     }
-                }
-            }
 
-            // ── Bottom Divider ──
-            ExpressiveSquigglyDivider(
-                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
-                modifier = Modifier.padding(top = 18.dp, bottom = 12.dp),
-            )
-
-            // ── Actions ──
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OutlinedButton(
-                    onClick = { openUrl(releaseNotes.releaseUrl) },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.view_on_github),
-                        maxLines = 1,
-                    )
-                }
-
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Text(text = stringResource(R.string.got_it))
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Text(text = stringResource(R.string.got_it))
+                    }
                 }
             }
         }
