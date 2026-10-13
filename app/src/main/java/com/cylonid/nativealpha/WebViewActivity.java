@@ -525,7 +525,7 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 
 		// The item is disabled because it has no click action, but we want to override
 		// the disabled style (text color)
-		int colorOnSurface = MaterialColors.getColor(center, R.attr.colorOnSurface, Color.BLACK);
+		int colorOnSurface = MaterialColors.getColor(center, com.google.android.material.R.attr.colorOnSurface, Color.BLACK);
 		ForegroundColorSpan foregroundColorSpan = new ForegroundColorSpan(colorOnSurface);
 		spanStringWebAppTitle.setSpan(foregroundColorSpan, 0, spanStringWebAppTitle.length(), 0);
 
