@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.6.4](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.3...v1.6.4) (2026-10-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* Transition versionCode calculation from Unix timestamp to version-derived integer. In-place updates from GitHub v1.6.3 APK will require backup, uninstall, and restore.
+
+### Features
+
+* modernize release metadata, dynamic versionCode calculation, and backup test suite ([afa1387](https://github.com/JoestarLabs/NativeAlpha/commit/afa1387f2eaa76a42bbc896d259964a63914c4a4))
+
+
+### Bug Fixes
+
+* resolve sandbox NPE crash and enable flavor feature parity ([9358d31](https://github.com/JoestarLabs/NativeAlpha/commit/9358d311fc7e9db851c4e0a809461616f625c1df))
+* resolve sandbox NPE crash and enable flavor feature parity ([188300c](https://github.com/JoestarLabs/NativeAlpha/commit/188300ce513f9ac58e3be8c67cfb025a67a6cdf7)), closes [#47](https://github.com/JoestarLabs/NativeAlpha/issues/47)
+
 ## [1.6.3](https://github.com/JoestarLabs/NativeAlpha/compare/NativeAlpha-v1.6.2...NativeAlpha-v1.6.3) (2026-10-09)
 
 
