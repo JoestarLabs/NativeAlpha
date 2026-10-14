@@ -62,7 +62,8 @@ class WebViewMenuBottomSheetDialogFragment : BottomSheetDialogFragment() {
             canGoForward: Boolean,
             webApp: WebApp?,
             listener: WebViewMenuListener,
-        ): WebViewMenuBottomSheetDialogFragment {
+        ): WebViewMenuBottomSheetDialogFragment? {
+            if (fragmentManager.isStateSaved) return null
             val existing = fragmentManager.findFragmentByTag(TAG) as? WebViewMenuBottomSheetDialogFragment
             if (existing != null) {
                 existing.dismissAllowingStateLoss()
@@ -107,7 +108,6 @@ class WebViewMenuBottomSheetDialogFragment : BottomSheetDialogFragment() {
         }
     }
 
-    @Suppress("DEPRECATION")
     override fun onStart() {
         super.onStart()
         (dialog as? BottomSheetDialog)?.let { bottomSheetDialog ->
@@ -117,7 +117,10 @@ class WebViewMenuBottomSheetDialogFragment : BottomSheetDialogFragment() {
             }
             bottomSheetDialog.window?.let { window ->
                 WindowCompat.setDecorFitsSystemWindows(window, false)
-                window.navigationBarColor = android.graphics.Color.TRANSPARENT
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                    @Suppress("DEPRECATION")
+                    window.navigationBarColor = android.graphics.Color.TRANSPARENT
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     window.isNavigationBarContrastEnforced = false
                 }

@@ -52,7 +52,8 @@ class WebViewMenuDialogFragment : DialogFragment() {
             canGoForward: Boolean,
             webApp: WebApp?,
             listener: WebViewMenuListener,
-        ): WebViewMenuDialogFragment {
+        ): WebViewMenuDialogFragment? {
+            if (fragmentManager.isStateSaved) return null
             val existing = fragmentManager.findFragmentByTag(TAG) as? WebViewMenuDialogFragment
             if (existing != null) {
                 existing.dismissAllowingStateLoss()

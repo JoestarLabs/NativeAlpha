@@ -5,9 +5,10 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentActivity
 import com.cylonid.nativealpha.model.WebApp
+import java.lang.ref.WeakReference
 
 object WebViewMenuLauncher {
-    private var currentPopupMenu: PopupMenu? = null
+    private var currentPopupMenu: WeakReference<PopupMenu>? = null
 
     @JvmStatic
     fun show(
@@ -21,6 +22,7 @@ object WebViewMenuLauncher {
         anchorView: View?,
         listener: WebViewMenuListener,
     ) {
+        if (activity.isFinishing || activity.isDestroyed) return
         dismiss(activity)
         when (style) {
             WebAppMenuStyle.BOTTOM_SHEET -> {
@@ -47,7 +49,7 @@ object WebViewMenuLauncher {
             }
             WebAppMenuStyle.CLASSIC_DROPDOWN -> {
                 val anchor = anchorView ?: activity.window.decorView
-                currentPopupMenu =
+                val popup =
                     WebViewClassicPopupMenu.show(
                         activity,
                         anchor,
@@ -55,13 +57,19 @@ object WebViewMenuLauncher {
                         canGoForward,
                         listener,
                     )
+                popup.setOnDismissListener {
+                    if (currentPopupMenu?.get() === popup) {
+                        currentPopupMenu = null
+                    }
+                }
+                currentPopupMenu = WeakReference(popup)
             }
         }
     }
 
     @JvmStatic
     fun dismiss(activity: FragmentActivity) {
-        currentPopupMenu?.dismiss()
+        currentPopupMenu?.get()?.dismiss()
         currentPopupMenu = null
 
         val fm = activity.supportFragmentManager

@@ -401,11 +401,18 @@ fun SettingsScreen(
             AlertDialog(
                 onDismissRequest = { showMenuStyleDialog = false },
                 title = {
-                    Text(
-                        text = stringResource(R.string.webapp_menu_style),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = stringResource(R.string.webapp_menu_style),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            text = stringResource(R.string.webapp_menu_style_summary),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

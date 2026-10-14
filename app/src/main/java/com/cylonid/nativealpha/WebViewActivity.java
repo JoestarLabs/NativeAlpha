@@ -19,12 +19,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.text.SpannableString;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.StyleSpan;
-import android.util.Log;
+import android.os.Looper;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowInsets;
@@ -42,7 +38,6 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
-import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 
 import androidx.activity.OnBackPressedCallback;
@@ -73,7 +68,6 @@ import com.cylonid.nativealpha.util.NotificationUtils;
 import com.cylonid.nativealpha.util.ShortcutIconUtils;
 import com.cylonid.nativealpha.util.Utility;
 import com.cylonid.nativealpha.util.WebViewLauncher;
-import com.google.android.material.color.MaterialColors;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.UnsupportedEncodingException;
@@ -296,7 +290,6 @@ public class WebViewActivity extends AppCompatActivity
 		wv.setWebViewClient(new CustomBrowser());
 		wv.getSettings().setSafeBrowsingEnabled(false);
 		wv.getSettings().setDomStorageEnabled(true);
-		wv.getSettings().setDatabaseEnabled(true);
 		wv.getSettings().setAllowFileAccess(true);
 		wv.getSettings().setBlockNetworkLoads(false);
 		// wv.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
@@ -556,8 +549,10 @@ public class WebViewActivity extends AppCompatActivity
 	public void onCopyUrl() {
 		if (wv.getUrl() != null) {
 			ClipboardManager clipboard = getSystemService(ClipboardManager.class);
-			ClipData clip = ClipData.newPlainText("URL", wv.getUrl());
-			clipboard.setPrimaryClip(clip);
+			if (clipboard != null) {
+				ClipData clip = ClipData.newPlainText("URL", wv.getUrl());
+				clipboard.setPrimaryClip(clip);
+			}
 		}
 	}
 
@@ -631,7 +626,7 @@ public class WebViewActivity extends AppCompatActivity
 					getString(R.string.bioprompt_restricted_webapp));
 		}
 		if (webapp.isAutoreload()) {
-			reload_handler = new Handler();
+			reload_handler = new Handler(Looper.getMainLooper());
 			reload();
 		}
 
@@ -653,7 +648,7 @@ public class WebViewActivity extends AppCompatActivity
 
 		if (reload_handler != null) {
 			reload_handler.removeCallbacksAndMessages(null);
-			Log.d("CLEANUP", "Stopped reload handler");
+			Timber.d("Stopped reload handler");
 		}
 	}
 
@@ -827,14 +822,14 @@ public class WebViewActivity extends AppCompatActivity
 			new AlertDialog.Builder(WebViewActivity.this)
 					.setTitle(getPermissionRequestStringResource("dialog_permission_", resId, "_title"))
 					.setMessage(getPermissionRequestStringResource("dialog_permission_", resId, "_txt"))
-					.setPositiveButton(android.R.string.yes, (dialog, id) -> {
+					.setPositiveButton(android.R.string.ok, (dialog, id) -> {
 						enablePermissionBoolOnWebApp(successCallback);
 						handleGeoPermissionCallback(true);
 						permissionsToGrant.addAll(Arrays.asList(webkitPermission));
 						if (androidPermissionsMissing) {
 							ActivityCompat.requestPermissions(WebViewActivity.this, androidPermissions, requestCode);
 						}
-					}).setNegativeButton(android.R.string.no, (dialog, id) -> handleGeoPermissionCallback(false))
+					}).setNegativeButton(android.R.string.cancel, (dialog, id) -> handleGeoPermissionCallback(false))
 					.create().show();
 		}
 
@@ -1049,6 +1044,7 @@ public class WebViewActivity extends AppCompatActivity
 			return super.shouldInterceptRequest(view, request);
 		}
 
+		@SuppressLint("WebViewClientOnReceivedSslError")
 		@Override
 		public void onReceivedSslError(WebView view, final SslErrorHandler handler, SslError error) {
 
