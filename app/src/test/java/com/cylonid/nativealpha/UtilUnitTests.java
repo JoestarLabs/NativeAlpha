@@ -23,7 +23,7 @@ public class UtilUnitTests {
 		WebApp webapp = new WebApp(base_url, Integer.MAX_VALUE);
 		ShortcutDialogFragment frag = ShortcutDialogFragment.newInstance(webapp);
 		String[] result = frag.fetchWebappData();
-		assertEquals(result[result_index], expected);
+		assertEquals(expected, result[result_index]);
 	}
 
 	@Test

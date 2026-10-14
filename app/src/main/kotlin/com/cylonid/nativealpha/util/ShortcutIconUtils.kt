@@ -16,9 +16,12 @@ import android.util.LruCache
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.scale
 import com.cylonid.nativealpha.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
@@ -233,21 +236,25 @@ object ShortcutIconUtils {
         removableWebAppIds: List<Int>,
         context: Context,
     ) {
-        val manager = context.getSystemService(ShortcutManager::class.java)
-        if (manager != null) {
-            for (info in manager.pinnedShortcuts) {
-                val id =
-                    info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) ?: -1
-                if (removableWebAppIds.contains(id)) {
-                    manager.disableShortcuts(
-                        listOf(info.id),
-                        context.getString(R.string.webapp_already_deleted),
-                    )
+        if (removableWebAppIds.isEmpty()) return
+        val appContext = context.applicationContext ?: context
+        for (id in removableWebAppIds) {
+            deleteIcon(appContext, id)
+        }
+        val manager = appContext.getSystemService(ShortcutManager::class.java) ?: return
+        CoroutineScope(Dispatchers.IO).launch {
+            runCatching {
+                for (info in manager.pinnedShortcuts) {
+                    val id =
+                        info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) ?: -1
+                    if (removableWebAppIds.contains(id)) {
+                        manager.disableShortcuts(
+                            listOf(info.id),
+                            appContext.getString(R.string.webapp_already_deleted),
+                        )
+                    }
                 }
             }
-        }
-        for (id in removableWebAppIds) {
-            deleteIcon(context, id)
         }
     }
 
@@ -258,26 +265,29 @@ object ShortcutIconUtils {
         bitmap: Bitmap,
     ) {
         if (webAppId < 0) return
-        runCatching {
-            val scManager = context.getSystemService(ShortcutManager::class.java) ?: return
-            val downscaled = downscaleIfNecessary(bitmap)
-            val matching =
-                scManager.pinnedShortcuts.filter { info ->
-                    info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) == webAppId
-                }
-            if (matching.isNotEmpty()) {
-                val updates =
-                    matching.map { info ->
-                        val builder =
-                            ShortcutInfo
-                                .Builder(context, info.id)
-                                .setIcon(Icon.createWithBitmap(downscaled))
-                        info.shortLabel?.let { builder.setShortLabel(it) }
-                        info.longLabel?.let { builder.setLongLabel(it) }
-                        info.intent?.let { builder.setIntent(it) }
-                        builder.build()
+        val appContext = context.applicationContext ?: context
+        val downscaled = downscaleIfNecessary(bitmap)
+        val scManager = appContext.getSystemService(ShortcutManager::class.java) ?: return
+        CoroutineScope(Dispatchers.IO).launch {
+            runCatching {
+                val matching =
+                    scManager.pinnedShortcuts.filter { info ->
+                        info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) == webAppId
                     }
-                scManager.updateShortcuts(updates)
+                if (matching.isNotEmpty()) {
+                    val updates =
+                        matching.map { info ->
+                            val builder =
+                                ShortcutInfo
+                                    .Builder(appContext, info.id)
+                                    .setIcon(Icon.createWithBitmap(downscaled))
+                            info.shortLabel?.let { builder.setShortLabel(it) }
+                            info.longLabel?.let { builder.setLongLabel(it) }
+                            info.intent?.let { builder.setIntent(it) }
+                            builder.build()
+                        }
+                    scManager.updateShortcuts(updates)
+                }
             }
         }
     }

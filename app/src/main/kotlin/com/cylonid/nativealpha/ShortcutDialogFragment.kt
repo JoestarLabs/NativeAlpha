@@ -84,6 +84,7 @@ import org.jsoup.Jsoup
 import java.net.URL
 import java.util.TreeMap
 import java.util.regex.Pattern
+import kotlin.time.Duration.Companion.seconds
 
 enum class IconFetchResult(
     @JvmField val index: Int,
@@ -216,7 +217,7 @@ class ShortcutDialogFragment : DialogFragment() {
                     .get()
 
             val docLocation = doc.location()
-            if (!docLocation.isNullOrBlank()) {
+            if (docLocation.isNotBlank()) {
                 baseUrl = docLocation
             }
 
@@ -232,7 +233,7 @@ class ShortcutDialogFragment : DialogFragment() {
                     baseUrl = redirectUrl
                     doc = Jsoup.connect(baseUrl).followRedirects(true).get()
                     val newLocation = doc.location()
-                    if (!newLocation.isNullOrBlank()) {
+                    if (newLocation.isNotBlank()) {
                         baseUrl = newLocation
                     }
                 }
@@ -430,7 +431,7 @@ private fun ShortcutDialogContent(
     LaunchedEffect(Unit) {
         val webAppData =
             withContext(Dispatchers.IO) {
-                withTimeoutOrNull(10000L) {
+                withTimeoutOrNull(10.seconds) {
                     fetchWebappData()
                 }
             }

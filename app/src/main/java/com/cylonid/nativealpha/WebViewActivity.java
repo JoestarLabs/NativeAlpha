@@ -76,8 +76,8 @@ import com.cylonid.nativealpha.util.Utility;
 import com.cylonid.nativealpha.util.WebViewLauncher;
 import com.google.android.material.snackbar.Snackbar;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -241,7 +241,7 @@ public class WebViewActivity extends AppCompatActivity
 				WebView.setDataDirectorySuffix(
 						webapp.getContainerId() + webapp.getAlphanumericBaseUrl() + "_" + webapp.getID());
 			} catch (IllegalStateException e) {
-				e.printStackTrace();
+				Timber.e(e, "Failed to set data directory suffix");
 			}
 		}
 
@@ -292,7 +292,7 @@ public class WebViewActivity extends AppCompatActivity
 		String uaString = wv.getSettings().getUserAgentString().replace("; " + fieldName, "");
 		wv.getSettings().setUserAgentString(uaString);
 		if (webapp.isUseCustomUserAgent()) {
-			if (webapp.getUserAgent() != null && !webapp.getUserAgent().equals("")) {
+			if (webapp.getUserAgent() != null && !webapp.getUserAgent().isEmpty()) {
 				wv.getSettings().setUserAgentString(
 						webapp.getUserAgent().replace("\0", "").replace("\n", "").replace("\r", ""));
 			}
@@ -358,21 +358,22 @@ public class WebViewActivity extends AppCompatActivity
 				i.setData(Uri.parse(dl_url));
 				startActivity(i);
 			} else {
-				if (dl_url != null && !dl_url.equals("")) {
+				if (dl_url != null && !dl_url.isEmpty()) {
 					if (dl_url.startsWith("blob:")) {
 						dl_url = dl_url.replace("blob:", "");
 						try {
-							dl_url = URLDecoder.decode(dl_url, "UTF-8");
-						} catch (UnsupportedEncodingException e) {
-							e.printStackTrace();
+							dl_url = URLDecoder.decode(dl_url, StandardCharsets.UTF_8.name());
+						} catch (Exception e) {
+							Timber.e(e, "Failed to decode blob download URL");
 						}
 					}
-					DownloadManager.Request request = null;
+					DownloadManager.Request request;
 					try {
 						request = new DownloadManager.Request(Uri.parse(dl_url));
 					} catch (Exception e) {
 						NotificationUtils.showInfoSnackbar(this, getString(R.string.file_download),
 								Snackbar.LENGTH_SHORT);
+						return;
 					}
 					String file_name = Utility.getFileNameFromDownload(dl_url, contentDisposition, mimeType);
 
@@ -482,9 +483,14 @@ public class WebViewActivity extends AppCompatActivity
 	}
 
 	private void setDarkModeIfNeeded() {
-		boolean needsForcedDarkMode = webapp.isUseTimespanDarkMode()
-				&& DateUtils.isInInterval(DateUtils.convertStringToCalendar(webapp.getTimespanDarkModeBegin()),
-						Calendar.getInstance(), DateUtils.convertStringToCalendar(webapp.getTimespanDarkModeEnd()))
+		Calendar beginCal = webapp.isUseTimespanDarkMode()
+				? DateUtils.convertStringToCalendar(webapp.getTimespanDarkModeBegin())
+				: null;
+		Calendar endCal = webapp.isUseTimespanDarkMode()
+				? DateUtils.convertStringToCalendar(webapp.getTimespanDarkModeEnd())
+				: null;
+		boolean needsForcedDarkMode = (beginCal != null && endCal != null
+				&& DateUtils.isInInterval(beginCal, Calendar.getInstance(), endCal))
 				|| (!webapp.isUseTimespanDarkMode() && webapp.isForceDarkMode());
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -934,7 +940,7 @@ public class WebViewActivity extends AppCompatActivity
 			this.handlePermissionRequest(R.string.dialog_permission_location_title,
 					R.string.dialog_permission_location_txt, webapp.isAllowLocationAccess(),
 					new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
-					Const.PERMISSION_RC_LOCATION, Arrays.asList(new String[]{}), new String[]{},
+					Const.PERMISSION_RC_LOCATION, Collections.emptyList(), new String[]{},
 					() -> webapp.setAllowLocationAccess(true));
 
 		}
@@ -1005,10 +1011,10 @@ public class WebViewActivity extends AppCompatActivity
 			if (request == null) {
 				return null;
 			}
-			if (urlOnFirstPageload.equals("") && request.getUrl() != null)
+			if (urlOnFirstPageload.isEmpty() && request.getUrl() != null)
 				urlOnFirstPageload = request.getUrl().toString();
 
-			if (webapp != null && webapp.isUseAdblock() && adFilter != null && request != null) {
+			if (webapp != null && webapp.isUseAdblock() && adFilter != null) {
 				try {
 					FilterResult filterResult = adFilter.shouldIntercept(view, request);
 					if (filterResult != null && filterResult.getResourceResponse() != null) {
@@ -1018,7 +1024,7 @@ public class WebViewActivity extends AppCompatActivity
 					Timber.e(t, "Error intercepting adblock request");
 				}
 			}
-			if (webapp != null && webapp.isBlockThirdPartyRequests() && request != null) {
+			if (webapp != null && webapp.isBlockThirdPartyRequests()) {
 				Uri uri = request.getUrl();
 				Uri webapp_uri = Uri.parse(webapp.getBaseUrl());
 
@@ -1114,7 +1120,7 @@ public class WebViewActivity extends AppCompatActivity
 				String base_url = webapp.getBaseUrl();
 				Uri uri = Uri.parse(base_url);
 				String host = uri.getHost();
-				if (!url.contains(host)) {
+				if (host != null && !url.contains(host)) {
 					view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
 					return true;
 				}

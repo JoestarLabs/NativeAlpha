@@ -4,8 +4,8 @@ import androidx.test.espresso.NoMatchingViewException;
 import androidx.test.espresso.action.GeneralSwipeAction;
 import androidx.test.espresso.action.ViewActions;
 import androidx.test.espresso.web.webdriver.Locator;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.rule.ActivityTestRule;
 
 import com.cylonid.nativealpha.model.DataManager;
 import com.cylonid.nativealpha.model.WebApp;
@@ -52,16 +52,15 @@ import android.view.View;
 @RunWith(AndroidJUnit4.class)
 public class UITests {
 	@Rule
-	public ActivityTestRule<MainActivity> activityTestRule = new ActivityTestRule<>(MainActivity.class);
-	// public ActivityScenarioRule<MainActivity> scenarioRule = new
-	// ActivityScenarioRule<>(MainActivity.class);
+	public ActivityScenarioRule<MainActivity> scenarioRule = new ActivityScenarioRule<>(MainActivity.class);
+
 	@Test
 	public void addWebsite() {
 		TestUtils.acceptLicense();
 		onView(withId(R.id.websiteUrl)).perform(clearText(), typeText("github.com"));
 		onView(withId(R.id.switchCreateShortcut)).perform(click());
 		onView(withId(android.R.id.button1)).perform(click());
-		assertEquals(DataManager.getInstance().getWebApp(0).getBaseUrl(), "https://github.com");
+		assertEquals("https://github.com", DataManager.getInstance().getWebApp(0).getBaseUrl());
 		onView(allOf(withId(R.id.btnWebAppTitle), isDisplayed())).perform(click());
 	}
 
@@ -80,7 +79,7 @@ public class UITests {
 		Matcher<View> anchor = TestUtils.getElementFromMatchAtPosition(withId(R.id.dragAnchor), 0);
 
 		onView(anchor).perform(actionWithAssertions(dragFromTo(500)));
-		assertEquals(DataManager.getInstance().getWebApp(0).getOrder(), 1);
+		assertEquals(1, DataManager.getInstance().getWebApp(0).getOrder());
 
 	}
 
