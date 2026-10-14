@@ -12,54 +12,63 @@
     </group>
 
     <group android:id="@+id/cmGroupMisc">
-        <item android:title="@string/back"
-
-              android:id="@+id/cmItemBack"
-              android:iconTint="?attr/colorOnSurface"
-              android:icon="@drawable/ic_baseline_arrow_back_24"/>
-        <item android:title="@string/forward"
+        <item
+            android:id="@+id/cmItemBack"
+            android:title="@string/back"
+            android:icon="@drawable/ic_baseline_arrow_back_24"
+            app:iconTint="?attr/colorOnSurface"
+            android:iconTint="?attr/colorOnSurface" />
+        <item
             android:id="@+id/cmItemForward"
+            android:title="@string/forward"
             android:visible="false"
-            android:iconTint="?attr/colorOnSurface"
-            android:icon="@drawable/ic_baseline_arrow_forward_24"/>
+            android:icon="@drawable/ic_baseline_arrow_forward_24"
+            app:iconTint="?attr/colorOnSurface"
+            android:iconTint="?attr/colorOnSurface" />
 
-        <item android:title="@string/share"
+        <item
             android:id="@+id/cmItemShareUrl"
-            android:iconTint="?attr/colorOnSurface"
-            android:icon="@drawable/ic_baseline_share_24"/>
-        <item android:title="@string/reload"
+            android:title="@string/share"
+            android:icon="@drawable/ic_baseline_share_24"
+            app:iconTint="?attr/colorOnSurface"
+            android:iconTint="?attr/colorOnSurface" />
+        <item
             android:id="@+id/cmItemReload"
-            android:iconTint="?attr/colorOnSurface"
-            android:icon="@drawable/ic_baseline_refresh_24" />
-        <item android:title="@string/to_main_menu"
+            android:title="@string/reload"
+            android:icon="@drawable/ic_baseline_refresh_24"
+            app:iconTint="?attr/colorOnSurface"
+            android:iconTint="?attr/colorOnSurface" />
+        <item
             android:id="@+id/cmMainMenu"
-            android:iconTint="?attr/colorOnSurface"
-            android:icon="@drawable/ic_baseline_home_24" />
-
-        <item android:title="Adblock providers"
-            android:id="@+id/cmShowAdblockProviders"
-            android:visible="false"
-            android:iconTint="?attr/colorOnSurface"
-            android:icon="@drawable/fingerprint_dialog_fp_icon"/>
+            android:title="@string/to_main_menu"
+            android:icon="@drawable/ic_baseline_home_24"
+            app:iconTint="?attr/colorOnSurface"
+            android:iconTint="?attr/colorOnSurface" />
         <item
             android:id="@+id/cmItemMore"
             android:title="@string/more"
-            android:iconTint="?attr/colorOnSurface"
-            android:icon="@drawable/ic_baseline_more_horiz_24">
+            android:icon="@drawable/ic_baseline_more_horiz_24"
+            app:iconTint="?attr/colorOnSurface"
+            android:iconTint="?attr/colorOnSurface">
             <menu>
-                <item android:title="@string/copy_url"
+                <item
                     android:id="@+id/cmItemCopyUrl"
-                    android:iconTint="?attr/colorOnSurface"
-                    android:icon="@drawable/ic_baseline_content_copy_24"/>
-                <item android:title="@string/use_standard_context_menu_temporarily"
+                    android:title="@string/copy_url"
+                    android:icon="@drawable/ic_baseline_content_copy_24"
+                    app:iconTint="?attr/colorOnSurface"
+                    android:iconTint="?attr/colorOnSurface" />
+                <item
                     android:id="@+id/cmFallbackContextmenuTemp"
-                    android:iconTint="?attr/colorOnSurface"
-                    android:icon="@drawable/baseline_menu_open_24"/>
+                    android:title="@string/use_standard_context_menu_temporarily"
+                    android:icon="@drawable/baseline_menu_open_24"
+                    app:iconTint="?attr/colorOnSurface"
+                    android:iconTint="?attr/colorOnSurface" />
                 <item
                     android:id="@+id/cmItemCloseWebApp"
-                    android:iconTint="?attr/colorOnSurface"
+                    android:title="@string/close_web_app"
                     android:icon="@drawable/ic_baseline_exit_to_app_24"
-                    android:title="@string/close_web_app"/>
+                    app:iconTint="?attr/colorOnSurface"
+                    android:iconTint="?attr/colorOnSurface" />
             </menu>
         </item>
     </group>

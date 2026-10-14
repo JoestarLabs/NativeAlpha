@@ -61,7 +61,6 @@ import com.cylonid.nativealpha.databinding.DialogHttpAuthBinding;
 import com.cylonid.nativealpha.helper.AdblockLifecycleHelper;
 import com.cylonid.nativealpha.helper.AdblockProviderApiHelper;
 import com.cylonid.nativealpha.helper.BiometricPromptHelper;
-import com.cylonid.nativealpha.helper.IconPopupMenuHelper;
 import com.cylonid.nativealpha.model.AdblockConfig;
 import com.cylonid.nativealpha.model.DataManager;
 import com.cylonid.nativealpha.model.SandboxManager;
@@ -89,6 +88,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import com.cylonid.nativealpha.ui.webapp.WebAppMenuStyle;
+import com.cylonid.nativealpha.ui.webapp.WebViewMenuLauncher;
+import com.cylonid.nativealpha.ui.webapp.WebViewMenuListener;
 import io.github.edsuns.adfilter.AdFilter;
 import io.github.edsuns.adfilter.Filter;
 import io.github.edsuns.adfilter.FilterResult;
@@ -97,7 +99,10 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.cylonid.nativealpha.util.Const.CODE_OPEN_FILE;
 
-public class WebViewActivity extends AppCompatActivity implements EasyPermissions.PermissionCallbacks {
+public class WebViewActivity extends AppCompatActivity
+		implements
+			EasyPermissions.PermissionCallbacks,
+			WebViewMenuListener {
 
 	// Constants for touchlistener
 	private static final int NONE = 0;
@@ -118,7 +123,6 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 	private WebApp webapp = null;
 	private String urlOnFirstPageload = "";
 	private boolean fallbackToDefaultLongClickBehaviour = false;
-	private PopupMenu mPopupMenu = null;
 
 	private AdFilter adFilter;
 
@@ -513,93 +517,64 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 	}
 
 	private void showWebViewPopupMenu() {
-		View center = findViewById(R.id.anchorCenterScreen);
-		mPopupMenu = IconPopupMenuHelper.getMenu(center, R.menu.wv_context_menu, WebViewActivity.this);
+		String currentUrl = wv.getUrl() != null ? wv.getUrl() : "";
+		String pageTitle = wv.getTitle() != null && !wv.getTitle().isEmpty()
+				? wv.getTitle()
+				: (webapp != null ? webapp.getTitle() : "");
+		WebAppMenuStyle style = WebAppMenuStyle.Companion
+				.fromId(DataManager.getInstance().getSettings().getWebAppMenuStyle());
+		WebViewMenuLauncher.show(this, style, pageTitle, currentUrl, wv.canGoBack(), wv.canGoForward(), webapp,
+				findViewById(R.id.anchorCenterScreen), this);
+	}
 
-		String currentUrl = wv.getUrl();
-		String title = "";
-		if (currentUrl != null) {
-			title = currentUrl.length() < 32 ? currentUrl : currentUrl.substring(0, 32) + "…";
+	@Override
+	public void onBack() {
+		handleBackPressed();
+	}
+
+	@Override
+	public void onForward() {
+		if (wv.canGoForward()) {
+			wv.goForward();
 		}
-		SpannableString spanStringWebAppTitle = new SpannableString(title);
+	}
 
-		// The item is disabled because it has no click action, but we want to override
-		// the disabled style (text color)
-		int colorOnSurface = MaterialColors.getColor(center, com.google.android.material.R.attr.colorOnSurface, Color.BLACK);
-		ForegroundColorSpan foregroundColorSpan = new ForegroundColorSpan(colorOnSurface);
-		spanStringWebAppTitle.setSpan(foregroundColorSpan, 0, spanStringWebAppTitle.length(), 0);
+	@Override
+	public void onReload() {
+		wv.reload();
+	}
 
-		spanStringWebAppTitle.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, spanStringWebAppTitle.length(),
-				0);
-		mPopupMenu.getMenu().getItem(0).setTitle(spanStringWebAppTitle);
-
-		for (int i = 0; i < mPopupMenu.getMenu().size(); i++) {
-			MenuItem item = mPopupMenu.getMenu().getItem(i);
-			SpannableString spanString = new SpannableString(item.getTitle());
-			spanString.setSpan(foregroundColorSpan, 0, spanString.length(), 0);
-			item.setTitle(spanString);
+	@Override
+	public void onShare() {
+		if (wv.getUrl() != null) {
+			new ShareCompat.IntentBuilder(WebViewActivity.this).setType("text/plain").setChooserTitle("Share URL")
+					.setText(wv.getUrl()).startChooser();
 		}
-		if (wv.canGoForward())
-			mPopupMenu.getMenu().getItem(2).setVisible(true);
-		if (BuildConfig.DEBUG) {
-			mPopupMenu.getMenu().getItem(6).setVisible(true);
-		}
-		mPopupMenu.setOnMenuItemClickListener(menuItem -> {
-			int itemId = menuItem.getItemId();
-			if (itemId == R.id.cmItemForward) {
-				wv.goForward();
-				return true;
-			} else if (itemId == R.id.cmItemBack) {
-				handleBackPressed();
-				return true;
-			} else if (itemId == R.id.cmItemReload) {
-				wv.reload();
-				return true;
-			} else if (itemId == R.id.cmItemCopyUrl) {
-				ClipboardManager clipboard = getSystemService(ClipboardManager.class);
-				ClipData clip = ClipData.newPlainText("URL", wv.getUrl());
-				clipboard.setPrimaryClip(clip);
-				return true;
-			} else if (itemId == R.id.cmItemShareUrl) {
-				new ShareCompat.IntentBuilder(WebViewActivity.this).setType("text/plain").setChooserTitle("Share URL")
-						.setText(wv.getUrl()).startChooser();
-				return true;
-			} else if (itemId == R.id.cmItemCloseWebApp) {
-				finishAndRemoveTask();
-				return true;
-			} else if (itemId == R.id.cmFallbackContextmenuTemp) {
-				fallbackToDefaultLongClickBehaviour = true;
-				return true;
-			} else if (itemId == R.id.cmMainMenu) {
-				Intent intent = new Intent(this, MainActivity.class);
-				startActivity(intent);
-				return true;
-			} else if (itemId == R.id.cmShowAdblockProviders) {
-				StringBuilder message = new StringBuilder();
-				try {
-					AdFilter filterInstance = adFilter != null
-							? adFilter
-							: AdFilter.Companion.get(getApplicationContext());
-					if (filterInstance != null && filterInstance.getViewModel() != null
-							&& filterInstance.getViewModel().getFilters() != null
-							&& filterInstance.getViewModel().getFilters().getValue() != null) {
-						for (Map.Entry<String, Filter> entry : filterInstance.getViewModel().getFilters().getValue()
-								.entrySet()) {
-							Filter filter = entry.getValue();
-							message.append(filter.getUrl()).append(" has downloaded: ").append(filter.hasDownloaded())
-									.append("\n\n");
-						}
-					}
-				} catch (Throwable t) {
-					Timber.e(t, "Error showing adblock providers");
-				}
-				NotificationUtils.showToast(this, message.toString());
-				return true;
-			}
-			return false;
-		});
+	}
 
-		mPopupMenu.show();
+	@Override
+	public void onCopyUrl() {
+		if (wv.getUrl() != null) {
+			ClipboardManager clipboard = getSystemService(ClipboardManager.class);
+			ClipData clip = ClipData.newPlainText("URL", wv.getUrl());
+			clipboard.setPrimaryClip(clip);
+		}
+	}
+
+	@Override
+	public void onMainMenu() {
+		Intent intent = new Intent(this, MainActivity.class);
+		startActivity(intent);
+	}
+
+	@Override
+	public void onFallbackContextMenu() {
+		fallbackToDefaultLongClickBehaviour = true;
+	}
+
+	@Override
+	public void onCloseWebApp() {
+		finishAndRemoveTask();
 	}
 
 	@Override
@@ -671,8 +646,7 @@ public class WebViewActivity extends AppCompatActivity implements EasyPermission
 				null);
 		wv.onPause();
 		wv.pauseTimers();
-		if (mPopupMenu != null)
-			mPopupMenu.dismiss();
+		WebViewMenuLauncher.dismiss(this);
 
 		if (webapp.isClearCache() || DataManager.getInstance().getSettings().isClearCache())
 			wv.clearCache(true);

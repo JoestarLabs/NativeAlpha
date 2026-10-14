@@ -73,6 +73,7 @@ class DataManagerBackupTest {
         dataManager.settings.isClearCache = true
         dataManager.settings.clear_cookies = true
         dataManager.settings.themeId = 1
+        dataManager.settings.webAppMenuStyle = 1
         dataManager.saveGlobalSettings()
 
         // Create temporary backup file
@@ -121,6 +122,7 @@ class DataManagerBackupTest {
         assertTrue("Restored clearCache should be true", dataManager.settings.isClearCache)
         assertTrue("Restored clear_cookies should be true", dataManager.settings.clear_cookies)
         assertEquals(1, dataManager.settings.themeId)
+        assertEquals("Restored webAppMenuStyle should be 1 (FLOATING_DIALOG)", 1, dataManager.settings.webAppMenuStyle)
     }
 
     @Test
@@ -205,5 +207,37 @@ class DataManagerBackupTest {
 
         val loadSuccess = dataManager.loadSharedPreferencesFromFile(nonExistentUri)
         assertFalse("Loading non-existent file URI should return false gracefully without crashing", loadSuccess)
+    }
+
+    @Test
+    fun testLegacyBackupWithoutMenuStyleRestoresGracefully() {
+        val prefs = context.getSharedPreferences("WEBSITEDATA", Context.MODE_PRIVATE)
+        val legacyJson =
+            """
+            {
+              "isClearCache": true,
+              "themeId": 2,
+              "clear_cookies": true,
+              "globalWebApp": {
+                "baseUrl": "http://localhost",
+                "ID": -1,
+                "isOverrideGlobalSettings": true,
+                "containerId": -1
+              }
+            }
+            """.trimIndent()
+        prefs
+            .edit()
+            .putString("GLOBALSETTINGS", legacyJson)
+            .commit()
+
+        dataManager.loadAppData()
+        assertEquals(
+            "Legacy backup without webAppMenuStyle should gracefully default to 0 (BOTTOM_SHEET)",
+            0,
+            dataManager.settings.webAppMenuStyle,
+        )
+        assertTrue(dataManager.settings.isClearCache)
+        assertEquals(2, dataManager.settings.themeId)
     }
 }

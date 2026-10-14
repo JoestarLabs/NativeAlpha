@@ -183,6 +183,14 @@
     <string name="material_you_theme">Material You</string>
     <string name="material_you_theme_summary">Sostituisci il colore rosso caratteristico con i colori dinamici del dispositivo</string>
     <string name="material_you_requires_android_12">Richiede Android 12 o superiore</string>
+    <string name="webapp_menu_style">Stile del menu in-app</string>
+    <string name="webapp_menu_style_summary">Scegli lo stile di presentazione per il menu alla pressione prolungata</string>
+    <string name="webapp_menu_style_bottom_sheet">Bottom sheet modale</string>
+    <string name="webapp_menu_style_bottom_sheet_desc">Menu a comparsa dal basso ottimizzato per l\'uso a una mano</string>
+    <string name="webapp_menu_style_floating_dialog">Finestra di dialogo mobile</string>
+    <string name="webapp_menu_style_floating_dialog_desc">Finestra di dialogo centrata simile a Chrome</string>
+    <string name="webapp_menu_style_classic_dropdown">Menu a discesa classico</string>
+    <string name="webapp_menu_style_classic_dropdown_desc">Menu popup tradizionale di Android</string>
     <string name="about_section_community">Link &amp; Comunità</string>
     <string name="support_development">Supporta lo sviluppo</string>
     <string name="open_source_dependencies_desc">Librerie di terze parti &amp; software open source</string>

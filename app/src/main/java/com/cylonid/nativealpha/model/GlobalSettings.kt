@@ -13,6 +13,7 @@ data class GlobalSettings(
     var alwaysShowSoftwareButtons: Boolean = false,
     var clear_cookies: Boolean = false,
     var isDynamicColor: Boolean = false,
+    var webAppMenuStyle: Int = 0,
 ) {
     fun setClearCookies(clear_cookies: Boolean) {
         this.clear_cookies = clear_cookies
