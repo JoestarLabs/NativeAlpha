@@ -88,9 +88,7 @@ class WebViewActivityAdblockTest {
         org.robolectric.shadows.ShadowLooper
             .idleMainLooper()
         thread.join(5000)
-        if (error != null) {
-            throw error!!
-        }
+        error?.let { throw it }
         println("Intercept response: $response")
     }
 

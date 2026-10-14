@@ -1,6 +1,8 @@
 package com.cylonid.nativealpha.model;
 
+import android.content.Context;
 import android.content.SharedPreferences;
+import timber.log.Timber;
 import android.net.Uri;
 import android.util.Base64;
 import android.util.Base64InputStream;
@@ -138,6 +140,8 @@ public class DataManager {
 	}
 
 	private void checkIfWebAppIdsCollide(ArrayList<WebApp> oldWebApps, ArrayList<WebApp> newWebApps) {
+		if (oldWebApps == null || newWebApps == null)
+			return;
 		int end = Math.min(oldWebApps.size(), newWebApps.size());
 		ArrayList<Integer> shortcuts_to_be_removed = new ArrayList<>();
 
@@ -149,8 +153,10 @@ public class DataManager {
 			}
 		}
 
-		ShortcutIconUtils.deleteShortcuts(shortcuts_to_be_removed, App.getAppContext());
-
+		Context context = App.getAppContext();
+		if (context != null && !shortcuts_to_be_removed.isEmpty()) {
+			ShortcutIconUtils.deleteShortcuts(shortcuts_to_be_removed, context);
+		}
 	}
 
 	public void loadAppData() {
@@ -261,12 +267,13 @@ public class DataManager {
 	}
 
 	public WebApp getWebApp(int i) {
-		WebApp webAppIgnoringGlobalOverride = getWebAppIgnoringGlobalOverride(i, false);
-		return webAppIgnoringGlobalOverride;
+		return getWebAppIgnoringGlobalOverride(i, false);
 	}
 
 	public WebApp getWebAppIgnoringGlobalOverride(int i, boolean ignoreOverride) {
-		loadAppData();
+		if (websites == null || websites.isEmpty()) {
+			loadAppData();
+		}
 		try {
 			WebApp webApp = websites.get(i);
 			if (!webApp.isOverrideGlobalSettings() && !ignoreOverride) {
@@ -275,10 +282,12 @@ public class DataManager {
 			}
 			return websites.get(i);
 		} catch (IndexOutOfBoundsException e) {
-			Toast toast = Toast.makeText(App.getAppContext(), App.getAppContext().getString(R.string.webapp_not_found),
-					Toast.LENGTH_LONG);
-			toast.setGravity(Gravity.TOP, 0, 100);
-			toast.show();
+			Context context = App.getAppContext();
+			if (context != null) {
+				Toast toast = Toast.makeText(context, context.getString(R.string.webapp_not_found), Toast.LENGTH_LONG);
+				toast.setGravity(Gravity.TOP, 0, 100);
+				toast.show();
+			}
 		}
 		return null;
 	}
@@ -301,26 +310,34 @@ public class DataManager {
 	public boolean saveSharedPreferences(OutputStream os) {
 		try (Base64OutputStream b64os = new Base64OutputStream(os, Base64.DEFAULT);
 				ObjectOutputStream oos = new ObjectOutputStream(b64os)) {
-			appdata = App.getAppContext().getSharedPreferences(SHARED_PREF_KEY, MODE_PRIVATE);
+			Context context = App.getAppContext();
+			if (context == null) {
+				return false;
+			}
+			appdata = context.getSharedPreferences(SHARED_PREF_KEY, MODE_PRIVATE);
 			TreeMap<String, ?> shared_pref_map = new TreeMap<>(appdata.getAll());
 
 			oos.writeObject(Hasher.Companion.hash(shared_pref_map.toString(), HashType.SHA_256));
 			oos.writeObject(shared_pref_map);
 			return true;
 		} catch (Exception e) {
-			e.printStackTrace();
+			Timber.e(e, "Failed to save shared preferences");
 			return false;
 		}
 	}
 
 	public boolean saveSharedPreferencesToFile(Uri uri) {
-		try (OutputStream os = App.getAppContext().getContentResolver().openOutputStream(uri)) {
+		Context context = App.getAppContext();
+		if (context == null) {
+			return false;
+		}
+		try (OutputStream os = context.getContentResolver().openOutputStream(uri)) {
 			if (os == null) {
 				return false;
 			}
 			return saveSharedPreferences(os);
 		} catch (Exception e) {
-			e.printStackTrace();
+			Timber.e(e, "Failed to save shared preferences to file");
 			return false;
 		}
 	}
@@ -341,8 +358,11 @@ public class DataManager {
 				throw new InvalidChecksumException("Checksums between backup and restored settings do not match.");
 			}
 
-			SharedPreferences.Editor prefEdit = App.getAppContext().getSharedPreferences(SHARED_PREF_KEY, MODE_PRIVATE)
-					.edit();
+			Context context = App.getAppContext();
+			if (context == null) {
+				return false;
+			}
+			SharedPreferences.Editor prefEdit = context.getSharedPreferences(SHARED_PREF_KEY, MODE_PRIVATE).edit();
 			prefEdit.clear();
 			for (Map.Entry<?, ?> entry : shared_pref_map.entrySet()) {
 				Object v = entry.getValue();
@@ -363,19 +383,23 @@ public class DataManager {
 			return true;
 
 		} catch (InvalidChecksumException | IOException | ClassNotFoundException e) {
-			e.printStackTrace();
+			Timber.e(e, "Failed to load shared preferences");
 			return false;
 		}
 	}
 
 	public boolean loadSharedPreferencesFromFile(Uri uri) {
-		try (InputStream is = App.getAppContext().getContentResolver().openInputStream(uri)) {
+		Context context = App.getAppContext();
+		if (context == null) {
+			return false;
+		}
+		try (InputStream is = context.getContentResolver().openInputStream(uri)) {
 			if (is == null) {
 				return false;
 			}
 			return loadSharedPreferences(is);
 		} catch (Exception e) {
-			e.printStackTrace();
+			Timber.e(e, "Failed to load shared preferences from file");
 			return false;
 		}
 	}

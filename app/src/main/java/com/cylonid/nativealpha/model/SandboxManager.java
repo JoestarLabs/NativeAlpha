@@ -1,6 +1,6 @@
 package com.cylonid.nativealpha.model;
 
-import android.util.Log;
+import timber.log.Timber;
 import androidx.annotation.NonNull;
 
 import java.util.stream.IntStream;
@@ -34,7 +34,7 @@ public class SandboxManager {
 	public void registerWebAppToSandbox(WebApp webapp) {
 		int sId = webapp.getContainerId();
 		sandboxes[sId].registerWebApp(webapp.getID(), webapp.getBaseUrl());
-		Log.d("SBX ", "Sandbox " + webapp.getContainerId() + " is occupied by " + webapp.getTitle());
+		Timber.d("Sandbox %d is occupied by %s", webapp.getContainerId(), webapp.getTitle());
 	}
 
 	public void unregisterWebAppFromSandbox(int sandboxId) {
@@ -42,7 +42,7 @@ public class SandboxManager {
 			WebApp currently_set_webapp = DataManager.getInstance()
 					.getWebApp(sandboxes[sandboxId].getCurrentlyRegisteredWebapp());
 			sandboxes[sandboxId].unregisterWebApp();
-			Log.d("SBX", "Sandbox " + sandboxId + " is left by " + currently_set_webapp.getTitle());
+			Timber.d("Sandbox %d is left by %s", sandboxId, currently_set_webapp.getTitle());
 		}
 	}
 

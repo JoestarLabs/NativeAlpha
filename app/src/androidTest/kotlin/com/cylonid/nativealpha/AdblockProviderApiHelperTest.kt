@@ -66,7 +66,7 @@ class AdblockProviderApiHelperTest {
 
         adblockProviderApiHelper.synchronizeAdblockProviderWithSettings(emptyList())
         Assert.assertEquals(
-            emptyList<AdblockConfig>(),
+            emptyList<String>(),
             getActiveUrls(),
         )
     }

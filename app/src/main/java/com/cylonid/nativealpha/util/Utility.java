@@ -34,7 +34,7 @@ public final class Utility {
 
 	public static String getFileNameFromDownload(String url, String content_disposition, String mime_type) {
 		String file_name = null;
-		if (content_disposition != null && !content_disposition.equals("")) {
+		if (content_disposition != null && !content_disposition.isEmpty()) {
 			Pattern pattern = Pattern.compile("attachment; filename=\"(.*)\"; filename\\*=UTF-8''(.*)",
 					Pattern.CASE_INSENSITIVE);
 			Matcher m = pattern.matcher(content_disposition);
