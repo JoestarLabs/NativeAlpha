@@ -23,13 +23,17 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowInsets;
-import android.view.WindowInsetsController;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.HttpAuthHandler;
 import android.webkit.PermissionRequest;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.SslErrorHandler;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -41,6 +45,8 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -91,8 +97,6 @@ import io.github.edsuns.adfilter.FilterResult;
 import timber.log.Timber;
 import pub.devrel.easypermissions.EasyPermissions;
 
-import static com.cylonid.nativealpha.util.Const.CODE_OPEN_FILE;
-
 public class WebViewActivity extends AppCompatActivity
 		implements
 			EasyPermissions.PermissionCallbacks,
@@ -111,6 +115,18 @@ public class WebViewActivity extends AppCompatActivity
 	private DownloadManager.Request dl_request = null;
 	private Map<String, String> CUSTOM_HEADERS;
 	protected ValueCallback<Uri[]> filePathCallback;
+	private final ActivityResultLauncher<Intent> fileChooserLauncher = registerForActivityResult(
+			new ActivityResultContracts.StartActivityForResult(), result -> {
+				if (filePathCallback != null) {
+					if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+						filePathCallback.onReceiveValue(WebChromeClient.FileChooserParams
+								.parseResult(result.getResultCode(), result.getData()));
+					} else {
+						filePathCallback.onReceiveValue(null);
+					}
+					filePathCallback = null;
+				}
+			});
 
 	private boolean quitOnNextBackpress = false;
 	private Handler reload_handler = null;
@@ -364,7 +380,6 @@ public class WebViewActivity extends AppCompatActivity
 					request.addRequestHeader("cookie", CookieManager.getInstance().getCookie(dl_url));
 					request.addRequestHeader("User-Agent", userAgent);
 					request.setTitle(file_name);
-					request.allowScanningByMediaScanner();
 					request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
 					request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, file_name);
 
@@ -478,27 +493,13 @@ public class WebViewActivity extends AppCompatActivity
 					wv.setBackgroundColor(Color.BLACK);
 					wv.setForceDarkAllowed(true);
 					getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-					if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
-						WebSettingsCompat.setForceDark(wv.getSettings(), WebSettingsCompat.FORCE_DARK_ON);
-					}
-					if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
-						WebSettingsCompat.setForceDarkStrategy(wv.getSettings(),
-								WebSettingsCompat.DARK_STRATEGY_PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING);
-					}
 					if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
 						WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), true);
 					}
 				} else {
 					getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
 					wv.setBackgroundColor(Color.WHITE);
-
-					if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
-						WebSettingsCompat.setForceDark(wv.getSettings(), WebSettingsCompat.FORCE_DARK_OFF);
-					}
-					if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
-						WebSettingsCompat.setForceDarkStrategy(wv.getSettings(),
-								WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY);
-					}
+					wv.setForceDarkAllowed(false);
 					if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
 						WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), false);
 					}
@@ -695,38 +696,24 @@ public class WebViewActivity extends AppCompatActivity
 
 	}
 	private void hideSystemBars() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-			getWindow().setDecorFitsSystemWindows(false);
-			WindowInsetsController controller = getWindow().getInsetsController();
-			if (controller != null) {
-				controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-
-				controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-			}
-		} else {
-			getWindow().getDecorView()
-					.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-							| View.SYSTEM_UI_FLAG_IMMERSIVE | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-							| View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+		WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(),
+				getWindow().getDecorView());
+		if (controller != null) {
+			controller.hide(WindowInsetsCompat.Type.systemBars());
+			controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
 		}
 	}
 
 	private void showSystemBars() {
-
 		if (webapp.isShowFullscreen())
 			return;
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-
-			getWindow().setDecorFitsSystemWindows(true);
-			WindowInsetsController controller = getWindow().getInsetsController();
-			if (controller != null) {
-				controller.show(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
-				controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-			}
-		} else {
-			getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-					| View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-
+		WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+		WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(),
+				getWindow().getDecorView());
+		if (controller != null) {
+			controller.show(WindowInsetsCompat.Type.systemBars());
+			controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
 		}
 	}
 
@@ -786,27 +773,14 @@ public class WebViewActivity extends AppCompatActivity
 		}
 	}
 
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-
-		super.onActivityResult(requestCode, resultCode, intent);
-		if (resultCode == RESULT_CANCELED && requestCode == CODE_OPEN_FILE) {
-			this.filePathCallback.onReceiveValue(null);
-		} else if (resultCode == RESULT_OK && requestCode == CODE_OPEN_FILE) {
-			filePathCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, intent));
-			filePathCallback = null;
-		}
-	}
-
 	private class CustomWebChromeClient extends android.webkit.WebChromeClient {
 		private View mCustomView;
 		private WebChromeClient.CustomViewCallback mCustomViewCallback;
 		private int mOriginalOrientation;
-		private int mOriginalSystemUiVisibility;
 
-		private void handlePermissionRequest(String resId, boolean currentState, String[] androidPermissions,
-				int requestCode, List<String> permissionsToGrant, String[] webkitPermission,
-				PermissionGrantedCallback successCallback) {
+		private void handlePermissionRequest(int titleRes, int messageRes, boolean currentState,
+				String[] androidPermissions, int requestCode, List<String> permissionsToGrant,
+				String[] webkitPermission, PermissionGrantedCallback successCallback) {
 			boolean androidPermissionsMissing = !EasyPermissions.hasPermissions(WebViewActivity.this,
 					androidPermissions);
 			if (currentState && androidPermissionsMissing) {
@@ -819,9 +793,7 @@ public class WebViewActivity extends AppCompatActivity
 				return;
 			}
 
-			new AlertDialog.Builder(WebViewActivity.this)
-					.setTitle(getPermissionRequestStringResource("dialog_permission_", resId, "_title"))
-					.setMessage(getPermissionRequestStringResource("dialog_permission_", resId, "_txt"))
+			new AlertDialog.Builder(WebViewActivity.this).setTitle(titleRes).setMessage(messageRes)
 					.setPositiveButton(android.R.string.ok, (dialog, id) -> {
 						enablePermissionBoolOnWebApp(successCallback);
 						handleGeoPermissionCallback(true);
@@ -831,11 +803,6 @@ public class WebViewActivity extends AppCompatActivity
 						}
 					}).setNegativeButton(android.R.string.cancel, (dialog, id) -> handleGeoPermissionCallback(false))
 					.create().show();
-		}
-
-		private String getPermissionRequestStringResource(String prefix, String variable, String suffix) {
-			return getString(WebViewActivity.this.getResources().getIdentifier(prefix + variable + suffix, "string",
-					WebViewActivity.this.getPackageName()));
 		}
 
 		@Override
@@ -867,11 +834,14 @@ public class WebViewActivity extends AppCompatActivity
 			filePathCallback = pFilePathCallback;
 			try {
 				Intent intent = fileChooserParams.createIntent();
-				startActivityForResult(intent, CODE_OPEN_FILE);
+				fileChooserLauncher.launch(intent);
 			} catch (Exception e) {
 				NotificationUtils.showInfoSnackbar(WebViewActivity.this, getString(R.string.no_filemanager),
 						Snackbar.LENGTH_LONG);
-				e.printStackTrace();
+				if (filePathCallback != null) {
+					filePathCallback.onReceiveValue(null);
+					filePathCallback = null;
+				}
 			}
 			return true;
 		}
@@ -887,7 +857,6 @@ public class WebViewActivity extends AppCompatActivity
 		public void onHideCustomView() {
 			((FrameLayout) getWindow().getDecorView()).removeView(this.mCustomView);
 			this.mCustomView = null;
-			getWindow().getDecorView().setSystemUiVisibility(this.mOriginalSystemUiVisibility);
 			setRequestedOrientation(this.mOriginalOrientation);
 			this.mCustomViewCallback.onCustomViewHidden();
 			this.mCustomViewCallback = null;
@@ -900,7 +869,6 @@ public class WebViewActivity extends AppCompatActivity
 				return;
 			}
 			this.mCustomView = pView;
-			this.mOriginalSystemUiVisibility = getWindow().getDecorView().getSystemUiVisibility();
 			this.mOriginalOrientation = getRequestedOrientation();
 			this.mCustomViewCallback = pViewCallback;
 			((FrameLayout) getWindow().getDecorView()).addView(this.mCustomView, new FrameLayout.LayoutParams(-1, -1));
@@ -919,17 +887,20 @@ public class WebViewActivity extends AppCompatActivity
 					.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE);
 
 			if (containsDrmRequest) {
-				this.handlePermissionRequest("drm", webapp.isDrmAllowed(), new String[]{}, -1, permissionsToGrant,
+				this.handlePermissionRequest(R.string.dialog_permission_drm_title, R.string.dialog_permission_drm_txt,
+						webapp.isDrmAllowed(), new String[]{}, -1, permissionsToGrant,
 						new String[]{PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID}, () -> webapp.setDrmAllowed(true));
 			}
 			if (containsCameraRequest) {
-				this.handlePermissionRequest("camera", webapp.isCameraPermission(),
+				this.handlePermissionRequest(R.string.dialog_permission_camera_title,
+						R.string.dialog_permission_camera_txt, webapp.isCameraPermission(),
 						new String[]{Manifest.permission.CAMERA}, Const.PERMISSION_CAMERA, permissionsToGrant,
 						new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE}, () -> webapp.setCameraPermission(true));
 			}
 
 			if (containsMicrophoneRequest) {
-				this.handlePermissionRequest("microphone", webapp.isMicrophonePermission(),
+				this.handlePermissionRequest(R.string.dialog_permission_microphone_title,
+						R.string.dialog_permission_microphone_txt, webapp.isMicrophonePermission(),
 						new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS},
 						Const.PERMISSION_AUDIO, permissionsToGrant,
 						new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE},
@@ -960,7 +931,8 @@ public class WebViewActivity extends AppCompatActivity
 				final GeolocationPermissions.Callback callback) {
 			mGeoPermissionRequestCallback = callback;
 			mGeoPermissionRequestOrigin = origin;
-			this.handlePermissionRequest("location", webapp.isAllowLocationAccess(),
+			this.handlePermissionRequest(R.string.dialog_permission_location_title,
+					R.string.dialog_permission_location_txt, webapp.isAllowLocationAccess(),
 					new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
 					Const.PERMISSION_RC_LOCATION, Arrays.asList(new String[]{}), new String[]{},
 					() -> webapp.setAllowLocationAccess(true));
@@ -982,6 +954,21 @@ public class WebViewActivity extends AppCompatActivity
 	}
 
 	private class CustomBrowser extends WebViewClient {
+
+		@Override
+		public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+			Timber.e("WebView render process gone. Crashed: %b", detail.didCrash());
+			if (wv != null) {
+				ViewGroup parent = (ViewGroup) wv.getParent();
+				if (parent != null) {
+					parent.removeView(wv);
+				}
+				wv.destroy();
+				wv = null;
+			}
+			finish();
+			return true;
+		}
 
 		@Override
 		public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
@@ -1044,7 +1031,6 @@ public class WebViewActivity extends AppCompatActivity
 			return super.shouldInterceptRequest(view, request);
 		}
 
-		@SuppressLint("WebViewClientOnReceivedSslError")
 		@Override
 		public void onReceivedSslError(WebView view, final SslErrorHandler handler, SslError error) {
 

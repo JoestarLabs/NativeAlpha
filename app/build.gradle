@@ -106,6 +106,9 @@ android {
     testOptions {
         unitTests {
             includeAndroidResources = true
+            all {
+                jvmArgs '--enable-native-access=ALL-UNNAMED'
+            }
         }
         execution 'ANDROIDX_TEST_ORCHESTRATOR'
     }
@@ -113,6 +116,10 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs << "-Xlint:deprecation"
     }
 
     lint {
