@@ -186,6 +186,14 @@
     <string name="material_you_theme">Material You</string>
     <string name="material_you_theme_summary">Override signature red with dynamic colors from your device</string>
     <string name="material_you_requires_android_12">Requires Android 12 or newer</string>
+    <string name="webapp_menu_style">In-app menu style</string>
+    <string name="webapp_menu_style_summary">Choose the presentation style for the in-app long-press menu</string>
+    <string name="webapp_menu_style_bottom_sheet">Modal Bottom Sheet</string>
+    <string name="webapp_menu_style_bottom_sheet_desc">Slide-up sheet optimized for one-handed reachability</string>
+    <string name="webapp_menu_style_floating_dialog">Floating Dialog</string>
+    <string name="webapp_menu_style_floating_dialog_desc">Centered dialog matching Chrome-style context menus</string>
+    <string name="webapp_menu_style_classic_dropdown">Classic Dropdown</string>
+    <string name="webapp_menu_style_classic_dropdown_desc">Traditional Android popup menu</string>
     <string name="about_section_community">Links &amp; Community</string>
     <string name="support_development">Support Development</string>
     <string name="open_source_dependencies_desc">Third-party libraries &amp; open source software</string>

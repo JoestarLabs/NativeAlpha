@@ -6,7 +6,6 @@ import com.google.gson.Gson
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
-import java.lang.NullPointerException
 import java.lang.reflect.Type
 
 class GlobalSettingsDeserializer : JsonDeserializer<GlobalSettings> {
@@ -18,12 +17,16 @@ class GlobalSettingsDeserializer : JsonDeserializer<GlobalSettings> {
         try {
             val obj = json.asJsonObject
             val globalWebApp =
-                context.deserialize<WebApp>(obj.get("globalWebApp"), WebApp::class.java)
+                if (obj.has("globalWebApp") && !obj.get("globalWebApp").isJsonNull) {
+                    context.deserialize<WebApp>(obj.get("globalWebApp"), WebApp::class.java)
+                } else {
+                    GlobalSettings().globalWebApp
+                }
             val settings = Gson().fromJson(obj, GlobalSettings::class.java)
             settings.globalWebApp = globalWebApp
 
             return settings
-        } catch (e: NullPointerException) {
+        } catch (e: Exception) {
             return GlobalSettings()
         }
     }
