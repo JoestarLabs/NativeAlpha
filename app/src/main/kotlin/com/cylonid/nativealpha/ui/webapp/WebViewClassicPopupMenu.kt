@@ -7,6 +7,7 @@ import android.view.Menu
 import android.view.View
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.view.forEach
 import com.cylonid.nativealpha.R
 
 object WebViewClassicPopupMenu {
@@ -88,8 +89,7 @@ object WebViewClassicPopupMenu {
         val tintColor = typedValue.data
 
         fun tint(m: Menu) {
-            for (i in 0 until m.size()) {
-                val item = m.getItem(i)
+            m.forEach { item ->
                 item.icon?.let { icon ->
                     val wrapped = DrawableCompat.wrap(icon.mutate())
                     DrawableCompat.setTint(wrapped, tintColor)

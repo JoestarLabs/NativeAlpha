@@ -9,7 +9,7 @@
     <string name="use_three_finger_swipes_to_switch_between_web_apps_experimental">Utiliza el deslizamiento de tres dedos ⇄ para cambiar entre las Aplicaciones Web (experimental)</string>
     <string name="select_ui_mode">Seleccione el modo de interfaz</string>
     <string name="save">Guardar</string>
-    <string name="loading_icon_and_website_title">Cargando el icono y el título del sitio web...</string>
+    <string name="loading_icon_and_website_title">Cargando el icono y el título del sitio web…</string>
     <string name="open_external_links_in_browser_app">Abrir enlaces externos en la aplicación del navegador</string>
     <string name="allow_javascript">Permitir Javascript</string>
     <string name="accept_cookies">Acceptar cookies</string>
@@ -87,13 +87,13 @@
     <string name="dialog_permission_drm_txt">¿Quiere permitir que esta aplicación web cargue contenidos protegidos por DRM?</string>
     <string name="permission_location_rationale">Si desea que las aplicaciones web puedan recuperar su ubicación, puede conceder a Native Alpha el permiso para acceder a la ubicación. Puedes decidir conceder el permiso para cada Aplicación Web individualmente.</string>
     <string name="permission_storage_rationale">Si quieres que las Aplicaciones Web de Native Alpha sean capaces de descargar archivos, tienes que aceptar la solicitud de permiso de almacenamiento.</string>
-    <string name="file_download">El archivo se está descargando...</string>
+    <string name="file_download">El archivo se está descargando…</string>
     <string name="file_download_failed">Descarga fallida.</string>
     <string name="custom_icon">Seleccione un icono personalizado</string>
     <string name="show_progress_bar_during_page_load">Mostrar la barra de progreso durante la carga de la página</string>
     <string name="user_agent">Agente de usuario</string>
     <string name="use_custom_user_agent">Utilizar un agente de usuario personalizado</string>
-    <string name="insert_custom_user_agent">Inserte el agente de usuario personalizado aquí...</string>
+    <string name="insert_custom_user_agent">Inserte el agente de usuario personalizado aquí…</string>
     <string name="webapp_autoreload">Recargar automáticamente la página</string>
     <string name="webapp_interval_for_reload">Intervalo en segundos</string>
     <string name="webapp_autoreload_switch">Actualizar la página regularmente</string>

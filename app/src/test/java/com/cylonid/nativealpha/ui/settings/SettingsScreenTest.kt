@@ -114,4 +114,42 @@ class SettingsScreenTest {
         val requiresAndroid12Str = context.getString(R.string.material_you_requires_android_12)
         composeTestRule.onNodeWithText(requiresAndroid12Str).assertIsDisplayed()
     }
+
+    @Test
+    fun testWebAppMenuStyleSelectionUpdatesModel() {
+        val dm = DataManager.getInstance()
+        dm.settings.webAppMenuStyle = com.cylonid.nativealpha.ui.webapp.WebAppMenuStyle.BOTTOM_SHEET.id
+
+        composeTestRule.setContent {
+            NativeAlphaTheme {
+                SettingsScreen(
+                    onNavigateBack = {},
+                )
+            }
+        }
+
+        val menuStyleStr = context.getString(R.string.webapp_menu_style)
+        val menuStyleItem = composeTestRule.onNodeWithText(menuStyleStr)
+        menuStyleItem.performScrollTo()
+        menuStyleItem.assertIsDisplayed()
+
+        // Click to open dialog
+        menuStyleItem.performClick()
+
+        // Verify summary text in dialog header is displayed
+        val menuStyleSummaryStr = context.getString(R.string.webapp_menu_style_summary)
+        composeTestRule.onNodeWithText(menuStyleSummaryStr).assertIsDisplayed()
+
+        // Check Floating Dialog option exists and click it
+        val floatingDialogStr = context.getString(R.string.webapp_menu_style_floating_dialog)
+        val floatingOption = composeTestRule.onNodeWithText(floatingDialogStr)
+        floatingOption.assertIsDisplayed()
+        floatingOption.performClick()
+
+        org.junit.Assert.assertEquals(
+            "DataManager settings.webAppMenuStyle should be updated to FLOATING_DIALOG",
+            com.cylonid.nativealpha.ui.webapp.WebAppMenuStyle.FLOATING_DIALOG.id,
+            dm.settings.webAppMenuStyle,
+        )
+    }
 }
