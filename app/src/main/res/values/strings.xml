@@ -65,7 +65,7 @@
     <string name="webapp_section_cookies">Cookies &amp; Ads</string>
     <string name="webapp_section_datasaving">Data saving</string>
     <string name="webapp_section_misc">Miscellaneous</string>
-    <string name="paypal" translatable="false">" ☕ Buy me a coffee on PayPal"</string>
+    <string name="paypal">" ☕ Buy me a coffee on PayPal"</string>
     <string name="webapp_section_restorepage">Restore page</string>
     <string name="import_failed">The backup could not restored.</string>
     <string name="import_success">Backup with %1$d Web App(s) was restored successfully.</string>

@@ -13,6 +13,8 @@ import android.graphics.Typeface
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.util.LruCache
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 import com.cylonid.nativealpha.R
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -63,7 +65,7 @@ object ShortcutIconUtils {
         val ratio = min(maxDimension.toFloat() / bitmap.width, maxDimension.toFloat() / bitmap.height)
         val targetWidth = (bitmap.width * ratio).toInt().coerceAtLeast(1)
         val targetHeight = (bitmap.height * ratio).toInt().coerceAtLeast(1)
-        return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+        return bitmap.scale(targetWidth, targetHeight, true)
     }
 
     @JvmStatic
@@ -321,7 +323,7 @@ object ShortcutIconUtils {
         label: String,
         sizePx: Int = 192,
     ): Bitmap {
-        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
         val colors =
