@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.5](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.4...v1.6.5) (2026-10-21)
+
+
+### Bug Fixes
+
+* **deps:** update androidx dependencies ([d558373](https://github.com/JoestarLabs/NativeAlpha/commit/d5583736422c58f4067611d18b28d00919b21cfb))
+* **deps:** update androidx dependencies ([644c0aa](https://github.com/JoestarLabs/NativeAlpha/commit/644c0aa51b1e45f5c460cd12ef2bff3869ac88a9))
+
 ## [1.6.4](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.3...v1.6.4) (2026-10-13)
 
 
