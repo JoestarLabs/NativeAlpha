@@ -22,7 +22,7 @@ compose-material3 = "1.5.0-beta02"
 
 # Network & Utilities
 jsoup = "1.23.2"
-gson = "2.14.0"
+gson = "2.15.0"
 hasher = "1.2"
 process-phoenix = "3.0.0"
 easypermissions = "3.0.0"
