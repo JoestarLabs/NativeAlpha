@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.5](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.4...v1.6.5) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update androidx dependencies ([d558373](https://github.com/JoestarLabs/NativeAlpha/commit/d5583736422c58f4067611d18b28d00919b21cfb))
+* **deps:** update androidx dependencies ([644c0aa](https://github.com/JoestarLabs/NativeAlpha/commit/644c0aa51b1e45f5c460cd12ef2bff3869ac88a9))
+* **deps:** update dependency com.google.code.gson:gson to v2.15.0 ([f047097](https://github.com/JoestarLabs/NativeAlpha/commit/f0470978a2c9a219647b042f9d7c197b1c3d3a17))
+* **deps:** update dependency com.google.code.gson:gson to v2.15.0 ([17b32a4](https://github.com/JoestarLabs/NativeAlpha/commit/17b32a4ec0659ff876f56fc382df80e6a2ac2f5f))
+
 ## [1.6.4](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.3...v1.6.4) (2026-10-13)
 
 
