@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 
 /**
  * A native Material 3 Expressive squiggly / wavy divider.
@@ -39,16 +40,17 @@ fun ExpressiveSquigglyDivider(
 
         if (width <= 0f || wl <= 0f) return@Canvas
 
+        val cycleCount = (width / wl).roundToInt().coerceAtLeast(1)
+        val actualWl = width / cycleCount
+
         val path = Path()
         path.moveTo(0f, midY)
 
-        var currentX = 0f
-        while (currentX < width) {
+        for (i in 0 until cycleCount) {
             // First half of wave (peak)
-            path.relativeQuadraticTo(wl / 4f, -amp, wl / 2f, 0f)
+            path.relativeQuadraticTo(actualWl / 4f, -amp, actualWl / 2f, 0f)
             // Second half of wave (trough)
-            path.relativeQuadraticTo(wl / 4f, amp, wl / 2f, 0f)
-            currentX += wl
+            path.relativeQuadraticTo(actualWl / 4f, amp, actualWl / 2f, 0f)
         }
 
         drawPath(
