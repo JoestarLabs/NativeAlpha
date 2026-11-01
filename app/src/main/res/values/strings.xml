@@ -166,6 +166,7 @@
     <string name="scroll_to_bottom">Please scroll to the bottom.</string>
     <string name="always_show_software_buttons">Always show software navigation buttons</string>
     <string name="use_standard_context_menu_temporarily">Temporarily use standard context menu</string>
+    <string name="use_standard_context_menu_temporarily_sub">For the next long press</string>
     <string name="use_standard_context_menu_permanently">Use standard context menu</string>
     <string name="adblock_config">Adblock settings</string>
     <string name="adblock_description">The entries created here serve as sources for the ad blocker. The blocking rules are downloaded from the specified URL and kept up to date. Please note that adding too many sources may negatively impact performance. You can create up to 8 entries.</string>

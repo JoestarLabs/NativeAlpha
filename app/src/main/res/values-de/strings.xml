@@ -162,6 +162,7 @@
     <string name="file_download_failed">Download fehlgeschlagen.</string>
     <string name="always_show_software_buttons">Software-Navigationsbuttons immer anzeigen</string>
     <string name="use_standard_context_menu_temporarily">Einmalig Standard-Kontextmenü nutzen</string>
+    <string name="use_standard_context_menu_temporarily_sub">Für das nächste lange Drücken</string>
     <string name="use_standard_context_menu_permanently">Standard-Kontextmenü nutzen</string>
     <string name="adblock_config">Adblocker-Einstellungen</string>
     <string name="adblock_description">Die hier angelegten Einträge dienen als Quellen für den Werbeblocker. Die Blockregeln werden von der angegebenen URL heruntergeladen und regelmäßig aktualisiert. Bitte beachten Sie, dass zu viele hinzugefügte Quellen sich negativ auf die Performance auswirken können. Sie können bis zu 8 Einträge erstellen.</string>

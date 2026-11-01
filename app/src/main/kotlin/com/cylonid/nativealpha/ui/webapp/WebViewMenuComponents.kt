@@ -52,7 +52,7 @@ fun WebViewMenuHeader(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val displayTitle = title.ifBlank { webApp?.title.orEmpty().ifBlank { "Native Alpha" } }
+    val displayTitle = title.ifBlank { webApp?.title.orEmpty().ifBlank { stringResource(R.string.app_name) } }
     val displayUrl = url.removePrefix("https://").removePrefix("http://").removePrefix("www.")
 
     Row(
@@ -248,7 +248,7 @@ fun WebViewMenuActionList(
         WebViewMenuItemRow(
             icon = Icons.AutoMirrored.Rounded.MenuOpen,
             title = stringResource(R.string.use_standard_context_menu_temporarily),
-            subtitle = "For the next long press",
+            subtitle = stringResource(R.string.use_standard_context_menu_temporarily_sub),
             onClick = {
                 onFallbackContextMenu()
                 onDismiss()

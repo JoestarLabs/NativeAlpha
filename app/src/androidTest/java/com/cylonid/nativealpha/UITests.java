@@ -149,9 +149,9 @@ public class UITests {
 	}
 
 	private void initSingleWebsite(final String base_url) {
-		activityTestRule.getActivity().runOnUiThread(() -> {
+		scenarioRule.getScenario().onActivity(activity -> {
 			DataManager.getInstance().addWebsite(new WebApp(base_url, DataManager.getInstance().getIncrementedID()));
-			activityTestRule.getActivity().updateWebAppList();
+			activity.updateWebAppList();
 		});
 
 		TestUtils.acceptLicense();
@@ -160,12 +160,12 @@ public class UITests {
 	}
 
 	private void initMultipleWebsites(final List<String> urls) {
-		activityTestRule.getActivity().runOnUiThread(() -> {
+		scenarioRule.getScenario().onActivity(activity -> {
 			for (String base_url : urls) {
 				DataManager.getInstance()
 						.addWebsite(new WebApp(base_url, DataManager.getInstance().getIncrementedID()));
 			}
-			activityTestRule.getActivity().updateWebAppList();
+			activity.updateWebAppList();
 		});
 		TestUtils.acceptLicense();
 		// Get rid of welcome message

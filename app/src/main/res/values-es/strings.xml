@@ -163,6 +163,7 @@
     <string name="scroll_to_bottom">Por favor, desplácese hasta el final.</string>
     <string name="always_show_software_buttons">Mostrar siempre los botones de navegación del software</string>
     <string name="use_standard_context_menu_temporarily">Utilizar el menú contextual estándar</string>
+    <string name="use_standard_context_menu_temporarily_sub">Para la siguiente pulsación prolongada</string>
     <string name="use_standard_context_menu_permanently">Utilizar permanentemente el menú contextual estándar</string>
     <string name="adblock_config">Configuración de Adblock</string>
     <string name="adblock_description">Las entradas creadas aquí sirven como fuentes para el bloqueador de anuncios. Las reglas de bloqueo se descargan desde la URL especificada y se mantienen actualizadas. Tenga en cuenta que agregar demasiadas fuentes puede afectar negativamente el rendimiento. Puede crear hasta 8 entradas.</string>
