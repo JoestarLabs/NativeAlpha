@@ -643,15 +643,17 @@ public class WebViewActivity extends AppCompatActivity
 	protected void onPause() {
 		super.onPause();
 
-		wv.evaluateJavascript(
-				"document.querySelectorAll('audio').forEach(x => x.pause());document.querySelectorAll('video').forEach(x => x.pause());",
-				null);
-		wv.onPause();
-		wv.pauseTimers();
-		WebViewMenuLauncher.dismiss(this);
+		if (wv != null) {
+			wv.evaluateJavascript(
+					"document.querySelectorAll('audio').forEach(x => x.pause());document.querySelectorAll('video').forEach(x => x.pause());",
+					null);
+			wv.onPause();
+			wv.pauseTimers();
 
-		if (webapp.isClearCache() || DataManager.getInstance().getSettings().isClearCache())
-			wv.clearCache(true);
+			if (webapp.isClearCache() || DataManager.getInstance().getSettings().isClearCache())
+				wv.clearCache(true);
+		}
+		WebViewMenuLauncher.dismiss(this);
 
 		if (reload_handler != null) {
 			reload_handler.removeCallbacksAndMessages(null);

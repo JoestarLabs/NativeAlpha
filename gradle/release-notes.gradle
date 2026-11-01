@@ -24,12 +24,6 @@ def generateReleaseNotesTask = tasks.register("generateReleaseNotesAsset") {
             def sectionText = ""
             if (matcher.find()) {
                 sectionText = matcher.group(1).trim()
-            } else {
-                def fallbackPattern = ~/##\s+\[([0-9.]+)\][^\n]*\n([\s\S]*?)(?=\n##\s+\[|\Z)/
-                def fallbackMatcher = content =~ fallbackPattern
-                if (fallbackMatcher.find()) {
-                    sectionText = fallbackMatcher.group(2).trim()
-                }
             }
 
             if (sectionText) {

@@ -275,12 +275,13 @@ public class DataManager {
 			loadAppData();
 		}
 		try {
-			WebApp webApp = websites.get(i);
-			if (!webApp.isOverrideGlobalSettings() && !ignoreOverride) {
-				webApp.copySettings(settings.getGlobalWebApp());
-				return webApp;
+			WebApp stored = websites.get(i);
+			if (!stored.isOverrideGlobalSettings() && !ignoreOverride) {
+				WebApp effective = stored.deepCopy();
+				effective.copySettings(settings.getGlobalWebApp());
+				return effective;
 			}
-			return websites.get(i);
+			return stored;
 		} catch (IndexOutOfBoundsException e) {
 			Context context = App.getAppContext();
 			if (context != null) {

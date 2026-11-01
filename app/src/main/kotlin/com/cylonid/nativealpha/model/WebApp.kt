@@ -84,6 +84,8 @@ data class WebApp(
         isOverrideGlobalSettings = other.isOverrideGlobalSettings
         containerId = other.containerId
         isUseContainer = other.isUseContainer
+        isActiveEntry = other.isActiveEntry
+        order = other.order
         copySettings(other)
     }
 
@@ -96,7 +98,6 @@ data class WebApp(
         isAllowThirdPartyCookies = other.isAllowThirdPartyCookies
         isRestorePage = other.isRestorePage
         isAllowJs = other.isAllowJs
-        isActiveEntry = other.isActiveEntry
         isRequestDesktop = other.isRequestDesktop
         isClearCache = other.isClearCache
         isUseAdblock = other.isUseAdblock
@@ -124,7 +125,6 @@ data class WebApp(
         isEnableZooming = other.isEnableZooming
         isBiometricProtection = other.isBiometricProtection
         isAllowMediaPlaybackInBackground = other.isAllowMediaPlaybackInBackground
-        order = other.order
         alwaysUseFallbackContextMenu = other.alwaysUseFallbackContextMenu
         adBlockSettings = other.adBlockSettings
     }

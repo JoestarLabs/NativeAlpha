@@ -238,23 +238,27 @@ object ShortcutIconUtils {
     ) {
         if (removableWebAppIds.isEmpty()) return
         val appContext = context.applicationContext ?: context
-        for (id in removableWebAppIds) {
-            deleteIcon(appContext, id)
-        }
-        val manager = appContext.getSystemService(ShortcutManager::class.java) ?: return
-        CoroutineScope(Dispatchers.IO).launch {
+        val manager = appContext.getSystemService(ShortcutManager::class.java)
+        if (manager != null) {
             runCatching {
+                val toDisable = mutableListOf<String>()
                 for (info in manager.pinnedShortcuts) {
                     val id =
                         info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) ?: -1
                     if (removableWebAppIds.contains(id)) {
-                        manager.disableShortcuts(
-                            listOf(info.id),
-                            appContext.getString(R.string.webapp_already_deleted),
-                        )
+                        toDisable.add(info.id)
                     }
                 }
+                if (toDisable.isNotEmpty()) {
+                    manager.disableShortcuts(
+                        toDisable,
+                        appContext.getString(R.string.webapp_already_deleted),
+                    )
+                }
             }
+        }
+        for (id in removableWebAppIds) {
+            deleteIcon(appContext, id)
         }
     }
 
