@@ -36,13 +36,16 @@ import android.webkit.PermissionRequest;
 import android.webkit.RenderProcessGoneDetail;
 import android.webkit.SslErrorHandler;
 import android.webkit.ValueCallback;
+import android.webkit.WebBackForwardList;
 import android.webkit.WebChromeClient;
+import android.webkit.WebHistoryItem;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -129,6 +132,8 @@ public class WebViewActivity extends AppCompatActivity
 			});
 
 	private boolean quitOnNextBackpress = false;
+	private final Handler backPressHandler = new Handler(Looper.getMainLooper());
+	private final Runnable resetBackPressRunnable = () -> quitOnNextBackpress = false;
 	private Handler reload_handler = null;
 	private WebApp webapp = null;
 	private String urlOnFirstPageload = "";
@@ -331,6 +336,10 @@ public class WebViewActivity extends AppCompatActivity
 		if (webapp.isEnableZooming()) {
 			wv.getSettings().setSupportZoom(true);
 			wv.getSettings().setBuiltInZoomControls(true);
+		}
+
+		if (WebViewFeature.isFeatureSupported(WebViewFeature.REQUESTED_WITH_HEADER_ALLOW_LIST)) {
+			WebSettingsCompat.setRequestedWithHeaderOriginAllowList(wv.getSettings(), Collections.emptySet());
 		}
 
 		CUSTOM_HEADERS = initCustomHeaders(webapp.isSendSavedataRequest());
@@ -595,21 +604,80 @@ public class WebViewActivity extends AppCompatActivity
 
 	private void handleBackPressed() {
 		WebApp webapp = DataManager.getInstance().getWebApp(webappID);
-
-		if (wv.canGoBack()) {
-			wv.goBack();
+		if (webapp == null) {
+			finish();
 			return;
+		}
+
+		if (wv != null && wv.canGoBack()) {
+			WebBackForwardList history = wv.copyBackForwardList();
+			int currentIndex = history.getCurrentIndex();
+			if (currentIndex > 0) {
+				String currentUrl = wv.getUrl();
+				if (currentUrl == null) {
+					WebHistoryItem currentItem = history.getItemAtIndex(currentIndex);
+					currentUrl = currentItem != null ? currentItem.getUrl() : "";
+				}
+
+				int targetIndex = currentIndex - 1;
+				while (targetIndex >= 0) {
+					WebHistoryItem item = history.getItemAtIndex(targetIndex);
+					if (item != null && !isSameOrRedirectUrl(currentUrl, item.getUrl())) {
+						break;
+					}
+					targetIndex--;
+				}
+
+				if (targetIndex >= 0) {
+					int steps = targetIndex - currentIndex;
+					wv.goBackOrForward(steps);
+					quitOnNextBackpress = false;
+					backPressHandler.removeCallbacks(resetBackPressRunnable);
+					return;
+				}
+			}
 		}
 
 		if (quitOnNextBackpress) {
 			quitOnNextBackpress = false;
+			backPressHandler.removeCallbacks(resetBackPressRunnable);
 			moveTaskToBack(true);
 			return;
 		}
 
-		loadURL(wv, webapp.getBaseUrl());
 		quitOnNextBackpress = true;
+		NotificationUtils.showToast(this, getString(R.string.press_back_again_to_exit), Toast.LENGTH_SHORT);
+		backPressHandler.removeCallbacks(resetBackPressRunnable);
+		backPressHandler.postDelayed(resetBackPressRunnable, 2000);
+	}
 
+	private boolean isSameOrRedirectUrl(String url1, String url2) {
+		if (url1 == null || url2 == null) {
+			return false;
+		}
+		if (url1.equals(url2)) {
+			return true;
+		}
+		String clean1 = normalizeUrlForComparison(url1);
+		String clean2 = normalizeUrlForComparison(url2);
+		return clean1.equals(clean2);
+	}
+
+	private String normalizeUrlForComparison(String url) {
+		if (url == null) {
+			return "";
+		}
+		String clean = url.trim();
+		if (clean.endsWith("#")) {
+			clean = clean.substring(0, clean.length() - 1);
+		}
+		if (clean.startsWith("http://")) {
+			clean = "https://" + clean.substring(7);
+		}
+		if (clean.endsWith("/") && clean.length() > 8) {
+			clean = clean.substring(0, clean.length() - 1);
+		}
+		return clean;
 	}
 
 	@Override
@@ -667,6 +735,18 @@ public class WebViewActivity extends AppCompatActivity
 			reload_handler.removeCallbacksAndMessages(null);
 			Timber.d("Stopped reload handler");
 		}
+		if (backPressHandler != null && resetBackPressRunnable != null) {
+			backPressHandler.removeCallbacks(resetBackPressRunnable);
+		}
+		quitOnNextBackpress = false;
+	}
+
+	@Override
+	protected void onDestroy() {
+		if (backPressHandler != null && resetBackPressRunnable != null) {
+			backPressHandler.removeCallbacks(resetBackPressRunnable);
+		}
+		super.onDestroy();
 	}
 
 	private void reload() {
@@ -1120,6 +1200,12 @@ public class WebViewActivity extends AppCompatActivity
 
 		@Override
 		public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+			if (request == null || request.getUrl() == null) {
+				return false;
+			}
+			if (!request.isForMainFrame()) {
+				return false;
+			}
 			runOnUiThread(() -> setDarkModeIfNeeded());
 			String url = request.getUrl().toString();
 			WebApp webapp = DataManager.getInstance().getWebApp(webappID);
@@ -1151,17 +1237,24 @@ public class WebViewActivity extends AppCompatActivity
 				}
 			}
 
-			if (webapp.isOpenUrlExternal()) {
+			if (webapp != null && webapp.isOpenUrlExternal()) {
 				String base_url = webapp.getBaseUrl();
-				Uri uri = Uri.parse(base_url);
-				String host = uri.getHost();
-				if (host != null && !url.contains(host)) {
-					view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-					return true;
+				if (base_url != null) {
+					Uri uri = Uri.parse(base_url);
+					String host = uri.getHost();
+					if (host != null && !url.contains(host)) {
+						view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+						return true;
+					}
 				}
 			}
-			loadURL(view, url);
-			return true;
+
+			if (webapp != null && url.startsWith("http://") && !webapp.isAllowHttp()) {
+				loadURL(view, url);
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

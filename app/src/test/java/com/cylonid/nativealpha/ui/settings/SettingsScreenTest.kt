@@ -116,7 +116,6 @@ class SettingsScreenTest {
     }
 
     @Test
-    @Test
     fun testWebAppMenuStyleSelectionUpdatesModel() {
         val dm = DataManager.getInstance()
         dm.settings.webAppMenuStyle = com.cylonid.nativealpha.ui.webapp.WebAppMenuStyle.BOTTOM_SHEET.id
@@ -184,6 +183,5 @@ class SettingsScreenTest {
         pdfViewerToggle.assertIsOn()
         assertTrue(dm.settings.isUseBuiltinPdfViewer)
         assertTrue(dm.settings.globalWebApp.isUseBuiltinPdfViewer)
-    }
     }
 }
