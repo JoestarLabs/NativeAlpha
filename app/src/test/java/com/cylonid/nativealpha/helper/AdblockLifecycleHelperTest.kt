@@ -87,4 +87,52 @@ class AdblockLifecycleHelperTest {
         }
         assertTrue("hasAdblockCrashed should be set to true on error", DataManager.getInstance().hasAdblockCrashed)
     }
+
+    @Test
+    fun testSanitizeFilterDownloadStatesConvertsRunningStates() {
+        val prefs = activity.getSharedPreferences(AdblockLifecycleHelper.FILTER_PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val initialJson =
+            """
+            {
+                "filter1": {
+                    "url": "https://example.com/rules1.txt",
+                    "name": "List 1",
+                    "downloadState": "ENQUEUED",
+                    "filtersCount": 150000
+                },
+                "filter2": {
+                    "url": "https://example.com/rules2.txt",
+                    "name": "List 2",
+                    "downloadState": "DOWNLOADING",
+                    "filtersCount": 0
+                },
+                "filter3": {
+                    "url": "https://example.com/rules3.txt",
+                    "name": "List 3",
+                    "downloadState": "SUCCESS",
+                    "filtersCount": 500
+                }
+            }
+            """.trimIndent()
+        prefs.edit().putString(AdblockLifecycleHelper.KEY_FILTER_MAP, initialJson).commit()
+
+        AdblockLifecycleHelper.sanitizeFilterDownloadStates(activity)
+
+        val sanitizedJson = prefs.getString(AdblockLifecycleHelper.KEY_FILTER_MAP, "") ?: ""
+        val jsonObject = org.json.JSONObject(sanitizedJson)
+
+        val filter1 = jsonObject.getJSONObject("filter1")
+        val filter2 = jsonObject.getJSONObject("filter2")
+        val filter3 = jsonObject.getJSONObject("filter3")
+
+        org.junit.Assert.assertEquals("NONE", filter1.getString("downloadState"))
+        org.junit.Assert.assertEquals("FAILED", filter2.getString("downloadState"))
+        org.junit.Assert.assertEquals("SUCCESS", filter3.getString("downloadState"))
+    }
+
+    @Test
+    fun testInitAdFilterSucceeds() {
+        val filter = AdblockLifecycleHelper.initAdFilter(activity)
+        org.junit.Assert.assertNotNull("AdFilter should be initialized", filter)
+    }
 }

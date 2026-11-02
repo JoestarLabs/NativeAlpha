@@ -27,7 +27,6 @@ import com.cylonid.nativealpha.ui.webapplist.WebAppListViewModel
 import com.cylonid.nativealpha.util.Const
 import com.cylonid.nativealpha.util.EntryPointUtils.entryPointReached
 import com.cylonid.nativealpha.util.WebViewLauncher
-import io.github.edsuns.adfilter.AdFilter
 
 class MainActivity : AppCompatActivity() {
     private val viewModel: WebAppListViewModel by viewModels()
@@ -96,7 +95,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        AdblockLifecycleHelper(this).trySyncOperation({ AdFilter.create(applicationContext) })
+        AdblockLifecycleHelper(this).trySyncOperation {
+            AdblockLifecycleHelper.initAdFilter(applicationContext)
+        }
     }
 
     override fun onResume() {

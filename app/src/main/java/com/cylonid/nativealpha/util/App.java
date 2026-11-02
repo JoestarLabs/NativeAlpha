@@ -6,6 +6,8 @@ import android.content.Context;
 import androidx.work.Configuration;
 import androidx.work.WorkManager;
 
+import com.cylonid.nativealpha.helper.AdblockLifecycleHelper;
+
 public class App extends Application {
 
 	private static App instance;
@@ -15,6 +17,7 @@ public class App extends Application {
 		super.onCreate();
 
 		instance = this;
+		AdblockLifecycleHelper.sanitizeFilterDownloadStates(this);
 		if (!WorkManager.isInitialized()) {
 			WorkManager.initialize(this, new Configuration.Builder().build());
 		}
