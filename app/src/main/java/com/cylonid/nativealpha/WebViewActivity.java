@@ -176,15 +176,11 @@ public class WebViewActivity extends AppCompatActivity
 
 		adblockLifecycleHelper = new AdblockLifecycleHelper(this);
 		adblockLifecycleHelper.trySyncOperation(() -> {
-			try {
-				adFilter = AdFilter.Companion.get(getApplicationContext());
-			} catch (Throwable t) {
-				adFilter = AdFilter.Companion.create(getApplicationContext());
-			}
+			adFilter = AdblockLifecycleHelper.initAdFilter(getApplicationContext());
 		});
 		if (adFilter == null) {
 			try {
-				adFilter = AdFilter.Companion.get(getApplicationContext());
+				adFilter = AdblockLifecycleHelper.initAdFilter(getApplicationContext());
 			} catch (Throwable ignored) {
 			}
 		}
