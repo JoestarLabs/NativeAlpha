@@ -352,8 +352,20 @@ public class WebViewActivity extends AppCompatActivity
 		});
 
 		wv.setDownloadListener((dl_url, userAgent, contentDisposition, mimeType, contentLength) -> {
+			String file_name = Utility.getFileNameFromDownload(dl_url, contentDisposition, mimeType);
+			boolean isPdf = (mimeType != null && mimeType.equalsIgnoreCase("application/pdf"))
+					|| (file_name != null && file_name.toLowerCase().endsWith(".pdf"))
+					|| (dl_url != null && dl_url.toLowerCase().split("\\?")[0].endsWith(".pdf"));
 
-			if (mimeType.equals("application/pdf")) {
+			if (isPdf && webapp != null && webapp.isUseBuiltinPdfViewer()) {
+				Intent intent = new Intent(WebViewActivity.this,
+						com.cylonid.nativealpha.activities.PdfViewerActivity.class);
+				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_PDF_URL, dl_url);
+				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_FILE_NAME, file_name);
+				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_USER_AGENT, userAgent);
+				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_WEBAPP_ID, webappID);
+				startActivity(intent);
+			} else if (mimeType != null && mimeType.equals("application/pdf")) {
 				Intent i = new Intent(Intent.ACTION_VIEW);
 				i.setData(Uri.parse(dl_url));
 				startActivity(i);
@@ -375,7 +387,7 @@ public class WebViewActivity extends AppCompatActivity
 								Snackbar.LENGTH_SHORT);
 						return;
 					}
-					String file_name = Utility.getFileNameFromDownload(dl_url, contentDisposition, mimeType);
+					file_name = Utility.getFileNameFromDownload(dl_url, contentDisposition, mimeType);
 
 					request.setMimeType(mimeType);
 					request.addRequestHeader("cookie", CookieManager.getInstance().getCookie(dl_url));
@@ -1125,6 +1137,22 @@ public class WebViewActivity extends AppCompatActivity
 				Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
 				startActivity(intent);
 				return true;
+			}
+
+			if (webapp != null && webapp.isUseBuiltinPdfViewer()) {
+				String cleanUrl = url.toLowerCase().split("\\?")[0].split("#")[0];
+				if (cleanUrl.endsWith(".pdf")) {
+					Intent intent = new Intent(view.getContext(),
+							com.cylonid.nativealpha.activities.PdfViewerActivity.class);
+					intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_PDF_URL, url);
+					intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_FILE_NAME,
+							Utility.getFileNameFromDownload(url, null, "application/pdf"));
+					intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_USER_AGENT,
+							wv != null && wv.getSettings() != null ? wv.getSettings().getUserAgentString() : null);
+					intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_WEBAPP_ID, webappID);
+					view.getContext().startActivity(intent);
+					return true;
+				}
 			}
 
 			if (webapp.isOpenUrlExternal()) {

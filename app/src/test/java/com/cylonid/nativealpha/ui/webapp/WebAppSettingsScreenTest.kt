@@ -135,4 +135,33 @@ class WebAppSettingsScreenTest {
         sandboxToggle.performClick()
         sandboxToggle.assertIsOff()
     }
+
+    @Test
+    fun testBuiltinPdfViewerToggleInWebAppSettings() {
+        val dm = DataManager.getInstance()
+        val webApp = dm.websites[0]
+        webApp.isUseBuiltinPdfViewer = true
+
+        composeTestRule.setContent {
+            NativeAlphaTheme {
+                WebAppSettingsScreen(
+                    webappId = testWebAppId,
+                    onNavigateBack = {},
+                )
+            }
+        }
+
+        val pdfViewerStr = context.getString(R.string.pref_pdf_viewer_title)
+        val pdfToggle = composeTestRule.onNodeWithText(pdfViewerStr).performScrollTo()
+        pdfToggle.assertIsDisplayed()
+        pdfToggle.assertIsOn()
+
+        // Toggle off
+        pdfToggle.performClick()
+        pdfToggle.assertIsOff()
+
+        // Toggle on
+        pdfToggle.performClick()
+        pdfToggle.assertIsOn()
+    }
 }

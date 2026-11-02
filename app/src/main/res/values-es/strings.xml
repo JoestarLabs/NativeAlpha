@@ -215,4 +215,17 @@
     <string name="got_it">Entendido</string>
     <string name="release_notes_fallback">Las notas de la versión están disponibles en GitHub.</string>
     <string name="support_liberapay_desc">Estás utilizando la versión extendida con todas las funciones Plus gratis. Considera apoyar el desarrollo en Liberapay.</string>
+
+    <!-- PDF Viewer -->
+    <string name="pref_pdf_viewer_title">Visor de PDF integrado</string>
+    <string name="pref_pdf_viewer_summary">Ver archivos PDF en Native Alpha en lugar de redirigir a un navegador externo</string>
+    <string name="pdf_viewer_save_download">Guardar en Descargas</string>
+    <string name="pdf_viewer_saved_success">PDF guardado en Descargas</string>
+    <string name="pdf_viewer_save_failed">Error al guardar el PDF</string>
+    <string name="pdf_viewer_share">Compartir PDF</string>
+    <string name="pdf_viewer_open_external">Abrir con…</string>
+    <string name="pdf_viewer_error_loading">Error al cargar el documento PDF</string>
+    <string name="pdf_viewer_page_indicator">Página %1$d de %2$d</string>
+    <string name="pdf_viewer_loading">Cargando PDF…</string>
+    <string name="pdf_viewer_retry">Reintentar</string>
 </resources>

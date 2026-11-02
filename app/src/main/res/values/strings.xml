@@ -218,4 +218,17 @@
     <string name="got_it">Got it</string>
     <string name="release_notes_fallback">Release notes for this version are available on GitHub.</string>
     <string name="support_liberapay_desc">You are using the extended release with all Plus features free of charge. Consider supporting development on Liberapay.</string>
+
+    <!-- PDF Viewer -->
+    <string name="pref_pdf_viewer_title">Built-in PDF viewer</string>
+    <string name="pref_pdf_viewer_summary">Preview PDFs in Native Alpha instead of redirecting to an external browser</string>
+    <string name="pdf_viewer_save_download">Save to Downloads</string>
+    <string name="pdf_viewer_saved_success">PDF saved to Downloads</string>
+    <string name="pdf_viewer_save_failed">Failed to save PDF</string>
+    <string name="pdf_viewer_share">Share PDF</string>
+    <string name="pdf_viewer_open_external">Open with…</string>
+    <string name="pdf_viewer_error_loading">Failed to load PDF document</string>
+    <string name="pdf_viewer_page_indicator">Page %1$d of %2$d</string>
+    <string name="pdf_viewer_loading">Loading PDF…</string>
+    <string name="pdf_viewer_retry">Retry</string>
 </resources>
