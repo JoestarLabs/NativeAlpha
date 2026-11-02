@@ -103,27 +103,13 @@ fun PdfViewerScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text(
-                            text = fileName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        if (uiState is PdfViewerUiState.Ready) {
-                            Text(
-                                text =
-                                    stringResource(
-                                        R.string.pdf_viewer_page_indicator,
-                                        1,
-                                        uiState.rendererHelper.pageCount,
-                                    ),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
+                    Text(
+                        text = fileName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -266,8 +252,6 @@ private fun PdfContent(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val containerWidthPx = with(LocalDensity.current) { maxWidth.toPx().toInt() }
-        val maxPanX = (maxWidth.value * (scale - 1f) * 2f).coerceAtLeast(0f)
-        val maxPanY = (maxHeight.value * (scale - 1f) * 2f).coerceAtLeast(0f)
 
         Box(
             modifier =
@@ -288,6 +272,8 @@ private fun PdfContent(
                         detectTransformGestures { _, pan, zoom, _ ->
                             scale = (scale * zoom).coerceIn(1f, 3.5f)
                             if (scale > 1f) {
+                                val maxPanX = (size.width * (scale - 1f) / 2f).coerceAtLeast(0f)
+                                val maxPanY = (size.height * (scale - 1f) / 2f).coerceAtLeast(0f)
                                 val newX = (offset.x + pan.x).coerceIn(-maxPanX, maxPanX)
                                 val newY = (offset.y + pan.y).coerceIn(-maxPanY, maxPanY)
                                 offset = Offset(newX, newY)

@@ -338,10 +338,6 @@ public class WebViewActivity extends AppCompatActivity
 			wv.getSettings().setBuiltInZoomControls(true);
 		}
 
-		if (WebViewFeature.isFeatureSupported(WebViewFeature.REQUESTED_WITH_HEADER_ALLOW_LIST)) {
-			WebSettingsCompat.setRequestedWithHeaderOriginAllowList(wv.getSettings(), Collections.emptySet());
-		}
-
 		CUSTOM_HEADERS = initCustomHeaders(webapp.isSendSavedataRequest());
 		loadURL(wv, url);
 		wv.setWebChromeClient(new CustomWebChromeClient());
@@ -363,12 +359,20 @@ public class WebViewActivity extends AppCompatActivity
 					|| (dl_url != null && dl_url.toLowerCase().split("\\?")[0].endsWith(".pdf"));
 
 			if (isPdf && webapp != null && webapp.isUseBuiltinPdfViewer()) {
+				if (dl_url != null && dl_url.startsWith("http://") && !webapp.isAllowHttp()) {
+					loadURL(wv, dl_url);
+					return;
+				}
+				String cookie = CookieManager.getInstance().getCookie(dl_url);
 				Intent intent = new Intent(WebViewActivity.this,
 						com.cylonid.nativealpha.activities.PdfViewerActivity.class);
 				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_PDF_URL, dl_url);
 				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_FILE_NAME, file_name);
 				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_USER_AGENT, userAgent);
+				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_COOKIE, cookie);
 				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_WEBAPP_ID, webappID);
+				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_ALLOW_HTTP,
+						webapp.isAllowHttp());
 				startActivity(intent);
 			} else if (mimeType != null && mimeType.equals("application/pdf")) {
 				Intent i = new Intent(Intent.ACTION_VIEW);
@@ -1224,6 +1228,11 @@ public class WebViewActivity extends AppCompatActivity
 			if (webapp != null && webapp.isUseBuiltinPdfViewer()) {
 				String cleanUrl = url.toLowerCase().split("\\?")[0].split("#")[0];
 				if (cleanUrl.endsWith(".pdf")) {
+					if (url.startsWith("http://") && !webapp.isAllowHttp()) {
+						loadURL(view, url);
+						return true;
+					}
+					String cookie = CookieManager.getInstance().getCookie(url);
 					Intent intent = new Intent(view.getContext(),
 							com.cylonid.nativealpha.activities.PdfViewerActivity.class);
 					intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_PDF_URL, url);
@@ -1231,7 +1240,10 @@ public class WebViewActivity extends AppCompatActivity
 							Utility.getFileNameFromDownload(url, null, "application/pdf"));
 					intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_USER_AGENT,
 							wv != null && wv.getSettings() != null ? wv.getSettings().getUserAgentString() : null);
+					intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_COOKIE, cookie);
 					intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_WEBAPP_ID, webappID);
+					intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_ALLOW_HTTP,
+							webapp.isAllowHttp());
 					view.getContext().startActivity(intent);
 					return true;
 				}
@@ -1250,6 +1262,12 @@ public class WebViewActivity extends AppCompatActivity
 			}
 
 			if (webapp != null && url.startsWith("http://") && !webapp.isAllowHttp()) {
+				loadURL(view, url);
+				return true;
+			}
+
+			String method = request.getMethod();
+			if ("GET".equalsIgnoreCase(method) && (url.startsWith("http://") || url.startsWith("https://"))) {
 				loadURL(view, url);
 				return true;
 			}

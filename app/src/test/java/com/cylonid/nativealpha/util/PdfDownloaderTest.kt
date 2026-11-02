@@ -3,6 +3,7 @@ package com.cylonid.nativealpha.util
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -66,12 +67,12 @@ class PdfDownloaderTest {
         val cacheDir = PdfDownloader.getPdfCacheDir(context)
         val file1 =
             File(cacheDir, "old_file.pdf").apply {
-                writeBytes(ByteArray(1024))
+                java.io.RandomAccessFile(this, "rw").use { it.setLength(55L * 1024 * 1024) }
                 setLastModified(1000L)
             }
         val file2 =
             File(cacheDir, "new_file.pdf").apply {
-                writeBytes(ByteArray(1024))
+                java.io.RandomAccessFile(this, "rw").use { it.setLength(1024) }
                 setLastModified(5000L)
             }
 
@@ -80,12 +81,11 @@ class PdfDownloaderTest {
 
         PdfDownloader.cleanOldCacheFiles(context)
 
-        // Under 50MB, files are retained
-        assertTrue(file1.exists())
+        // Exceeding 50MB limit: oldest file is deleted, newest file retained
+        assertFalse(file1.exists())
         assertTrue(file2.exists())
 
         // Cleanup
-        file1.delete()
         file2.delete()
     }
 }

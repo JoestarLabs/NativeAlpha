@@ -28,10 +28,22 @@ open class PdfRendererHelper(
 ) : PdfRendererEngine {
     private val parcelFileDescriptor: ParcelFileDescriptor =
         ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
-    private val renderer: PdfRenderer = PdfRenderer(parcelFileDescriptor)
+    private val renderer: PdfRenderer =
+        try {
+            PdfRenderer(parcelFileDescriptor)
+        } catch (t: Throwable) {
+            try {
+                parcelFileDescriptor.close()
+            } catch (_: Exception) {
+            }
+            throw t
+        }
+
+    @Volatile
+    private var isClosed = false
 
     override val pageCount: Int
-        get() = renderer.pageCount
+        get() = if (isClosed) 0 else renderer.pageCount
 
     private val mutex = Mutex()
     private val dimensionCache = mutableMapOf<Int, Pair<Int, Int>>()
@@ -54,10 +66,15 @@ open class PdfRendererHelper(
                 return@withContext Pair(1, 1)
             }
             mutex.withLock {
+                if (isClosed) return@withLock Pair(1, 1)
                 dimensionCache[pageIndex]?.let { return@withLock it }
                 val page = renderer.openPage(pageIndex)
-                val dims = Pair(page.width, page.height)
-                page.close()
+                val dims =
+                    try {
+                        Pair(page.width, page.height)
+                    } finally {
+                        page.close()
+                    }
                 dimensionCache[pageIndex] = dims
                 dims
             }
@@ -79,6 +96,7 @@ open class PdfRendererHelper(
             }
 
             mutex.withLock {
+                if (isClosed) return@withLock null
                 bitmapCache.get(pageIndex)?.let { cached ->
                     if (!cached.isRecycled) {
                         return@withLock cached
@@ -86,29 +104,50 @@ open class PdfRendererHelper(
                 }
 
                 val page = renderer.openPage(pageIndex)
-                val pageW = page.width.coerceAtLeast(1)
-                val pageH = page.height.coerceAtLeast(1)
-                val targetHeight = ((targetWidth.toFloat() / pageW) * pageH).toInt().coerceAtLeast(1)
+                try {
+                    val pageW = page.width.coerceAtLeast(1)
+                    val pageH = page.height.coerceAtLeast(1)
+                    val targetHeight = ((targetWidth.toFloat() / pageW) * pageH).toInt().coerceAtLeast(1)
 
-                val bitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-                val canvas = Canvas(bitmap)
-                canvas.drawColor(Color.WHITE)
+                    val bitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+                    val canvas = Canvas(bitmap)
+                    canvas.drawColor(Color.WHITE)
 
-                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                page.close()
-
-                bitmapCache.put(pageIndex, bitmap)
-                bitmap
+                    page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                    bitmapCache.put(pageIndex, bitmap)
+                    bitmap
+                } finally {
+                    page.close()
+                }
             }
         }
 
     override fun close() {
+        isClosed = true
         try {
             bitmapCache.evictAll()
-            renderer.close()
-            parcelFileDescriptor.close()
         } catch (_: Exception) {
-            // Safe cleanup
+        }
+
+        try {
+            kotlinx.coroutines.runBlocking {
+                mutex.withLock {
+                    try {
+                        renderer.close()
+                    } catch (_: Exception) {
+                    }
+                }
+            }
+        } catch (_: Exception) {
+            try {
+                renderer.close()
+            } catch (_: Exception) {
+            }
+        } finally {
+            try {
+                parcelFileDescriptor.close()
+            } catch (_: Exception) {
+            }
         }
     }
 }

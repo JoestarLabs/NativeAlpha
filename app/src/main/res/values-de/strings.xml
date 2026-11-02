@@ -227,5 +227,5 @@
     <string name="pdf_viewer_page_indicator">Seite %1$d von %2$d</string>
     <string name="pdf_viewer_loading">PDF wird geladen…</string>
     <string name="pdf_viewer_retry">Wiederholen</string>
-    <string name="press_back_again_to_exit">Zum Beenden noch einmal tippen</string>
+    <string name="press_back_again_to_exit">Erneut „Zurück“ drücken zum Beenden</string>
 </resources>

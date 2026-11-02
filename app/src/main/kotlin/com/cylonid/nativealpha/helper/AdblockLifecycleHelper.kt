@@ -75,6 +75,7 @@ class AdblockLifecycleHelper(
     companion object {
         const val FILTER_PREFS_NAME = "io.github.edsuns.filter"
         const val KEY_FILTER_MAP = "filter_map"
+        private val filterMapLock = Any()
 
         /**
          * Clears any active download states ('ENQUEUED', 'DOWNLOADING', 'INSTALLING')
@@ -90,13 +91,19 @@ class AdblockLifecycleHelper(
         @JvmStatic
         fun sanitizeFilterDownloadStates(context: Context) {
             try {
-                val prefs = context.getSharedPreferences(FILTER_PREFS_NAME, Context.MODE_PRIVATE)
-                val filterMapJson = prefs.getString(KEY_FILTER_MAP, null) ?: return
-                if (filterMapJson.contains("ENQUEUED") ||
-                    filterMapJson.contains("DOWNLOADING") ||
-                    filterMapJson.contains("INSTALLING")
-                ) {
-                    val jsonObj = JSONObject(filterMapJson)
+                synchronized(filterMapLock) {
+                    val prefs = context.getSharedPreferences(FILTER_PREFS_NAME, Context.MODE_PRIVATE)
+                    val filterMapJson = prefs.getString(KEY_FILTER_MAP, null) ?: return
+                    if (!filterMapJson.contains("ENQUEUED") &&
+                        !filterMapJson.contains("DOWNLOADING") &&
+                        !filterMapJson.contains("INSTALLING")
+                    ) {
+                        return
+                    }
+
+                    // Recheck fresh state under coordination before modifying
+                    val latestJsonStr = prefs.getString(KEY_FILTER_MAP, null) ?: return
+                    val jsonObj = JSONObject(latestJsonStr)
                     var modified = false
                     val keys = jsonObj.keys()
                     while (keys.hasNext()) {

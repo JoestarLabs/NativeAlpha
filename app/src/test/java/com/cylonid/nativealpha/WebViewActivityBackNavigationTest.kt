@@ -172,9 +172,9 @@ class WebViewActivityBackNavigationTest {
         constructor.isAccessible = true
         val client = constructor.newInstance(activity) as WebViewClient
 
-        val subframeRequest =
+        val subframePdfRequest =
             createWebResourceRequest(
-                uri = Uri.parse("https://example.com/iframe.html"),
+                uri = Uri.parse("https://example.com/document.pdf"),
                 isForMainFrame = false,
             )
 
@@ -182,12 +182,12 @@ class WebViewActivityBackNavigationTest {
         wvField.isAccessible = true
         val wv = wvField.get(activity) as WebView
 
-        val result = client.shouldOverrideUrlLoading(wv, subframeRequest)
-        assertFalse("Subframes should not be overridden by WebViewActivity", result)
+        val result = client.shouldOverrideUrlLoading(wv, subframePdfRequest)
+        assertFalse("Subframes (including subframe PDFs) should not be overridden", result)
     }
 
     @Test
-    fun testShouldOverrideUrlLoadingAllowsNormalNavigation() {
+    fun testShouldOverrideUrlLoadingRoutesGetRequests() {
         val activity = createActivity()
         val customBrowserField =
             activity.javaClass.declaredClasses.firstOrNull { it.simpleName == "CustomBrowser" }
@@ -197,30 +197,41 @@ class WebViewActivityBackNavigationTest {
         constructor.isAccessible = true
         val client = constructor.newInstance(activity) as WebViewClient
 
-        val mainFrameRequest =
+        val mainFrameGetRequest =
             createWebResourceRequest(
                 uri = Uri.parse("https://example.com/another-page"),
                 isForMainFrame = true,
+                method = "GET",
             )
 
         val wvField = WebViewActivity::class.java.getDeclaredField("wv")
         wvField.isAccessible = true
         val wv = wvField.get(activity) as WebView
 
-        val result = client.shouldOverrideUrlLoading(wv, mainFrameRequest)
-        assertFalse("Normal HTTPS in-app navigation should return false to let WebView handle it natively", result)
+        val resultGet = client.shouldOverrideUrlLoading(wv, mainFrameGetRequest)
+        assertTrue("Main-frame HTTP(S) GET navigation should be routed through loadURL", resultGet)
+
+        val mainFramePostRequest =
+            createWebResourceRequest(
+                uri = Uri.parse("https://example.com/submit-form"),
+                isForMainFrame = true,
+                method = "POST",
+            )
+        val resultPost = client.shouldOverrideUrlLoading(wv, mainFramePostRequest)
+        assertFalse("Non-GET navigations should return false to preserve POST payload", resultPost)
     }
 
     private fun createWebResourceRequest(
         uri: Uri,
         isForMainFrame: Boolean,
+        method: String = "GET",
     ): WebResourceRequest {
         val handler =
-            InvocationHandler { _, method, _ ->
-                when (method.name) {
+            InvocationHandler { _, m, _ ->
+                when (m.name) {
                     "getUrl" -> uri
                     "isForMainFrame" -> isForMainFrame
-                    "getMethod" -> "GET"
+                    "getMethod" -> method
                     "getRequestHeaders" -> emptyMap<String, String>()
                     "hasGesture" -> false
                     "isRedirect" -> false

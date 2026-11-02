@@ -31,14 +31,17 @@ object PdfDownloader {
         try {
             val dir = getPdfCacheDir(context)
             val files = dir.listFiles()?.filter { it.isFile } ?: return
-            val totalSize = files.sumOf { it.length() }
-            if (totalSize > MAX_CACHE_SIZE_BYTES) {
-                // Delete oldest files first
-                files
-                    .sortedBy { it.lastModified() }
-                    .forEach { file ->
-                        file.delete()
+            var currentTotalSize = files.sumOf { it.length() }
+            if (currentTotalSize > MAX_CACHE_SIZE_BYTES) {
+                // Delete oldest files first until total size is <= MAX_CACHE_SIZE_BYTES
+                val sortedFiles = files.sortedBy { it.lastModified() }
+                for (file in sortedFiles) {
+                    if (currentTotalSize <= MAX_CACHE_SIZE_BYTES) break
+                    val len = file.length()
+                    if (file.delete()) {
+                        currentTotalSize -= len
                     }
+                }
             }
         } catch (_: Exception) {
             // Best effort cache trimming
@@ -50,10 +53,16 @@ object PdfDownloader {
         urlStr: String,
         preferredFileName: String? = null,
         userAgent: String? = null,
+        cookieHeader: String? = null,
+        allowHttp: Boolean = true,
         onProgress: ((bytesDownloaded: Long, totalBytes: Long) -> Unit)? = null,
     ): Result<File> =
         withContext(Dispatchers.IO) {
             cleanOldCacheFiles(context)
+
+            if (!allowHttp && urlStr.startsWith("http://", ignoreCase = true)) {
+                return@withContext Result.failure(IOException("Insecure HTTP disallowed by Web App policy"))
+            }
 
             // Handle local content / file URIs directly
             if (urlStr.startsWith("content://") || urlStr.startsWith("file://")) {
@@ -83,7 +92,12 @@ object PdfDownloader {
                                 setRequestProperty("User-Agent", userAgent)
                             }
 
-                            val cookie = CookieManager.getInstance().getCookie(currentUrl)
+                            val cookie =
+                                if (!cookieHeader.isNullOrBlank()) {
+                                    cookieHeader
+                                } else {
+                                    CookieManager.getInstance().getCookie(currentUrl)
+                                }
                             if (!cookie.isNullOrBlank()) {
                                 setRequestProperty("Cookie", cookie)
                             }
@@ -102,6 +116,10 @@ object PdfDownloader {
                             } else {
                                 URL(URL(currentUrl), location).toString()
                             }
+                        if (!allowHttp && currentUrl.startsWith("http://", ignoreCase = true)) {
+                            connection.disconnect()
+                            throw IOException("Redirect to insecure HTTP disallowed by Web App policy: $currentUrl")
+                        }
                         connection.disconnect()
                         redirectCount++
                     } else if (responseCode in 200..299) {
