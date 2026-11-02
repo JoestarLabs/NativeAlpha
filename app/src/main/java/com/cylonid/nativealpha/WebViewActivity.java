@@ -693,6 +693,15 @@ public class WebViewActivity extends AppCompatActivity
 			builder.setPositiveButton(getString(R.string.no_https_dialog_accept), (dialog, id) -> {
 				webApp.setAllowHttp(true);
 				webApp.setOverrideGlobalSettings(true);
+				WebApp stored = DataManager.getInstance().getWebAppIgnoringGlobalOverride(webappID, true);
+				if (stored != null) {
+					stored.setAllowHttp(true);
+					stored.setOverrideGlobalSettings(true);
+				}
+				if (webapp != null) {
+					webapp.setAllowHttp(true);
+					webapp.setOverrideGlobalSettings(true);
+				}
 				DataManager.getInstance().saveWebAppData();
 				view.loadUrl(url, CUSTOM_HEADERS);
 			});

@@ -334,6 +334,8 @@ class ShortcutDialogFragment : DialogFragment() {
             finalTitle = "Unknown"
         }
         currentWebapp.title = finalTitle
+        val stored = DataManager.getInstance().getWebAppIgnoringGlobalOverride(currentWebapp.ID, true)
+        stored?.title = finalTitle
         DataManager.getInstance().saveWebAppData()
 
         if (bitmap != null) {
@@ -482,6 +484,8 @@ private fun ShortcutDialogContent(
         val newBaseUrl = webAppData?.getOrNull(IconFetchResult.NEW_BASEURL.index)
         if (!newBaseUrl.isNullOrBlank() && webapp != null) {
             webapp.baseUrl = newBaseUrl
+            val stored = DataManager.getInstance().getWebAppIgnoringGlobalOverride(webapp.ID, true)
+            stored?.baseUrl = newBaseUrl
             DataManager.getInstance().saveWebAppData()
         }
 
