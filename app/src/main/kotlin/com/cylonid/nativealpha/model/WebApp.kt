@@ -64,6 +64,7 @@ data class WebApp(
     var isAllowMediaPlaybackInBackground = false
     var order = 0
     var alwaysUseFallbackContextMenu = false
+    var isUseBuiltinPdfViewer = true
     var adBlockSettings = mutableListOf<AdblockConfig>()
 
     init {
@@ -126,6 +127,7 @@ data class WebApp(
         isBiometricProtection = other.isBiometricProtection
         isAllowMediaPlaybackInBackground = other.isAllowMediaPlaybackInBackground
         alwaysUseFallbackContextMenu = other.alwaysUseFallbackContextMenu
+        isUseBuiltinPdfViewer = other.isUseBuiltinPdfViewer
         adBlockSettings = other.adBlockSettings
     }
 

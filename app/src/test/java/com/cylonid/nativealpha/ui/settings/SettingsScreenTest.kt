@@ -116,6 +116,7 @@ class SettingsScreenTest {
     }
 
     @Test
+    @Test
     fun testWebAppMenuStyleSelectionUpdatesModel() {
         val dm = DataManager.getInstance()
         dm.settings.webAppMenuStyle = com.cylonid.nativealpha.ui.webapp.WebAppMenuStyle.BOTTOM_SHEET.id
@@ -151,5 +152,38 @@ class SettingsScreenTest {
             com.cylonid.nativealpha.ui.webapp.WebAppMenuStyle.FLOATING_DIALOG.id,
             dm.settings.webAppMenuStyle,
         )
+    }
+
+    @Test
+    fun testBuiltinPdfViewerToggle() {
+        val dm = DataManager.getInstance()
+        dm.settings.isUseBuiltinPdfViewer = true
+
+        composeTestRule.setContent {
+            NativeAlphaTheme {
+                SettingsScreen(
+                    onNavigateBack = {},
+                )
+            }
+        }
+
+        val pdfViewerStr = context.getString(R.string.pref_pdf_viewer_title)
+        val pdfViewerToggle = composeTestRule.onNodeWithText(pdfViewerStr)
+        pdfViewerToggle.performScrollTo()
+        pdfViewerToggle.assertIsDisplayed()
+        pdfViewerToggle.assertIsOn()
+
+        // Toggle off
+        pdfViewerToggle.performClick()
+        pdfViewerToggle.assertIsOff()
+        assertFalse(dm.settings.isUseBuiltinPdfViewer)
+        assertFalse(dm.settings.globalWebApp.isUseBuiltinPdfViewer)
+
+        // Toggle on
+        pdfViewerToggle.performClick()
+        pdfViewerToggle.assertIsOn()
+        assertTrue(dm.settings.isUseBuiltinPdfViewer)
+        assertTrue(dm.settings.globalWebApp.isUseBuiltinPdfViewer)
+    }
     }
 }

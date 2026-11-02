@@ -33,6 +33,7 @@ import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.HourglassTop
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.PictureAsPdf
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.SmartButton
@@ -316,6 +317,19 @@ fun SettingsScreen(
                     icon = Icons.Rounded.HourglassTop,
                     onCheckedChange = { isChecked ->
                         updateSettings { isShowProgressbar = isChecked }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.pref_pdf_viewer_title),
+                    description = stringResource(R.string.pref_pdf_viewer_summary),
+                    checked = settings.isUseBuiltinPdfViewer,
+                    icon = Icons.Rounded.PictureAsPdf,
+                    onCheckedChange = { isChecked ->
+                        updateSettings {
+                            isUseBuiltinPdfViewer = isChecked
+                            globalWebApp.isUseBuiltinPdfViewer = isChecked
+                        }
                     },
                 )
             }

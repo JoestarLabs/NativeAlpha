@@ -1,0 +1,227 @@
+package com.cylonid.nativealpha.activities
+
+import android.content.ContentValues
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.core.content.FileProvider
+import androidx.lifecycle.lifecycleScope
+import com.cylonid.nativealpha.R
+import com.cylonid.nativealpha.ui.pdf.PdfRendererHelper
+import com.cylonid.nativealpha.ui.pdf.PdfViewerScreen
+import com.cylonid.nativealpha.ui.pdf.PdfViewerUiState
+import com.cylonid.nativealpha.ui.theme.NativeAlphaTheme
+import com.cylonid.nativealpha.util.PdfDownloader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+
+class PdfViewerActivity : AppCompatActivity() {
+    private var currentHelper: PdfRendererHelper? = null
+    private var currentPdfFile: File? = null
+
+    companion object {
+        const val EXTRA_PDF_URL = "EXTRA_PDF_URL"
+        const val EXTRA_FILE_NAME = "EXTRA_FILE_NAME"
+        const val EXTRA_USER_AGENT = "EXTRA_USER_AGENT"
+        const val EXTRA_WEBAPP_ID = "EXTRA_WEBAPP_ID"
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        val url = intent.getStringExtra(EXTRA_PDF_URL) ?: ""
+        val fileName =
+            intent.getStringExtra(EXTRA_FILE_NAME)
+                ?: PdfDownloader.deriveFileNameFromUrl(url)
+        val userAgent = intent.getStringExtra(EXTRA_USER_AGENT)
+
+        setContent {
+            NativeAlphaTheme {
+                var uiState by remember { mutableStateOf<PdfViewerUiState>(PdfViewerUiState.Loading) }
+                val snackbarHostState = remember { SnackbarHostState() }
+                val coroutineScope = rememberCoroutineScope()
+
+                fun loadPdf() {
+                    uiState = PdfViewerUiState.Loading
+                    currentHelper?.close()
+                    currentHelper = null
+
+                    lifecycleScope.launch {
+                        val result =
+                            PdfDownloader.downloadPdf(
+                                context = this@PdfViewerActivity,
+                                urlStr = url,
+                                preferredFileName = fileName,
+                                userAgent = userAgent,
+                            )
+
+                        result
+                            .onSuccess { file ->
+                                try {
+                                    val helper = PdfRendererHelper(file)
+                                    currentHelper = helper
+                                    currentPdfFile = file
+                                    uiState = PdfViewerUiState.Ready(file, helper)
+                                } catch (e: Exception) {
+                                    uiState =
+                                        PdfViewerUiState.Error(
+                                            e.localizedMessage ?: getString(R.string.pdf_viewer_error_loading),
+                                        )
+                                }
+                            }.onFailure { error ->
+                                uiState =
+                                    PdfViewerUiState.Error(
+                                        error.localizedMessage ?: getString(R.string.pdf_viewer_error_loading),
+                                    )
+                            }
+                    }
+                }
+
+                // Initial load
+                androidx.compose.runtime.LaunchedEffect(url) {
+                    loadPdf()
+                }
+
+                PdfViewerScreen(
+                    fileName = fileName,
+                    uiState = uiState,
+                    onNavigateBack = { finish() },
+                    onSaveToDownloads = {
+                        coroutineScope.launch {
+                            currentPdfFile?.let { file ->
+                                val success = savePdfToDownloads(file, fileName)
+                                val msg =
+                                    if (success) {
+                                        getString(R.string.pdf_viewer_saved_success)
+                                    } else {
+                                        getString(R.string.pdf_viewer_save_failed)
+                                    }
+                                snackbarHostState.showSnackbar(msg)
+                            }
+                        }
+                    },
+                    onShare = {
+                        currentPdfFile?.let { file ->
+                            sharePdf(file)
+                        }
+                    },
+                    onOpenWith = {
+                        currentPdfFile?.let { file ->
+                            openPdfWithExternalApp(file)
+                        }
+                    },
+                    onRetry = {
+                        loadPdf()
+                    },
+                    snackbarHostState = snackbarHostState,
+                )
+            }
+        }
+    }
+
+    private suspend fun savePdfToDownloads(
+        sourceFile: File,
+        targetName: String,
+    ): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val sanitizedName = PdfDownloader.sanitizeFileName(targetName)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val contentValues =
+                        ContentValues().apply {
+                            put(MediaStore.MediaColumns.DISPLAY_NAME, sanitizedName)
+                            put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                            put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                        }
+                    val resolver = contentResolver
+                    val uri =
+                        resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                            ?: return@withContext false
+
+                    resolver.openOutputStream(uri)?.use { out ->
+                        FileInputStream(sourceFile).use { input ->
+                            input.copyTo(out)
+                        }
+                    } ?: return@withContext false
+                    true
+                } else {
+                    @Suppress("DEPRECATION")
+                    val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    if (!downloadsDir.exists()) {
+                        downloadsDir.mkdirs()
+                    }
+                    val destFile = File(downloadsDir, sanitizedName)
+                    FileInputStream(sourceFile).use { input ->
+                        FileOutputStream(destFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    true
+                }
+            } catch (_: Exception) {
+                false
+            }
+        }
+
+    private fun sharePdf(file: File) {
+        try {
+            val uri: Uri =
+                FileProvider.getUriForFile(
+                    this,
+                    "${applicationContext.packageName}.fileprovider",
+                    file,
+                )
+            val intent =
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "application/pdf"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            startActivity(Intent.createChooser(intent, getString(R.string.pdf_viewer_share)))
+        } catch (_: Exception) {
+            // Sharing failed or no receiver
+        }
+    }
+
+    private fun openPdfWithExternalApp(file: File) {
+        try {
+            val uri: Uri =
+                FileProvider.getUriForFile(
+                    this,
+                    "${applicationContext.packageName}.fileprovider",
+                    file,
+                )
+            val intent =
+                Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/pdf")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            startActivity(Intent.createChooser(intent, getString(R.string.pdf_viewer_open_external)))
+        } catch (_: Exception) {
+            // No external PDF viewer available
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        currentHelper?.close()
+        currentHelper = null
+    }
+}

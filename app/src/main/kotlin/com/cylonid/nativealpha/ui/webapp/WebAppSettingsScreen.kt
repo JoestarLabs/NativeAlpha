@@ -45,6 +45,7 @@ import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.OpenInBrowser
+import androidx.compose.material.icons.rounded.PictureAsPdf
 import androidx.compose.material.icons.rounded.Place
 import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Schedule
@@ -420,6 +421,17 @@ fun WebAppSettingsScreen(
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
                         updateWebApp { isOpenUrlExternal = isChecked }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.pref_pdf_viewer_title),
+                    description = stringResource(R.string.pref_pdf_viewer_summary),
+                    checked = webapp.isUseBuiltinPdfViewer,
+                    icon = Icons.Rounded.PictureAsPdf,
+                    enabled = isSettingsEnabled,
+                    onCheckedChange = { isChecked ->
+                        updateWebApp { isUseBuiltinPdfViewer = isChecked }
                     },
                 )
 

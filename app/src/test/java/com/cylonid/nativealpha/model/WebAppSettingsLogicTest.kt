@@ -15,6 +15,7 @@ class WebAppSettingsLogicTest {
         assertFalse("Third-party cookies should be disabled by default", webApp.isAllowThirdPartyCookies)
         assertFalse("Desktop site should be disabled by default", webApp.isRequestDesktop)
         assertFalse("Zooming should be disabled by default", webApp.isEnableZooming)
+        assertTrue("Built-in PDF viewer should be enabled by default", webApp.isUseBuiltinPdfViewer)
     }
 
     @Test
@@ -59,15 +60,18 @@ class WebAppSettingsLogicTest {
         val settings = GlobalSettings()
         assertFalse(settings.isClearCache)
         assertTrue(settings.isTwoFingerMultitouch)
+        assertTrue(settings.isUseBuiltinPdfViewer)
 
         val modified =
             settings.copy(
                 isClearCache = true,
                 isTwoFingerMultitouch = false,
+                isUseBuiltinPdfViewer = false,
             )
 
         assertTrue(modified.isClearCache)
         assertFalse(modified.isTwoFingerMultitouch)
+        assertFalse(modified.isUseBuiltinPdfViewer)
         assertFalse("Original settings should remain unchanged", settings.isClearCache)
     }
 
@@ -97,6 +101,7 @@ class WebAppSettingsLogicTest {
                 isUseCustomUserAgent = true
                 userAgent = "CustomUA/1.0"
                 isIgnoreSslErrors = true
+                isUseBuiltinPdfViewer = false
             }
 
         val copied = WebApp(original)
@@ -104,6 +109,7 @@ class WebAppSettingsLogicTest {
         assertEquals("Custom Title", copied.title)
         assertFalse(copied.isOverrideGlobalSettings)
         assertFalse(copied.isAllowJs)
+        assertFalse(copied.isUseBuiltinPdfViewer)
         assertTrue(copied.isClearCache)
         assertTrue(copied.isForceDarkMode)
         assertTrue(copied.isUseTimespanDarkMode)

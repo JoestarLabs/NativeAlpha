@@ -214,6 +214,24 @@
             android:theme="@style/AppTheme">
         </activity>
 
+        <activity
+            android:name="com.cylonid.nativealpha.activities.PdfViewerActivity"
+            android:label="@string/pref_pdf_viewer_title"
+            android:icon="@mipmap/native_alpha"
+            android:roundIcon="@mipmap/native_alpha"
+            android:theme="@style/AppTheme"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|smallestScreenSize|density|screenLayout|uiMode" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <meta-data android:name="com.samsung.android.keepalive.density" android:value="true"/>
         <meta-data android:name="com.samsung.android.multidisplay.keep_process_alive" android:value="true"/>
