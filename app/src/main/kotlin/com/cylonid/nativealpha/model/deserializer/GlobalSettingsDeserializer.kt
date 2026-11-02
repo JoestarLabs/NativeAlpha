@@ -23,6 +23,9 @@ class GlobalSettingsDeserializer : JsonDeserializer<GlobalSettings> {
                     GlobalSettings().globalWebApp
                 }
             val settings = Gson().fromJson(obj, GlobalSettings::class.java)
+            if (!obj.has("isUseBuiltinPdfViewer")) {
+                settings.isUseBuiltinPdfViewer = true
+            }
             settings.globalWebApp = globalWebApp
 
             return settings

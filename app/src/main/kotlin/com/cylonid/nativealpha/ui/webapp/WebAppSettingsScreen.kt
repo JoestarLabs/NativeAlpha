@@ -138,6 +138,7 @@ fun WebAppSettingsScreen(
                 ProcessUtils.closeAllWebAppsAndProcesses(activityManager)
             }
             dataManager.settings.globalWebApp = webapp
+            dataManager.settings.isUseBuiltinPdfViewer = webapp.isUseBuiltinPdfViewer
             dataManager.saveGlobalSettings()
         } else {
             if (activityManager != null) {

@@ -40,6 +40,8 @@ class PdfViewerActivity : AppCompatActivity() {
         const val EXTRA_FILE_NAME = "EXTRA_FILE_NAME"
         const val EXTRA_USER_AGENT = "EXTRA_USER_AGENT"
         const val EXTRA_WEBAPP_ID = "EXTRA_WEBAPP_ID"
+        const val EXTRA_COOKIE = "EXTRA_COOKIE"
+        const val EXTRA_ALLOW_HTTP = "EXTRA_ALLOW_HTTP"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,12 +66,16 @@ class PdfViewerActivity : AppCompatActivity() {
                     currentHelper = null
 
                     lifecycleScope.launch {
+                        val cookie = intent.getStringExtra(EXTRA_COOKIE)
+                        val allowHttp = intent.getBooleanExtra(EXTRA_ALLOW_HTTP, false)
                         val result =
                             PdfDownloader.downloadPdf(
                                 context = this@PdfViewerActivity,
                                 urlStr = url,
                                 preferredFileName = fileName,
                                 userAgent = userAgent,
+                                cookieHeader = cookie,
+                                allowHttp = allowHttp,
                             )
 
                         result
@@ -144,36 +150,81 @@ class PdfViewerActivity : AppCompatActivity() {
             try {
                 val sanitizedName = PdfDownloader.sanitizeFileName(targetName)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val resolver = contentResolver
                     val contentValues =
                         ContentValues().apply {
                             put(MediaStore.MediaColumns.DISPLAY_NAME, sanitizedName)
                             put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
                             put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                            put(MediaStore.MediaColumns.IS_PENDING, 1)
                         }
-                    val resolver = contentResolver
                     val uri =
                         resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
                             ?: return@withContext false
 
-                    resolver.openOutputStream(uri)?.use { out ->
-                        FileInputStream(sourceFile).use { input ->
-                            input.copyTo(out)
+                    var copySucceeded = false
+                    try {
+                        resolver.openOutputStream(uri)?.use { out ->
+                            FileInputStream(sourceFile).use { input ->
+                                input.copyTo(out)
+                            }
+                            copySucceeded = true
                         }
-                    } ?: return@withContext false
+                    } finally {
+                        if (!copySucceeded) {
+                            try {
+                                resolver.delete(uri, null, null)
+                            } catch (_: Exception) {
+                            }
+                        }
+                    }
+
+                    if (!copySucceeded) return@withContext false
+
+                    val publishValues =
+                        ContentValues().apply {
+                            put(MediaStore.MediaColumns.IS_PENDING, 0)
+                        }
+                    resolver.update(uri, publishValues, null, null)
                     true
                 } else {
+                    val perms = arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    if (!pub.devrel.easypermissions.EasyPermissions
+                            .hasPermissions(this@PdfViewerActivity, *perms)
+                    ) {
+                        return@withContext false
+                    }
+
                     @Suppress("DEPRECATION")
                     val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                     if (!downloadsDir.exists()) {
                         downloadsDir.mkdirs()
                     }
-                    val destFile = File(downloadsDir, sanitizedName)
-                    FileInputStream(sourceFile).use { input ->
-                        FileOutputStream(destFile).use { output ->
-                            input.copyTo(output)
-                        }
+
+                    var destFile = File(downloadsDir, sanitizedName)
+                    var counter = 1
+                    val nameWithoutExt = sanitizedName.substringBeforeLast(".pdf")
+                    while (destFile.exists()) {
+                        destFile = File(downloadsDir, "$nameWithoutExt ($counter).pdf")
+                        counter++
                     }
-                    true
+
+                    val tempFile = File(downloadsDir, "${destFile.name}.${System.currentTimeMillis()}.tmp")
+                    try {
+                        FileInputStream(sourceFile).use { input ->
+                            FileOutputStream(tempFile).use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        if (!tempFile.renameTo(destFile)) {
+                            tempFile.delete()
+                            return@withContext false
+                        }
+                        true
+                    } catch (e: Exception) {
+                        tempFile.delete()
+                        false
+                    }
                 }
             } catch (_: Exception) {
                 false
