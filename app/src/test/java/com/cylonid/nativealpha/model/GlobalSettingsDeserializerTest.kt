@@ -64,4 +64,27 @@ class GlobalSettingsDeserializerTest {
         assertNotNull(settings)
         assertNotNull(settings.globalWebApp)
     }
+
+    @Test
+    fun testDeserializePdfViewerDefaultsAndExplicitValues() {
+        // Missing key -> defaults to true
+        val jsonMissing = "{}"
+        val settingsMissing = gson.fromJson(jsonMissing, GlobalSettings::class.java)
+        assertTrue(settingsMissing.isUseBuiltinPdfViewer)
+
+        // Explicit null -> defaults to true
+        val jsonNull = """{"isUseBuiltinPdfViewer": null}"""
+        val settingsNull = gson.fromJson(jsonNull, GlobalSettings::class.java)
+        assertTrue(settingsNull.isUseBuiltinPdfViewer)
+
+        // Explicit false -> preserves false
+        val jsonFalse = """{"isUseBuiltinPdfViewer": false}"""
+        val settingsFalse = gson.fromJson(jsonFalse, GlobalSettings::class.java)
+        org.junit.Assert.assertFalse(settingsFalse.isUseBuiltinPdfViewer)
+
+        // Explicit true -> preserves true
+        val jsonTrue = """{"isUseBuiltinPdfViewer": true}"""
+        val settingsTrue = gson.fromJson(jsonTrue, GlobalSettings::class.java)
+        assertTrue(settingsTrue.isUseBuiltinPdfViewer)
+    }
 }

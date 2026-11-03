@@ -93,7 +93,7 @@ object PdfDownloader {
                             }
 
                             val cookie =
-                                if (!cookieHeader.isNullOrBlank()) {
+                                if (!cookieHeader.isNullOrBlank() && isSameOrigin(urlStr, currentUrl)) {
                                     cookieHeader
                                 } else {
                                     CookieManager.getInstance().getCookie(currentUrl)
@@ -198,6 +198,24 @@ object PdfDownloader {
             Result.failure(e)
         }
     }
+
+    fun isSameOrigin(
+        urlStr1: String,
+        urlStr2: String,
+    ): Boolean =
+        try {
+            val u1 = URL(urlStr1)
+            val u2 = URL(urlStr2)
+            val scheme1 = u1.protocol.lowercase()
+            val scheme2 = u2.protocol.lowercase()
+            val host1 = u1.host.lowercase()
+            val host2 = u2.host.lowercase()
+            val port1 = if (u1.port != -1) u1.port else u1.defaultPort
+            val port2 = if (u2.port != -1) u2.port else u2.defaultPort
+            scheme1 == scheme2 && host1 == host2 && port1 == port2
+        } catch (_: Exception) {
+            false
+        }
 
     fun deriveFileNameFromUrl(url: String): String =
         try {
