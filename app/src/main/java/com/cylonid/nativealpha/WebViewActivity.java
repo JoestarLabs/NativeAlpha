@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Application;
 import android.app.DownloadManager;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
@@ -358,15 +359,25 @@ public class WebViewActivity extends AppCompatActivity
 					|| (file_name != null && file_name.toLowerCase().endsWith(".pdf"))
 					|| (dl_url != null && dl_url.toLowerCase().split("\\?")[0].endsWith(".pdf"));
 
-			if (isPdf && webapp != null && webapp.isUseBuiltinPdfViewer()) {
-				if (dl_url != null && dl_url.startsWith("http://") && !webapp.isAllowHttp()) {
-					loadURL(wv, dl_url);
+			String targetUrl = dl_url;
+			if (targetUrl != null && targetUrl.startsWith("blob:")) {
+				String stripped = targetUrl.replace("blob:", "");
+				try {
+					targetUrl = URLDecoder.decode(stripped, StandardCharsets.UTF_8.name());
+				} catch (Exception e) {
+					Timber.e(e, "Failed to decode blob download URL");
+				}
+			}
+
+			if (isPdf && webapp != null && webapp.isUseBuiltinPdfViewer() && isSupportedPdfScheme(targetUrl)) {
+				if (isHttpUrl(targetUrl) && !webapp.isAllowHttp()) {
+					loadURL(wv, targetUrl);
 					return;
 				}
-				String cookie = CookieManager.getInstance().getCookie(dl_url);
+				String cookie = CookieManager.getInstance().getCookie(targetUrl);
 				Intent intent = new Intent(WebViewActivity.this,
 						com.cylonid.nativealpha.activities.PdfViewerActivity.class);
-				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_PDF_URL, dl_url);
+				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_PDF_URL, targetUrl);
 				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_FILE_NAME, file_name);
 				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_USER_AGENT, userAgent);
 				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_COOKIE, cookie);
@@ -374,10 +385,19 @@ public class WebViewActivity extends AppCompatActivity
 				intent.putExtra(com.cylonid.nativealpha.activities.PdfViewerActivity.EXTRA_ALLOW_HTTP,
 						webapp.isAllowHttp());
 				startActivity(intent);
-			} else if (mimeType != null && mimeType.equals("application/pdf")) {
+			} else if (isPdf) {
 				Intent i = new Intent(Intent.ACTION_VIEW);
-				i.setData(Uri.parse(dl_url));
-				startActivity(i);
+				i.setDataAndType(Uri.parse(dl_url), "application/pdf");
+				try {
+					startActivity(i);
+				} catch (ActivityNotFoundException e) {
+					i.setData(Uri.parse(dl_url));
+					try {
+						startActivity(i);
+					} catch (Exception ex) {
+						Timber.e(ex, "Failed to launch external PDF viewer");
+					}
+				}
 			} else {
 				if (dl_url != null && !dl_url.isEmpty()) {
 					if (dl_url.startsWith("blob:")) {
@@ -774,9 +794,46 @@ public class WebViewActivity extends AppCompatActivity
 		return Collections.unmodifiableMap(extraHeaders);
 	}
 
+	public static boolean isHttpUrl(final String url) {
+		if (url == null || url.isEmpty()) {
+			return false;
+		}
+		try {
+			final String scheme = Uri.parse(url).getScheme();
+			return "http".equalsIgnoreCase(scheme);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	public static boolean isHttpOrHttpsUrl(final String url) {
+		if (url == null || url.isEmpty()) {
+			return false;
+		}
+		try {
+			final String scheme = Uri.parse(url).getScheme();
+			return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	public static boolean isSupportedPdfScheme(final String url) {
+		if (url == null || url.isEmpty()) {
+			return false;
+		}
+		try {
+			final String scheme = Uri.parse(url).getScheme();
+			return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)
+					|| "file".equalsIgnoreCase(scheme) || "content".equalsIgnoreCase(scheme);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
 	private void loadURL(final WebView view, final String url) {
 		final WebApp webApp = DataManager.getInstance().getWebApp(webappID);
-		if (url != null && url.startsWith("http://") && !webApp.isAllowHttp()) {
+		if (isHttpUrl(url) && !webApp.isAllowHttp()) {
 			final AlertDialog.Builder builder = new AlertDialog.Builder(WebViewActivity.this);
 
 			builder.setTitle(getString(R.string.no_https_dialog_title));
@@ -1225,10 +1282,10 @@ public class WebViewActivity extends AppCompatActivity
 				return true;
 			}
 
-			if (webapp != null && webapp.isUseBuiltinPdfViewer()) {
+			if (webapp != null && webapp.isUseBuiltinPdfViewer() && isSupportedPdfScheme(url)) {
 				String cleanUrl = url.toLowerCase().split("\\?")[0].split("#")[0];
 				if (cleanUrl.endsWith(".pdf")) {
-					if (url.startsWith("http://") && !webapp.isAllowHttp()) {
+					if (isHttpUrl(url) && !webapp.isAllowHttp()) {
 						loadURL(view, url);
 						return true;
 					}
@@ -1261,13 +1318,13 @@ public class WebViewActivity extends AppCompatActivity
 				}
 			}
 
-			if (webapp != null && url.startsWith("http://") && !webapp.isAllowHttp()) {
+			if (webapp != null && isHttpUrl(url) && !webapp.isAllowHttp()) {
 				loadURL(view, url);
 				return true;
 			}
 
 			String method = request.getMethod();
-			if ("GET".equalsIgnoreCase(method) && (url.startsWith("http://") || url.startsWith("https://"))) {
+			if ("GET".equalsIgnoreCase(method) && isHttpOrHttpsUrl(url)) {
 				loadURL(view, url);
 				return true;
 			}
