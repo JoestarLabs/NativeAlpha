@@ -88,4 +88,27 @@ class PdfDownloaderTest {
         // Cleanup
         file2.delete()
     }
+
+    @Test
+    fun testIsSameOrigin() {
+        // Same origin: scheme, host, port match
+        assertTrue(PdfDownloader.isSameOrigin("https://example.com/doc.pdf", "https://example.com/other.pdf"))
+        assertTrue(PdfDownloader.isSameOrigin("https://example.com:443/doc.pdf", "https://example.com/other.pdf"))
+        assertTrue(PdfDownloader.isSameOrigin("http://example.com:80/doc.pdf", "http://example.com/other.pdf"))
+        assertTrue(PdfDownloader.isSameOrigin("https://example.com:8443/doc.pdf", "https://example.com:8443/sub"))
+
+        // Different scheme
+        assertFalse(PdfDownloader.isSameOrigin("http://example.com/doc.pdf", "https://example.com/doc.pdf"))
+
+        // Different host
+        assertFalse(PdfDownloader.isSameOrigin("https://example.com/doc.pdf", "https://cdn.example.com/doc.pdf"))
+        assertFalse(PdfDownloader.isSameOrigin("https://example.com/doc.pdf", "https://other.com/doc.pdf"))
+
+        // Different port
+        assertFalse(PdfDownloader.isSameOrigin("https://example.com:8443/doc.pdf", "https://example.com:8444/doc.pdf"))
+        assertFalse(PdfDownloader.isSameOrigin("https://example.com:8443/doc.pdf", "https://example.com/doc.pdf"))
+
+        // Malformed URLs
+        assertFalse(PdfDownloader.isSameOrigin("not_a_url", "https://example.com"))
+    }
 }

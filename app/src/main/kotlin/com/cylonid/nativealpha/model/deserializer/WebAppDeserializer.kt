@@ -18,7 +18,7 @@ class WebAppDeserializer : JsonDeserializer<WebApp> {
     ): WebApp {
         val obj = json.asJsonObject
         val webapp = Gson().fromJson(obj, WebApp::class.java)
-        if (!obj.has("isUseBuiltinPdfViewer")) {
+        if (!obj.has("isUseBuiltinPdfViewer") || obj.get("isUseBuiltinPdfViewer").isJsonNull) {
             webapp.isUseBuiltinPdfViewer = true
         }
         patchDataVersion1500(webapp, obj)
