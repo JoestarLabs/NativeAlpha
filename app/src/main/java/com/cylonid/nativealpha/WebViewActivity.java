@@ -1282,7 +1282,10 @@ public class WebViewActivity extends AppCompatActivity
 				return true;
 			}
 
-			if (webapp != null && webapp.isUseBuiltinPdfViewer() && isSupportedPdfScheme(url)) {
+			String method = request.getMethod();
+
+			if ("GET".equalsIgnoreCase(method) && webapp != null && webapp.isUseBuiltinPdfViewer()
+					&& isSupportedPdfScheme(url)) {
 				String cleanUrl = url.toLowerCase().split("\\?")[0].split("#")[0];
 				if (cleanUrl.endsWith(".pdf")) {
 					if (isHttpUrl(url) && !webapp.isAllowHttp()) {
@@ -1323,7 +1326,6 @@ public class WebViewActivity extends AppCompatActivity
 				return true;
 			}
 
-			String method = request.getMethod();
 			if ("GET".equalsIgnoreCase(method) && isHttpOrHttpsUrl(url)) {
 				loadURL(view, url);
 				return true;

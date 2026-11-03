@@ -42,8 +42,21 @@ open class PdfRendererHelper(
     @Volatile
     private var isClosed = false
 
+    private val lifecycleLock = Any()
+
     override val pageCount: Int
-        get() = if (isClosed) 0 else renderer.pageCount
+        get() =
+            synchronized(lifecycleLock) {
+                if (isClosed) {
+                    0
+                } else {
+                    try {
+                        renderer.pageCount
+                    } catch (_: Exception) {
+                        0
+                    }
+                }
+            }
 
     private val mutex = Mutex()
     private val dimensionCache = mutableMapOf<Int, Pair<Int, Int>>()
@@ -123,30 +136,33 @@ open class PdfRendererHelper(
         }
 
     override fun close() {
-        isClosed = true
-        try {
-            bitmapCache.evictAll()
-        } catch (_: Exception) {
-        }
+        synchronized(lifecycleLock) {
+            if (isClosed) return
+            isClosed = true
+            try {
+                bitmapCache.evictAll()
+            } catch (_: Exception) {
+            }
 
-        try {
-            kotlinx.coroutines.runBlocking {
-                mutex.withLock {
-                    try {
-                        renderer.close()
-                    } catch (_: Exception) {
+            try {
+                kotlinx.coroutines.runBlocking {
+                    mutex.withLock {
+                        try {
+                            renderer.close()
+                        } catch (_: Exception) {
+                        }
                     }
                 }
-            }
-        } catch (_: Exception) {
-            try {
-                renderer.close()
             } catch (_: Exception) {
-            }
-        } finally {
-            try {
-                parcelFileDescriptor.close()
-            } catch (_: Exception) {
+                try {
+                    renderer.close()
+                } catch (_: Exception) {
+                }
+            } finally {
+                try {
+                    parcelFileDescriptor.close()
+                } catch (_: Exception) {
+                }
             }
         }
     }
