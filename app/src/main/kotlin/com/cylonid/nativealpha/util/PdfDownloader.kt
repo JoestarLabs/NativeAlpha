@@ -93,10 +93,14 @@ object PdfDownloader {
                             }
 
                             val cookie =
-                                if (!cookieHeader.isNullOrBlank() && isSameOrigin(urlStr, currentUrl)) {
-                                    cookieHeader
+                                if (isSameOrigin(urlStr, currentUrl)) {
+                                    if (!cookieHeader.isNullOrBlank()) {
+                                        cookieHeader
+                                    } else {
+                                        CookieManager.getInstance().getCookie(currentUrl)
+                                    }
                                 } else {
-                                    CookieManager.getInstance().getCookie(currentUrl)
+                                    null
                                 }
                             if (!cookie.isNullOrBlank()) {
                                 setRequestProperty("Cookie", cookie)

@@ -221,6 +221,64 @@ class WebViewActivityBackNavigationTest {
         assertFalse("Non-GET navigations should return false to preserve POST payload", resultPost)
     }
 
+    @Test
+    fun testUrlSchemeHelpers() {
+        // isHttpUrl
+        assertTrue(WebViewActivity.isHttpUrl("http://example.com"))
+        assertTrue(WebViewActivity.isHttpUrl("HTTP://example.com/path"))
+        assertTrue(WebViewActivity.isHttpUrl("Http://example.com?query=https://other.com"))
+        assertFalse(WebViewActivity.isHttpUrl("https://example.com"))
+        assertFalse(WebViewActivity.isHttpUrl("file:///doc.pdf"))
+        assertFalse(WebViewActivity.isHttpUrl(null))
+
+        // isHttpOrHttpsUrl
+        assertTrue(WebViewActivity.isHttpOrHttpsUrl("http://example.com"))
+        assertTrue(WebViewActivity.isHttpOrHttpsUrl("HTTP://example.com"))
+        assertTrue(WebViewActivity.isHttpOrHttpsUrl("https://example.com"))
+        assertTrue(WebViewActivity.isHttpOrHttpsUrl("HTTPS://example.com"))
+        assertFalse(WebViewActivity.isHttpOrHttpsUrl("ftp://example.com"))
+        assertFalse(WebViewActivity.isHttpOrHttpsUrl("intent://example.com"))
+        assertFalse(WebViewActivity.isHttpOrHttpsUrl(null))
+
+        // isSupportedPdfScheme
+        assertTrue(WebViewActivity.isSupportedPdfScheme("http://example.com/doc.pdf"))
+        assertTrue(WebViewActivity.isSupportedPdfScheme("HTTP://example.com/doc.pdf"))
+        assertTrue(WebViewActivity.isSupportedPdfScheme("https://example.com/doc.pdf"))
+        assertTrue(WebViewActivity.isSupportedPdfScheme("HTTPS://example.com/doc.pdf"))
+        assertTrue(WebViewActivity.isSupportedPdfScheme("file:///sdcard/doc.pdf"))
+        assertTrue(WebViewActivity.isSupportedPdfScheme("content://media/external/doc.pdf"))
+        assertFalse(WebViewActivity.isSupportedPdfScheme("intent://example.com/doc.pdf#Intent;"))
+        assertFalse(WebViewActivity.isSupportedPdfScheme("blob:uuid-1234"))
+        assertFalse(WebViewActivity.isSupportedPdfScheme("tel:12345.pdf"))
+        assertFalse(WebViewActivity.isSupportedPdfScheme(null))
+    }
+
+    @Test
+    fun testShouldOverrideUrlLoadingIgnoresUnsupportedPdfScheme() {
+        val activity = createActivity()
+        val customBrowserField =
+            activity.javaClass.declaredClasses.firstOrNull { it.simpleName == "CustomBrowser" }
+                ?: error("CustomBrowser class not found")
+
+        val constructor = customBrowserField.getDeclaredConstructor(WebViewActivity::class.java)
+        constructor.isAccessible = true
+        val client = constructor.newInstance(activity) as WebViewClient
+
+        val unsupportedPdfRequest =
+            createWebResourceRequest(
+                uri = Uri.parse("intent://example.com/document.pdf#Intent;action=VIEW;scheme=example;end"),
+                isForMainFrame = true,
+                method = "GET",
+            )
+
+        val wvField = WebViewActivity::class.java.getDeclaredField("wv")
+        wvField.isAccessible = true
+        val wv = wvField.get(activity) as WebView
+
+        val result = client.shouldOverrideUrlLoading(wv, unsupportedPdfRequest)
+        assertFalse("Unsupported schemes ending with .pdf should not be intercepted as built-in PDF", result)
+    }
+
     private fun createWebResourceRequest(
         uri: Uri,
         isForMainFrame: Boolean,

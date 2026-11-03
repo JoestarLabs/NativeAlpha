@@ -56,7 +56,7 @@ public class UtilUnitTests {
 
 	@Test
 	public void faviconNull() {
-		testShortcutHelper("https://tugraz.at", null, IconFetchResult.FAVICON.index);
+		testShortcutHelper("http://info.cern.ch", null, IconFetchResult.FAVICON.index);
 	}
 
 	@Test
