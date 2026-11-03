@@ -124,7 +124,25 @@ open class PdfRendererHelper(
                 try {
                     val pageW = page.width.coerceAtLeast(1)
                     val pageH = page.height.coerceAtLeast(1)
-                    val targetHeight = ((targetWidth.toFloat() / pageW) * pageH).toInt().coerceAtLeast(1)
+                    val scaledHeight = (targetWidth.toDouble() / pageW) * pageH
+                    if (scaledHeight > Int.MAX_VALUE || scaledHeight.isNaN() || scaledHeight.isInfinite()) {
+                        return@withLock null
+                    }
+                    val targetHeightLong =
+                        kotlin.math
+                            .round(scaledHeight)
+                            .toLong()
+                            .coerceAtLeast(1L)
+                    if (targetHeightLong > Int.MAX_VALUE ||
+                        targetHeightLong > MAX_BITMAP_BYTES / (targetWidth.toLong() * BYTES_PER_PIXEL)
+                    ) {
+                        return@withLock null
+                    }
+                    val targetHeight = targetHeightLong.toInt()
+                    val requiredBytes = targetWidth.toLong() * targetHeightLong * BYTES_PER_PIXEL
+                    if (requiredBytes > MAX_BITMAP_BYTES) {
+                        return@withLock null
+                    }
 
                     val bitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
                     val canvas = Canvas(bitmap)
@@ -169,5 +187,10 @@ open class PdfRendererHelper(
                 }
             }
         }
+    }
+
+    companion object {
+        const val BYTES_PER_PIXEL = 4
+        const val MAX_BITMAP_BYTES = 32L * 1024 * 1024 // 32 MB
     }
 }

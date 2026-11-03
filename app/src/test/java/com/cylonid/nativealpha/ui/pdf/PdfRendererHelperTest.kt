@@ -1,8 +1,12 @@
 package com.cylonid.nativealpha.ui.pdf
 
+import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,14 +20,51 @@ import java.util.Collections
 import java.util.concurrent.CountDownLatch
 import kotlin.concurrent.thread
 
+@Implements(PdfRenderer.Page::class)
+class ShadowTestPdfPage {
+    companion object {
+        var lastPageClosed: Boolean = false
+    }
+
+    @Implementation
+    fun getWidth(): Int = 100
+
+    @Implementation
+    fun getHeight(): Int = 200
+
+    @Implementation
+    fun render(
+        bitmap: Bitmap,
+        destClip: android.graphics.Rect?,
+        transform: android.graphics.Matrix?,
+        renderMode: Int,
+    ) {
+    }
+
+    @Implementation
+    fun close() {
+        lastPageClosed = true
+    }
+}
+
 @Implements(PdfRenderer::class)
 class ShadowTestPdfRenderer {
     @Implementation
     fun getPageCount(): Int = 1
+
+    @Implementation
+    fun openPage(index: Int): PdfRenderer.Page {
+        ShadowTestPdfPage.lastPageClosed = false
+        return org.robolectric.shadow.api.Shadow
+            .newInstanceOf(PdfRenderer.Page::class.java)
+    }
+
+    @Implementation
+    fun close() {}
 }
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34], shadows = [ShadowTestPdfRenderer::class])
+@Config(sdk = [34], shadows = [ShadowTestPdfRenderer::class, ShadowTestPdfPage::class])
 class PdfRendererHelperTest {
     private fun createMinimalPdfFile(): File {
         val pdfBytes =
@@ -127,5 +168,39 @@ class PdfRendererHelperTest {
         }
 
         file.delete()
+    }
+
+    @Test
+    fun testRenderPageExceedingByteBudgetReturnsNullAndClosesPage() {
+        runBlocking {
+            val file = createMinimalPdfFile()
+            val helper = PdfRendererHelper(file)
+
+            // 10_000 width with 100x200 aspect ratio results in 20_000 height.
+            // 10_000 * 20_000 * 4 = 800,000,000 bytes, which exceeds MAX_BITMAP_BYTES (32 MB).
+            val bitmap = helper.renderPage(0, 10_000)
+            assertNull(bitmap)
+            assertTrue("Page should have been closed in finally block", ShadowTestPdfPage.lastPageClosed)
+
+            helper.close()
+            file.delete()
+        }
+    }
+
+    @Test
+    fun testRenderPageWithinBudgetSucceeds() {
+        runBlocking {
+            val file = createMinimalPdfFile()
+            val helper = PdfRendererHelper(file)
+
+            val bitmap = helper.renderPage(0, 100)
+            assertNotNull(bitmap)
+            assertEquals(100, bitmap!!.width)
+            assertEquals(200, bitmap.height)
+            assertTrue("Page should have been closed in finally block", ShadowTestPdfPage.lastPageClosed)
+
+            helper.close()
+            file.delete()
+        }
     }
 }
