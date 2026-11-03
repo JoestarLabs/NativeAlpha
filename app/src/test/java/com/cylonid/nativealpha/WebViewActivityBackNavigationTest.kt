@@ -279,6 +279,41 @@ class WebViewActivityBackNavigationTest {
         assertFalse("Unsupported schemes ending with .pdf should not be intercepted as built-in PDF", result)
     }
 
+    @Test
+    fun testShouldOverrideUrlLoadingIgnoresPostPdfRequests() {
+        val activity = createActivity()
+        val customBrowserField =
+            activity.javaClass.declaredClasses.firstOrNull { it.simpleName == "CustomBrowser" }
+                ?: error("CustomBrowser class not found")
+
+        val constructor = customBrowserField.getDeclaredConstructor(WebViewActivity::class.java)
+        constructor.isAccessible = true
+        val client = constructor.newInstance(activity) as WebViewClient
+
+        val postPdfRequest =
+            createWebResourceRequest(
+                uri = Uri.parse("https://example.com/document.pdf"),
+                isForMainFrame = true,
+                method = "POST",
+            )
+
+        val wvField = WebViewActivity::class.java.getDeclaredField("wv")
+        wvField.isAccessible = true
+        val wv = wvField.get(activity) as WebView
+
+        val result = client.shouldOverrideUrlLoading(wv, postPdfRequest)
+        assertFalse("Non-GET (e.g. POST) requests ending with .pdf should return false to preserve POST payload", result)
+
+        val getPdfRequest =
+            createWebResourceRequest(
+                uri = Uri.parse("https://example.com/document.pdf"),
+                isForMainFrame = true,
+                method = "GET",
+            )
+        val resultGet = client.shouldOverrideUrlLoading(wv, getPdfRequest)
+        assertTrue("Main-frame GET requests ending with .pdf should launch built-in PDF viewer", resultGet)
+    }
+
     private fun createWebResourceRequest(
         uri: Uri,
         isForMainFrame: Boolean,
