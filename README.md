@@ -33,7 +33,7 @@ Run your favorite web services with granular privacy controls, ad blocking, cust
 
 Recommended for automated background updates directly from GitHub releases:
 
-<a href="https://apps.obtainium.page/redirect?r=obtainium://add/https://github.com/JoestarLabs/NativeAlpha/releases">
+<a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/JoestarLabs/NativeAlpha/releases">
   <img src=".github/assets/badge_obtainium.png" alt="Get it on Obtainium" height="85" />
 </a>
 
