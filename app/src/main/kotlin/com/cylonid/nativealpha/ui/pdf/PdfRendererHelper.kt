@@ -6,7 +6,10 @@ import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import android.util.LruCache
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -59,6 +62,7 @@ open class PdfRendererHelper(
             }
 
     private val mutex = Mutex()
+    private val closeScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val dimensionCache = mutableMapOf<Int, Pair<Int, Int>>()
 
     private val maxCacheMemory =
@@ -144,24 +148,24 @@ open class PdfRendererHelper(
             } catch (_: Exception) {
             }
 
-            try {
-                kotlinx.coroutines.runBlocking {
+            closeScope.launch {
+                try {
                     mutex.withLock {
                         try {
                             renderer.close()
                         } catch (_: Exception) {
                         }
                     }
-                }
-            } catch (_: Exception) {
-                try {
-                    renderer.close()
                 } catch (_: Exception) {
-                }
-            } finally {
-                try {
-                    parcelFileDescriptor.close()
-                } catch (_: Exception) {
+                    try {
+                        renderer.close()
+                    } catch (_: Exception) {
+                    }
+                } finally {
+                    try {
+                        parcelFileDescriptor.close()
+                    } catch (_: Exception) {
+                    }
                 }
             }
         }

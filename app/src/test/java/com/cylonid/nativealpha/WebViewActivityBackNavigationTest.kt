@@ -312,6 +312,16 @@ class WebViewActivityBackNavigationTest {
             )
         val resultGet = client.shouldOverrideUrlLoading(wv, getPdfRequest)
         assertTrue("Main-frame GET requests ending with .pdf should launch built-in PDF viewer", resultGet)
+
+        val startedIntent =
+            org.robolectric.Shadows
+                .shadowOf(activity)
+                .nextStartedActivity
+        org.junit.Assert.assertNotNull("An intent should have been started", startedIntent)
+        assertEquals(
+            com.cylonid.nativealpha.activities.PdfViewerActivity::class.java.name,
+            startedIntent.component?.className,
+        )
     }
 
     private fun createWebResourceRequest(
