@@ -124,27 +124,58 @@ open class PdfRendererHelper(
                 try {
                     val pageW = page.width.coerceAtLeast(1)
                     val pageH = page.height.coerceAtLeast(1)
-                    val scaledHeight = (targetWidth.toDouble() / pageW) * pageH
+                    var renderWidth = targetWidth
+                    val initialScaledHeight = (renderWidth.toDouble() / pageW) * pageH
+                    if (initialScaledHeight.isNaN() || initialScaledHeight.isInfinite() || initialScaledHeight <= 0.0) {
+                        return@withLock null
+                    }
+
+                    val maxPixels = MAX_BITMAP_BYTES / BYTES_PER_PIXEL
+                    val maxAllowedWidth = kotlin.math.sqrt(maxPixels.toDouble() * pageW / pageH)
+                    if (renderWidth.toDouble() > maxAllowedWidth) {
+                        renderWidth = kotlin.math.floor(maxAllowedWidth).toInt()
+                    }
+
+                    if (renderWidth < 1) {
+                        return@withLock null
+                    }
+
+                    var scaledHeight = (renderWidth.toDouble() / pageW) * pageH
                     if (scaledHeight > Int.MAX_VALUE || scaledHeight.isNaN() || scaledHeight.isInfinite()) {
                         return@withLock null
                     }
-                    val targetHeightLong =
+                    var targetHeightLong =
                         kotlin.math
                             .round(scaledHeight)
                             .toLong()
                             .coerceAtLeast(1L)
+
+                    val maxAllowedWidthForHeight = MAX_BITMAP_BYTES / (targetHeightLong * BYTES_PER_PIXEL)
+                    if (renderWidth.toLong() > maxAllowedWidthForHeight) {
+                        renderWidth = maxAllowedWidthForHeight.toInt()
+                        if (renderWidth < 1) {
+                            return@withLock null
+                        }
+                        scaledHeight = (renderWidth.toDouble() / pageW) * pageH
+                        targetHeightLong =
+                            kotlin.math
+                                .round(scaledHeight)
+                                .toLong()
+                                .coerceAtLeast(1L)
+                    }
+
                     if (targetHeightLong > Int.MAX_VALUE ||
-                        targetHeightLong > MAX_BITMAP_BYTES / (targetWidth.toLong() * BYTES_PER_PIXEL)
+                        targetHeightLong > MAX_BITMAP_BYTES / (renderWidth.toLong() * BYTES_PER_PIXEL)
                     ) {
                         return@withLock null
                     }
                     val targetHeight = targetHeightLong.toInt()
-                    val requiredBytes = targetWidth.toLong() * targetHeightLong * BYTES_PER_PIXEL
+                    val requiredBytes = renderWidth.toLong() * targetHeightLong * BYTES_PER_PIXEL
                     if (requiredBytes > MAX_BITMAP_BYTES) {
                         return@withLock null
                     }
 
-                    val bitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+                    val bitmap = Bitmap.createBitmap(renderWidth, targetHeight, Bitmap.Config.ARGB_8888)
                     val canvas = Canvas(bitmap)
                     canvas.drawColor(Color.WHITE)
 
