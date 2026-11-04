@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.6.5](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.4...v1.6.5) (2026-11-04)
+
+
+### Features
+
+* add built-in native PDF viewer option (issue [#61](https://github.com/JoestarLabs/NativeAlpha/issues/61)) ([6d7d033](https://github.com/JoestarLabs/NativeAlpha/commit/6d7d0334eed80f2e2dbd6e8b3689d7e399184d95))
+* **ui:** add Material You monochrome icons and unify Android 12+ splash screen ([cda11f6](https://github.com/JoestarLabs/NativeAlpha/commit/cda11f6cbdb0f61314a928a30dc2da7c2fe8dd6c))
+* **ui:** add multiple configurable layout options for the web app (press and hold) menu ([0880430](https://github.com/JoestarLabs/NativeAlpha/commit/0880430e679d817082d3d5ae7eb6941b4cd65606))
+* **ui:** modernize release notes with M3 Expressive sheet and SoC Gradle task ([84eaec1](https://github.com/JoestarLabs/NativeAlpha/commit/84eaec1db843d5a67d3d93ef0f340a00f11d3303))
+
+
+### Bug Fixes
+
+* address review findings for PDF viewer, process isolation, and lint ([3da0fcb](https://github.com/JoestarLabs/NativeAlpha/commit/3da0fcb3f957eb3f4194b0778cb5acad47acc1bf))
+* close renderer asynchronously on worker thread and strengthen PDF test verifications ([ee8feba](https://github.com/JoestarLabs/NativeAlpha/commit/ee8feba904e3f5c8462445807849c4ddd8ffd41e))
+* **data:** persist HTTP override, title, and start URL updates to stored WebApp entry ([89773f7](https://github.com/JoestarLabs/NativeAlpha/commit/89773f705671eb5ebedf1e497d42f8b892ee6b8f))
+* **deps:** update androidx dependencies ([d558373](https://github.com/JoestarLabs/NativeAlpha/commit/d5583736422c58f4067611d18b28d00919b21cfb))
+* **deps:** update androidx dependencies ([644c0aa](https://github.com/JoestarLabs/NativeAlpha/commit/644c0aa51b1e45f5c460cd12ef2bff3869ac88a9))
+* **deps:** update dependency com.google.code.gson:gson to v2.15.0 ([f047097](https://github.com/JoestarLabs/NativeAlpha/commit/f0470978a2c9a219647b042f9d7c197b1c3d3a17))
+* **deps:** update dependency com.google.code.gson:gson to v2.15.0 ([17b32a4](https://github.com/JoestarLabs/NativeAlpha/commit/17b32a4ec0659ff876f56fc382df80e6a2ac2f5f))
+* **deps:** update dependency org.jsoup:jsoup to v1.24.1 ([eb3d8a4](https://github.com/JoestarLabs/NativeAlpha/commit/eb3d8a422f683f18b74220cfac267b2f5f728937))
+* enforce URL scheme check, cookie same-origin policy, and deserializer null handling ([fcb2416](https://github.com/JoestarLabs/NativeAlpha/commit/fcb2416dcdfaacefa4fdc5d87a2ad89b5dd55a8c))
+* guard PDF page rendering against oversized bitmap allocation ([c4ae899](https://github.com/JoestarLabs/NativeAlpha/commit/c4ae899dffc21696f7c9f19d2a0ddaf7e2f32e28))
+* resolve back navigation multiple-swipe regression and history loop ([9519a23](https://github.com/JoestarLabs/NativeAlpha/commit/9519a2369b03999957f3dcd41df04463f6bd32d0))
+* resolve review findings for data isolation, lifecycle, localization, and tests ([06d6146](https://github.com/JoestarLabs/NativeAlpha/commit/06d6146faaf60a08d4b9c83ba6aeaeb3a49ff063))
+* **resources:** restore mipmap-anydpi-v26 resource qualifier for adaptive icons ([a6fecef](https://github.com/JoestarLabs/NativeAlpha/commit/a6fecef9cfbf48f2cd01a5a84893f9c1ce9f7c72))
+* sanitize adblock filter download state to prevent startup deadlock and restore adblocking ([3ac9080](https://github.com/JoestarLabs/NativeAlpha/commit/3ac9080750a83182c051f147af6bae5297dd0214))
+* sanitize URL scheme matching, restrict PDF launch schemes, and omit cross-origin cookies ([8f27912](https://github.com/JoestarLabs/NativeAlpha/commit/8f279120ce563b5a03d0ab78d70bd49ca8606d88))
+* scale down PDF render dimensions to fit bitmap budget while preserving aspect ratio ([1d8968c](https://github.com/JoestarLabs/NativeAlpha/commit/1d8968cd153dd427fa6cde14648830552ab69d53))
+* serialize PdfRendererHelper lifecycle and restrict PDF navigation to GET ([6c40202](https://github.com/JoestarLabs/NativeAlpha/commit/6c40202402d8c5ca7dab8617662727b61f561e6d))
+* **shortcuts:** offload pinned shortcut cleanup to IO dispatcher to resolve ThreadConstraint lint errors ([263e468](https://github.com/JoestarLabs/NativeAlpha/commit/263e468da991f030c082183e7ee21d0dda422933))
+* **ui:** ensure ExpressiveSquigglyDivider bounds are symmetric and prevent horizontal overshoot ([d03dd1f](https://github.com/JoestarLabs/NativeAlpha/commit/d03dd1f9351dc222d658f12f1009d676bb39a215))
+* **ui:** pin action bar and make release notes content scrollable with sticky footer ([0a11e0a](https://github.com/JoestarLabs/NativeAlpha/commit/0a11e0a197b54ae4d2fc25397dcb82a226892d98))
+
 ## [1.6.4](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.3...v1.6.4) (2026-10-13)
 
 
