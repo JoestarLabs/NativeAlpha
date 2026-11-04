@@ -54,7 +54,7 @@ android {
         applicationId "com.cylonid.nativealpha"
         minSdkVersion 28
         targetSdkVersion 35
-        versionName "1.6.4" // x-release-please-version
+        versionName "1.6.5" // x-release-please-version
         versionCode calculateVersionCode(versionName)
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
