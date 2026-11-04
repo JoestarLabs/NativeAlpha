@@ -24,13 +24,15 @@ import kotlin.concurrent.thread
 class ShadowTestPdfPage {
     companion object {
         var lastPageClosed: Boolean = false
+        var mockWidth: Int = 100
+        var mockHeight: Int = 200
     }
 
     @Implementation
-    fun getWidth(): Int = 100
+    fun getWidth(): Int = mockWidth
 
     @Implementation
-    fun getHeight(): Int = 200
+    fun getHeight(): Int = mockHeight
 
     @Implementation
     fun render(
@@ -171,15 +173,21 @@ class PdfRendererHelperTest {
     }
 
     @Test
-    fun testRenderPageExceedingByteBudgetReturnsNullAndClosesPage() {
+    fun testRenderPageExceedingByteBudgetReducesDimensionsAndRenders() {
         runBlocking {
+            ShadowTestPdfPage.mockWidth = 100
+            ShadowTestPdfPage.mockHeight = 200
             val file = createMinimalPdfFile()
             val helper = PdfRendererHelper(file)
 
-            // 10_000 width with 100x200 aspect ratio results in 20_000 height.
-            // 10_000 * 20_000 * 4 = 800,000,000 bytes, which exceeds MAX_BITMAP_BYTES (32 MB).
+            // 10_000 width with 100x200 aspect ratio would be 20_000 height = 800 MB.
+            // renderPage should scale down width to fit MAX_BITMAP_BYTES (32 MB) while preserving aspect ratio.
             val bitmap = helper.renderPage(0, 10_000)
-            assertNull(bitmap)
+            assertNotNull(bitmap)
+            assertTrue("Width should be scaled down", bitmap!!.width <= 2048)
+            val totalBytes = bitmap.width.toLong() * bitmap.height.toLong() * PdfRendererHelper.BYTES_PER_PIXEL
+            assertTrue("Total bytes must stay within MAX_BITMAP_BYTES", totalBytes <= PdfRendererHelper.MAX_BITMAP_BYTES)
+            assertEquals("Aspect ratio should be preserved", 2.0, bitmap.height.toDouble() / bitmap.width, 0.05)
             assertTrue("Page should have been closed in finally block", ShadowTestPdfPage.lastPageClosed)
 
             helper.close()
@@ -188,8 +196,30 @@ class PdfRendererHelperTest {
     }
 
     @Test
+    fun testRenderPageExtremeDimensionsThatCannotFitBudgetReturnsNullAndClosesPage() {
+        runBlocking {
+            // Extreme height where even width = 1 cannot fit within MAX_BITMAP_BYTES (32 MB)
+            ShadowTestPdfPage.mockWidth = 1
+            ShadowTestPdfPage.mockHeight = 10_000_000
+            val file = createMinimalPdfFile()
+            val helper = PdfRendererHelper(file)
+
+            val bitmap = helper.renderPage(0, 100)
+            assertNull(bitmap)
+            assertTrue("Page should have been closed in finally block", ShadowTestPdfPage.lastPageClosed)
+
+            helper.close()
+            file.delete()
+            ShadowTestPdfPage.mockWidth = 100
+            ShadowTestPdfPage.mockHeight = 200
+        }
+    }
+
+    @Test
     fun testRenderPageWithinBudgetSucceeds() {
         runBlocking {
+            ShadowTestPdfPage.mockWidth = 100
+            ShadowTestPdfPage.mockHeight = 200
             val file = createMinimalPdfFile()
             val helper = PdfRendererHelper(file)
 
