@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.6](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.5...v1.6.6) (2026-11-06)
+
+
+### Bug Fixes
+
+* **deps:** update dependency androidx.compose.material3:material3 to v1.5.0-rc01 ([718a1b8](https://github.com/JoestarLabs/NativeAlpha/commit/718a1b8ad052a26553881f461019771e92e3739c))
+
 ## [1.6.5](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.4...v1.6.5) (2026-11-04)
 
 
