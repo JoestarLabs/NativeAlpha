@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.6](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.5...v1.6.6) (2026-11-20)
+
+
+### Bug Fixes
+
+* **deps:** update dependency androidx.compose.material3:material3 to v1.5.0-rc01 ([718a1b8](https://github.com/JoestarLabs/NativeAlpha/commit/718a1b8ad052a26553881f461019771e92e3739c))
+* **deps:** update dependency com.github.edsuns.adblockandroid:ad-filter to v0.9.1 ([82f7b85](https://github.com/JoestarLabs/NativeAlpha/commit/82f7b850fc04d4c622b7dbe88375b8bc96d5140c))
+* **deps:** update dependency org.robolectric:robolectric to v4.18 ([58435c6](https://github.com/JoestarLabs/NativeAlpha/commit/58435c6551861edef475cf1913d1d39b67e839ca))
+* **deps:** update dependency org.robolectric:robolectric to v4.18.1 ([87c7997](https://github.com/JoestarLabs/NativeAlpha/commit/87c7997d415dce588817a4060e89170a0db76612))
+
 ## [1.6.5](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.4...v1.6.5) (2026-11-04)
 
 
