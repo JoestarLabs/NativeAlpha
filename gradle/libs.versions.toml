@@ -16,9 +16,9 @@ work-runtime = "2.12.0"
 
 # UI / Material
 material = "1.14.0"
-compose-bom = "2026.09.00"
+compose-bom = "2026.11.01"
 activity-compose = "1.13.0"
-compose-material3 = "1.5.0-rc01"
+compose-material3 = "1.5.0"
 
 # Network & Utilities
 jsoup = "1.24.1"
