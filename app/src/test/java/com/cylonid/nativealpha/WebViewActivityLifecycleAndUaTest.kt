@@ -144,4 +144,42 @@ class WebViewActivityLifecycleAndUaTest {
         assertNull(activity.webView)
         controller.pause().stop().destroy()
     }
+
+    @Test
+    fun testHostMatchingRejectsSuffixAndQueryBypass() {
+        assertTrue(WebViewActivity.isSameHostOrSubdomain("example.com", "example.com"))
+        assertTrue(WebViewActivity.isSameHostOrSubdomain("SUB.EXAMPLE.COM", "example.com"))
+        assertFalse(WebViewActivity.isSameHostOrSubdomain("evilexample.com", "example.com"))
+        assertFalse(WebViewActivity.isSameHostOrSubdomain(null, "example.com"))
+
+        val dm = DataManager.getInstance()
+        dm.websites[0].apply {
+            baseUrl = "https://example.com"
+            isOpenUrlExternal = true
+        }
+        dm.saveWebAppData()
+
+        val controller = buildStartedActivity()
+        val activity = controller.get()
+        val customBrowserClass =
+            WebViewActivity::class.java.declaredClasses.first { it.simpleName == "CustomBrowser" }
+        val ctor = customBrowserClass.getDeclaredConstructor(WebViewActivity::class.java).apply { isAccessible = true }
+        val client = ctor.newInstance(activity) as WebViewClient
+
+        val sneakyExternal =
+            Proxy.newProxyInstance(
+                WebResourceRequest::class.java.classLoader,
+                arrayOf(WebResourceRequest::class.java),
+            ) { _, method, _ ->
+                when (method.name) {
+                    "getUrl" -> Uri.parse("https://evil.com/?q=example.com")
+                    "isForMainFrame" -> true
+                    "getMethod" -> "GET"
+                    else -> null
+                }
+            } as WebResourceRequest
+
+        assertTrue(client.shouldOverrideUrlLoading(activity.webView, sneakyExternal))
+        controller.pause().stop().destroy()
+    }
 }
