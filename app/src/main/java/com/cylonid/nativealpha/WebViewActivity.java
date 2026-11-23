@@ -745,8 +745,12 @@ public class WebViewActivity extends AppCompatActivity
 			fullActivityView.setVisibility(View.GONE);
 			promptForBiometricUnlock(() -> fullActivityView.setVisibility(View.VISIBLE));
 		}
-		if (webapp.isAutoreload()) {
-			reload_handler = new Handler(Looper.getMainLooper());
+		if (webapp.isAutoreload() && webapp.getTimeAutoreload() > 0) {
+			if (reload_handler == null) {
+				reload_handler = new Handler(Looper.getMainLooper());
+			} else {
+				reload_handler.removeCallbacksAndMessages(null);
+			}
 			reload();
 		}
 
@@ -833,9 +837,14 @@ public class WebViewActivity extends AppCompatActivity
 	}
 
 	private void reload() {
+		if (reload_handler == null || webapp == null || !webapp.isAutoreload() || webapp.getTimeAutoreload() <= 0) {
+			return;
+		}
 		reload_handler.postDelayed(() -> {
 			currently_reloading = true;
-			wv.reload();
+			if (wv != null) {
+				wv.reload();
+			}
 			reload();
 		}, webapp.getTimeAutoreload() * 1000L);
 	}

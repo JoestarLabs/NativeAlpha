@@ -699,7 +699,12 @@ fun WebAppSettingsScreen(
                     icon = Icons.Rounded.Autorenew,
                     enabled = isSettingsEnabled,
                     onCheckedChange = { isChecked ->
-                        updateWebApp { isAutoreload = isChecked }
+                        updateWebApp {
+                            isAutoreload = isChecked
+                            if (isChecked && timeAutoreload <= 0) {
+                                timeAutoreload = 30
+                            }
+                        }
                     },
                 )
 
