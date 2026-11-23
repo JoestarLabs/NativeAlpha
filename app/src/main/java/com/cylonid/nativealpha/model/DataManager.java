@@ -210,7 +210,8 @@ public class DataManager {
 		max_assigned_ID = appdata.getInt(shared_pref_max_id, max_assigned_ID);
 		SandboxManager.getInstance().setNextContainer(appdata.getInt(shared_pref_next_container, 0));
 
-		if (appdata.getBoolean(shared_pref_global_settings_json, false)) {
+		if (!appdata.getBoolean(shared_pref_global_settings_json, false)
+				&& !appdata.contains(shared_pref_globalsettings)) {
 			loadGlobalSettingsLegacy();
 		}
 		// Global settings

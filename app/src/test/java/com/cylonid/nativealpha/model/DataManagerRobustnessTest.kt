@@ -161,4 +161,21 @@ class DataManagerRobustnessTest {
         }
         assertFalse(dataManager.loadSharedPreferences(ByteArrayInputStream(baos.toByteArray())))
     }
+
+    @Test
+    fun testLoadAppDataDoesNotRunLegacyMigrationWhenGlobalSettingsStoredAsJson() {
+        dataManager.settings.apply {
+            isClearCache = false
+            themeId = 1
+        }
+        dataManager.saveGlobalSettings()
+
+        // Seed stale legacy boolean key; should be ignored when globalSettingsStoredAsJson=true
+        val prefs = context.getSharedPreferences("WEBSITEDATA", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("Cache", true).commit()
+
+        dataManager.loadAppData()
+        assertFalse(dataManager.settings.isClearCache)
+        assertEquals(1, dataManager.settings.themeId)
+    }
 }
