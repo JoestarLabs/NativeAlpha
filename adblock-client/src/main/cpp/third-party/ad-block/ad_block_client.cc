@@ -267,7 +267,7 @@ const char *AdBlockClient::getElementHidingSelectors(const char *contextUrl) {
   if (selectors) {
     buffer.append(selectors);
   }
-  if (isGenericElementHidingEnabled) {
+  if (isGenericElementHidingEnabled && genericElementHidingSelectors && genericElementHidingSelectors->data) {
     if (buffer.length() > 0) {
       buffer.append(", ");
     }
@@ -312,8 +312,10 @@ const LinkedList<std::string> *getRulesFrom(HashMap<NoFingerprintDomain,
   auto onFind = [result](CosmeticFilterHashSet *set) { result->concat(set->toStringList()); };
   if (getFrom<CosmeticFilterHashSet>(map, host, hostLen, onFind)) {
     (*cache)->put(NoFingerprintDomain(host, hostLen), result);
+    return result;
   }
-  return result;
+  delete result;
+  return nullptr;
 }
 
 const LinkedList<std::string> *AdBlockClient::getExtendedCssSelectors(const char *contextUrl) {
