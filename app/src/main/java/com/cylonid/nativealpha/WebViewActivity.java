@@ -138,6 +138,8 @@ public class WebViewActivity extends AppCompatActivity
 	private Handler reload_handler = null;
 	private WebApp webapp = null;
 	private boolean fallbackToDefaultLongClickBehaviour = false;
+	private boolean isBiometricAuthenticated = false;
+	private boolean isBiometricPromptShowing = false;
 
 	private AdFilter adFilter;
 
@@ -207,11 +209,26 @@ public class WebViewActivity extends AppCompatActivity
 			}
 			updateTaskDescription(webapp.getTitle(), mCurrentTaskIcon);
 			if (webapp.isBiometricProtection()) {
-				new BiometricPromptHelper(WebViewActivity.this).showPrompt(() -> setupWebView(), () -> finish(),
-						getString(R.string.bioprompt_restricted_webapp));
+				promptForBiometricUnlock(() -> setupWebView());
+			} else {
+				setupWebView();
 			}
-			setupWebView();
 		}
+	}
+
+	private void promptForBiometricUnlock(@NonNull Runnable onUnlocked) {
+		if (isBiometricPromptShowing) {
+			return;
+		}
+		isBiometricPromptShowing = true;
+		new BiometricPromptHelper(WebViewActivity.this).showPrompt(() -> {
+			isBiometricPromptShowing = false;
+			isBiometricAuthenticated = true;
+			onUnlocked.run();
+		}, () -> {
+			isBiometricPromptShowing = false;
+			finish();
+		}, getString(R.string.bioprompt_restricted_webapp));
 	}
 
 	@SuppressLint("ClickableViewAccessibility")
@@ -721,18 +738,24 @@ public class WebViewActivity extends AppCompatActivity
 		wv.resumeTimers();
 		this.setDarkModeIfNeeded();
 
-		if (webapp.isBiometricProtection()) {
+		if (webapp.isBiometricProtection() && !isBiometricAuthenticated) {
 			View fullActivityView = findViewById(R.id.webviewActivity);
 			fullActivityView.setVisibility(View.GONE);
-			new BiometricPromptHelper(WebViewActivity.this).showPrompt(
-					() -> fullActivityView.setVisibility(View.VISIBLE), () -> finish(),
-					getString(R.string.bioprompt_restricted_webapp));
+			promptForBiometricUnlock(() -> fullActivityView.setVisibility(View.VISIBLE));
 		}
 		if (webapp.isAutoreload()) {
 			reload_handler = new Handler(Looper.getMainLooper());
 			reload();
 		}
 
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		if (!isBiometricPromptShowing) {
+			isBiometricAuthenticated = false;
+		}
 	}
 
 	@Override

@@ -122,4 +122,26 @@ class WebViewActivityLifecycleAndUaTest {
         assertTrue(client.shouldOverrideUrlLoading(activity.webView, request))
         controller.pause().stop().destroy()
     }
+
+    @Test
+    fun testBiometricProtectedWebAppDoesNotInitializeWebViewBeforeAuth() {
+        val dm = DataManager.getInstance()
+        dm.websites[0].isBiometricProtection = true
+        dm.saveWebAppData()
+
+        val intent =
+            Intent(context, WebViewActivity::class.java).apply {
+                putExtra(Const.INTENT_WEBAPPID, 0)
+            }
+        val controller =
+            Robolectric
+                .buildActivity(WebViewActivity::class.java, intent)
+                .create()
+                .start()
+                .resume()
+        val activity = controller.get()
+
+        assertNull(activity.webView)
+        controller.pause().stop().destroy()
+    }
 }

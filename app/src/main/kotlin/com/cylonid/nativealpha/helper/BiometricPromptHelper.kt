@@ -18,7 +18,10 @@ internal class BiometricPromptHelper(
         promptTitle: String,
     ) {
         val supported = isBiometricsSupported(activity)
-        if (!supported) return
+        if (!supported) {
+            funFail.execute()
+            return
+        }
         val executor = ContextCompat.getMainExecutor(activity)
         val biometricPrompt =
             BiometricPrompt(
