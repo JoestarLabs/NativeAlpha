@@ -876,16 +876,7 @@ public class WebViewActivity extends AppCompatActivity
 	}
 
 	public static boolean isSupportedPdfScheme(final String url) {
-		if (url == null || url.isEmpty()) {
-			return false;
-		}
-		try {
-			final String scheme = Uri.parse(url).getScheme();
-			return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)
-					|| "file".equalsIgnoreCase(scheme) || "content".equalsIgnoreCase(scheme);
-		} catch (Exception e) {
-			return false;
-		}
+		return isHttpOrHttpsUrl(url);
 	}
 
 	private void loadURL(final WebView view, final String url) {
