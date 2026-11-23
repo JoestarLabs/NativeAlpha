@@ -67,7 +67,10 @@ open class AdBlockClient(
     }
 
     override var isGenericElementHidingEnabled: Boolean
+        @Synchronized
         get() = if (nativeClientPointer == 0L) false else isGenericElementHidingEnabled(nativeClientPointer)
+
+        @Synchronized
         set(value) {
             if (nativeClientPointer != 0L) {
                 setGenericElementHidingEnabled(nativeClientPointer, value)
@@ -108,14 +111,17 @@ open class AdBlockClient(
         data: ByteArray,
     ): Long
 
+    @Synchronized
     fun getProcessedData(): ByteArray = if (nativeClientPointer == 0L) ByteArray(0) else getProcessedData(nativeClientPointer)
 
     private external fun getProcessedData(clientPointer: Long): ByteArray
 
+    @Synchronized
     fun getFiltersCount(): Int = if (nativeClientPointer == 0L) 0 else getFiltersCount(nativeClientPointer)
 
     private external fun getFiltersCount(clientPointer: Long): Int
 
+    @Synchronized
     override fun matches(
         url: String,
         documentUrl: String,
@@ -134,14 +140,18 @@ open class AdBlockClient(
         filterOption: Int,
     ): MatchResult
 
+    @Synchronized
     override fun getElementHidingSelectors(url: String): String? =
         nativeClientPointer.takeIf { it != 0L }?.let { getElementHidingSelectors(it, url) }
 
+    @Synchronized
     override fun getExtendedCssSelectors(url: String): Array<String>? =
         nativeClientPointer.takeIf { it != 0L }?.let { getExtendedCssSelectors(it, url) }
 
+    @Synchronized
     override fun getCssRules(url: String): Array<String>? = nativeClientPointer.takeIf { it != 0L }?.let { getCssRules(it, url) }
 
+    @Synchronized
     override fun getScriptlets(url: String): Array<String>? = nativeClientPointer.takeIf { it != 0L }?.let { getScriptlets(it, url) }
 
     private external fun getElementHidingSelectors(
