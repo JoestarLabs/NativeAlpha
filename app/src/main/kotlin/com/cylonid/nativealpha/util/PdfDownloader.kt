@@ -193,6 +193,23 @@ object PdfDownloader {
         uri: Uri,
         fileName: String?,
     ): Result<File> {
+        if ("file".equals(uri.scheme, ignoreCase = true)) {
+            val filePath = uri.path ?: return Result.failure(IOException("Invalid file URI: $uri"))
+            val canonicalTarget =
+                try {
+                    File(filePath).canonicalPath
+                } catch (e: IOException) {
+                    return Result.failure(e)
+                }
+            val privateDataDir =
+                context.applicationInfo.dataDir
+                    ?.let { File(it).canonicalPath }
+            if (privateDataDir != null &&
+                (canonicalTarget == privateDataDir || canonicalTarget.startsWith(privateDataDir + File.separator))
+            ) {
+                return Result.failure(SecurityException("Access to private application files is disallowed"))
+            }
+        }
         val cacheDir = getPdfCacheDir(context)
         val name = sanitizeFileName(fileName ?: "document.pdf")
         val targetFile = File(cacheDir, "${System.currentTimeMillis()}_$name")
