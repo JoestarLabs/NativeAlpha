@@ -116,6 +116,8 @@ public class WebViewActivity extends AppCompatActivity
 	private boolean currently_reloading = true;
 	private GeolocationPermissions.Callback mGeoPermissionRequestCallback = null;
 	private String mGeoPermissionRequestOrigin = null;
+	private PermissionRequest pendingWebPermissionRequest = null;
+	private final List<String> pendingWebResources = new ArrayList<>();
 	private DownloadManager.Request dl_request = null;
 	private Map<String, String> CUSTOM_HEADERS;
 	protected ValueCallback<Uri[]> filePathCallback;
@@ -970,6 +972,11 @@ public class WebViewActivity extends AppCompatActivity
 		}
 		if (requestCode == Const.PERMISSION_CAMERA) {
 			enablePermissionBoolOnWebApp(() -> webapp.setCameraPermission(true));
+			resolvePendingWebPermissions(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
+		}
+		if (requestCode == Const.PERMISSION_AUDIO) {
+			enablePermissionBoolOnWebApp(() -> webapp.setMicrophonePermission(true));
+			resolvePendingWebPermissions(PermissionRequest.RESOURCE_AUDIO_CAPTURE);
 		}
 		if (requestCode == Const.PERMISSION_RC_STORAGE) {
 			if (dl_request != null) {
@@ -989,6 +996,9 @@ public class WebViewActivity extends AppCompatActivity
 		if (requestCode == Const.PERMISSION_RC_LOCATION) {
 			this.handleGeoPermissionCallback(false);
 		}
+		if (requestCode == Const.PERMISSION_CAMERA || requestCode == Const.PERMISSION_AUDIO) {
+			denyPendingWebPermissions();
+		}
 	}
 
 	private void handleGeoPermissionCallback(boolean allow) {
@@ -998,36 +1008,84 @@ public class WebViewActivity extends AppCompatActivity
 		}
 	}
 
+	private void resolvePendingWebPermissions(@NonNull String grantedResource) {
+		if (pendingWebPermissionRequest != null) {
+			if (!pendingWebResources.contains(grantedResource)) {
+				pendingWebResources.add(grantedResource);
+			}
+			pendingWebPermissionRequest.grant(pendingWebResources.toArray(new String[0]));
+			pendingWebPermissionRequest = null;
+			pendingWebResources.clear();
+		}
+	}
+
+	private void denyPendingWebPermissions() {
+		if (pendingWebPermissionRequest != null) {
+			pendingWebPermissionRequest.deny();
+			pendingWebPermissionRequest = null;
+			pendingWebResources.clear();
+		}
+	}
+
 	private class CustomWebChromeClient extends android.webkit.WebChromeClient {
 		private View mCustomView;
 		private WebChromeClient.CustomViewCallback mCustomViewCallback;
 		private int mOriginalOrientation;
 
-		private void handlePermissionRequest(int titleRes, int messageRes, boolean currentState,
-				String[] androidPermissions, int requestCode, List<String> permissionsToGrant,
-				String[] webkitPermission, PermissionGrantedCallback successCallback) {
+		private void handleGeoPermissionDialog() {
 			boolean androidPermissionsMissing = !EasyPermissions.hasPermissions(WebViewActivity.this,
-					androidPermissions);
+					Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION);
+			if (webapp.isAllowLocationAccess() && androidPermissionsMissing) {
+				ActivityCompat.requestPermissions(WebViewActivity.this, new String[]{
+						Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
+						Const.PERMISSION_RC_LOCATION);
+				return;
+			}
+			if (webapp.isAllowLocationAccess() && !androidPermissionsMissing) {
+				handleGeoPermissionCallback(true);
+				return;
+			}
+			new AlertDialog.Builder(WebViewActivity.this).setTitle(R.string.dialog_permission_location_title)
+					.setMessage(R.string.dialog_permission_location_txt)
+					.setPositiveButton(android.R.string.ok, (dialog, id) -> {
+						enablePermissionBoolOnWebApp(() -> webapp.setAllowLocationAccess(true));
+						if (androidPermissionsMissing) {
+							ActivityCompat
+									.requestPermissions(WebViewActivity.this,
+											new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
+													Manifest.permission.ACCESS_FINE_LOCATION},
+											Const.PERMISSION_RC_LOCATION);
+						} else {
+							handleGeoPermissionCallback(true);
+						}
+					}).setNegativeButton(android.R.string.cancel, (dialog, id) -> handleGeoPermissionCallback(false))
+					.setOnCancelListener(dialog -> handleGeoPermissionCallback(false)).create().show();
+		}
+
+		private void handleWebPermission(int titleRes, int messageRes, boolean currentState,
+				String[] androidPermissions, int requestCode, String webkitResource,
+				PermissionGrantedCallback successCallback) {
+			boolean androidPermissionsMissing = androidPermissions.length > 0
+					&& !EasyPermissions.hasPermissions(WebViewActivity.this, androidPermissions);
 			if (currentState && androidPermissionsMissing) {
 				ActivityCompat.requestPermissions(WebViewActivity.this, androidPermissions, requestCode);
 				return;
 			}
-			if (currentState && !androidPermissionsMissing) {
-				permissionsToGrant.addAll(Arrays.asList(webkitPermission));
-				handleGeoPermissionCallback(true);
+			if (currentState) {
+				resolvePendingWebPermissions(webkitResource);
 				return;
 			}
 
 			new AlertDialog.Builder(WebViewActivity.this).setTitle(titleRes).setMessage(messageRes)
 					.setPositiveButton(android.R.string.ok, (dialog, id) -> {
 						enablePermissionBoolOnWebApp(successCallback);
-						handleGeoPermissionCallback(true);
-						permissionsToGrant.addAll(Arrays.asList(webkitPermission));
 						if (androidPermissionsMissing) {
 							ActivityCompat.requestPermissions(WebViewActivity.this, androidPermissions, requestCode);
+						} else {
+							resolvePendingWebPermissions(webkitResource);
 						}
-					}).setNegativeButton(android.R.string.cancel, (dialog, id) -> handleGeoPermissionCallback(false))
-					.create().show();
+					}).setNegativeButton(android.R.string.cancel, (dialog, id) -> denyPendingWebPermissions())
+					.setOnCancelListener(dialog -> denyPendingWebPermissions()).create().show();
 		}
 
 		@Override
@@ -1106,37 +1164,31 @@ public class WebViewActivity extends AppCompatActivity
 
 		@Override
 		public void onPermissionRequest(PermissionRequest request) {
-			List<String> permissionsToGrant = new ArrayList<>();
-
-			boolean containsDrmRequest = Arrays.asList(request.getResources())
-					.contains(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID);
-			boolean containsCameraRequest = Arrays.asList(request.getResources())
-					.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
-			boolean containsMicrophoneRequest = Arrays.asList(request.getResources())
-					.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE);
-
-			if (containsDrmRequest) {
-				this.handlePermissionRequest(R.string.dialog_permission_drm_title, R.string.dialog_permission_drm_txt,
-						webapp.isDrmAllowed(), new String[]{}, -1, permissionsToGrant,
-						new String[]{PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID}, () -> webapp.setDrmAllowed(true));
+			if (request == null) {
+				return;
 			}
-			if (containsCameraRequest) {
-				this.handlePermissionRequest(R.string.dialog_permission_camera_title,
-						R.string.dialog_permission_camera_txt, webapp.isCameraPermission(),
-						new String[]{Manifest.permission.CAMERA}, Const.PERMISSION_CAMERA, permissionsToGrant,
-						new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE}, () -> webapp.setCameraPermission(true));
-			}
+			denyPendingWebPermissions();
+			pendingWebPermissionRequest = request;
+			pendingWebResources.clear();
 
-			if (containsMicrophoneRequest) {
-				this.handlePermissionRequest(R.string.dialog_permission_microphone_title,
+			List<String> requested = Arrays.asList(request.getResources());
+			if (requested.contains(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID)) {
+				this.handleWebPermission(R.string.dialog_permission_drm_title, R.string.dialog_permission_drm_txt,
+						webapp.isDrmAllowed(), new String[]{}, -1, PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID,
+						() -> webapp.setDrmAllowed(true));
+			} else if (requested.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
+				this.handleWebPermission(R.string.dialog_permission_camera_title, R.string.dialog_permission_camera_txt,
+						webapp.isCameraPermission(), new String[]{Manifest.permission.CAMERA}, Const.PERMISSION_CAMERA,
+						PermissionRequest.RESOURCE_VIDEO_CAPTURE, () -> webapp.setCameraPermission(true));
+			} else if (requested.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
+				this.handleWebPermission(R.string.dialog_permission_microphone_title,
 						R.string.dialog_permission_microphone_txt, webapp.isMicrophonePermission(),
 						new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS},
-						Const.PERMISSION_AUDIO, permissionsToGrant,
-						new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE},
+						Const.PERMISSION_AUDIO, PermissionRequest.RESOURCE_AUDIO_CAPTURE,
 						() -> webapp.setMicrophonePermission(true));
+			} else {
+				denyPendingWebPermissions();
 			}
-
-			request.grant(permissionsToGrant.toArray(new String[0]));
 		}
 
 		public void onProgressChanged(WebView view, int progress) {
@@ -1160,12 +1212,7 @@ public class WebViewActivity extends AppCompatActivity
 				final GeolocationPermissions.Callback callback) {
 			mGeoPermissionRequestCallback = callback;
 			mGeoPermissionRequestOrigin = origin;
-			this.handlePermissionRequest(R.string.dialog_permission_location_title,
-					R.string.dialog_permission_location_txt, webapp.isAllowLocationAccess(),
-					new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
-					Const.PERMISSION_RC_LOCATION, Collections.emptyList(), new String[]{},
-					() -> webapp.setAllowLocationAccess(true));
-
+			this.handleGeoPermissionDialog();
 		}
 	}
 
