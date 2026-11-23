@@ -104,6 +104,7 @@ class MainActivity : AppCompatActivity() {
         AdblockLifecycleHelper(this).trySyncOperation {
             AdblockLifecycleHelper.initAdFilter(applicationContext)
         }
+        handleIntentExtras(intent)
     }
 
     override fun onResume() {
@@ -115,6 +116,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntentExtras(intent)
+    }
+
+    private fun handleIntentExtras(intent: Intent?) {
+        if (intent == null) return
         if (intent.getBooleanExtra(Const.INTENT_BACKUP_RESTORED, false)) {
             viewModel.loadWebApps()
             buildImportSuccessDialog()
@@ -151,25 +158,48 @@ class MainActivity : AppCompatActivity() {
                 ),
             ).setPositiveButton(getString(R.string.ok)) { _: DialogInterface?, _: Int ->
                 val webapps = DataManager.getInstance().activeWebsites
-                for (i in webapps.indices.reversed()) {
-                    val webapp = webapps[i]
-                    val msg =
-                        Html.fromHtml(
-                            getString(R.string.restore_shortcut, webapp.title),
-                            Html.FROM_HTML_MODE_COMPACT,
-                        )
-                    AlertDialog
-                        .Builder(this)
-                        .setMessage(msg)
-                        .setPositiveButton(R.string.ok) { _: DialogInterface?, _: Int ->
-                            val frag = ShortcutDialogFragment.newInstance(webapp)
-                            frag.show(supportFragmentManager, "SCFetcher-" + webapp.ID)
-                        }.setNegativeButton(R.string.cancel) { _: DialogInterface?, _: Int -> }
-                        .create()
-                        .show()
-                }
+                promptShortcutRestoreSequentially(webapps, 0)
             }.setNegativeButton(getString(R.string.cancel)) { _: DialogInterface?, _: Int -> }
             .create()
+            .show()
+    }
+
+    private fun promptShortcutRestoreSequentially(
+        webapps: List<com.cylonid.nativealpha.model.WebApp>,
+        index: Int,
+    ) {
+        if (index >= webapps.size || isFinishing || isDestroyed) return
+        val webapp = webapps[index]
+        val msg =
+            Html.fromHtml(
+                getString(R.string.restore_shortcut, webapp.title),
+                Html.FROM_HTML_MODE_COMPACT,
+            )
+        AlertDialog
+            .Builder(this)
+            .setMessage(msg)
+            .setPositiveButton(R.string.ok) { _: DialogInterface?, _: Int ->
+                val frag = ShortcutDialogFragment.newInstance(webapp)
+                supportFragmentManager.registerFragmentLifecycleCallbacks(
+                    object : androidx.fragment.app.FragmentManager.FragmentLifecycleCallbacks() {
+                        override fun onFragmentDestroyed(
+                            fm: androidx.fragment.app.FragmentManager,
+                            f: androidx.fragment.app.Fragment,
+                        ) {
+                            if (f === frag) {
+                                fm.unregisterFragmentLifecycleCallbacks(this)
+                                promptShortcutRestoreSequentially(webapps, index + 1)
+                            }
+                        }
+                    },
+                    false,
+                )
+                frag.show(supportFragmentManager, "SCFetcher-" + webapp.ID)
+            }.setNegativeButton(R.string.cancel) { _: DialogInterface?, _: Int ->
+                promptShortcutRestoreSequentially(webapps, index + 1)
+            }.setOnCancelListener {
+                promptShortcutRestoreSequentially(webapps, index + 1)
+            }.create()
             .show()
     }
 }
