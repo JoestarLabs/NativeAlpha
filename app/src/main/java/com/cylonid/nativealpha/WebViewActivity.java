@@ -879,6 +879,16 @@ public class WebViewActivity extends AppCompatActivity
 		return isHttpOrHttpsUrl(url);
 	}
 
+	@androidx.annotation.VisibleForTesting
+	static boolean isSameHostOrSubdomain(@Nullable String requestHost, @Nullable String baseHost) {
+		if (requestHost == null || baseHost == null || requestHost.isEmpty() || baseHost.isEmpty()) {
+			return false;
+		}
+		String normalizedReq = requestHost.toLowerCase(Locale.ROOT);
+		String normalizedBase = baseHost.toLowerCase(Locale.ROOT);
+		return normalizedReq.equals(normalizedBase) || normalizedReq.endsWith("." + normalizedBase);
+	}
+
 	private void loadURL(final WebView view, final String url) {
 		final WebApp webApp = DataManager.getInstance().getWebApp(webappID);
 		if (isHttpUrl(url) && !webApp.isAllowHttp()) {
@@ -1264,7 +1274,7 @@ public class WebViewActivity extends AppCompatActivity
 				Uri webapp_uri = Uri.parse(webapp.getBaseUrl());
 
 				if (uri != null && uri.getHost() != null && webapp_uri != null && webapp_uri.getHost() != null) {
-					if (!uri.getHost().endsWith(webapp_uri.getHost())) {
+					if (!isSameHostOrSubdomain(uri.getHost(), webapp_uri.getHost())) {
 						return new WebResourceResponse("text/plain", "utf-8", null);
 					}
 				}
@@ -1368,9 +1378,9 @@ public class WebViewActivity extends AppCompatActivity
 			if (webapp != null && webapp.isOpenUrlExternal()) {
 				String base_url = webapp.getBaseUrl();
 				if (base_url != null) {
-					Uri uri = Uri.parse(base_url);
-					String host = uri.getHost();
-					if (host != null && !url.contains(host)) {
+					String baseHost = Uri.parse(base_url).getHost();
+					String reqHost = request.getUrl().getHost();
+					if (baseHost != null && reqHost != null && !isSameHostOrSubdomain(reqHost, baseHost)) {
 						startExternalActivitySafely(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
 						return true;
 					}
