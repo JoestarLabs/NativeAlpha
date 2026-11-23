@@ -3,12 +3,16 @@ package com.cylonid.nativealpha
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.cylonid.nativealpha.ui.theme.NativeAlphaTheme
 import com.cylonid.nativealpha.ui.webapp.WebAppSettingsScreen
+import com.cylonid.nativealpha.ui.webapp.WebAppSettingsViewModel
 import com.cylonid.nativealpha.util.Const
 
 class WebAppSettingsActivity : AppCompatActivity() {
+    private val viewModel: WebAppSettingsViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -20,6 +24,7 @@ class WebAppSettingsActivity : AppCompatActivity() {
                 WebAppSettingsScreen(
                     webappId = webappId,
                     onNavigateBack = { finish() },
+                    viewModel = viewModel,
                 )
             }
         }

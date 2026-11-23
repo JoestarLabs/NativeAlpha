@@ -88,20 +88,28 @@ class PdfViewerActivity : AppCompatActivity() {
 
                             result
                                 .onSuccess { file ->
+                                    var pendingHelper: PdfRendererHelper? = null
                                     try {
-                                        val helper = withContext(Dispatchers.IO) { PdfRendererHelper(file) }
-                                        if (!isActive || isDestroyed) {
-                                            helper.close()
+                                        withContext(Dispatchers.IO) {
+                                            pendingHelper = PdfRendererHelper(file)
+                                        }
+                                        val helper = pendingHelper
+                                        if (helper == null || !isActive || isDestroyed) {
                                             return@launch
                                         }
                                         currentHelper = helper
+                                        pendingHelper = null
                                         currentPdfFile = file
                                         uiState = PdfViewerUiState.Ready(file, helper)
+                                    } catch (e: kotlinx.coroutines.CancellationException) {
+                                        throw e
                                     } catch (e: Exception) {
                                         uiState =
                                             PdfViewerUiState.Error(
                                                 e.localizedMessage ?: getString(R.string.pdf_viewer_error_loading),
                                             )
+                                    } finally {
+                                        pendingHelper?.close()
                                     }
                                 }.onFailure { error ->
                                     uiState =

@@ -105,7 +105,8 @@ class ShortcutDialogFragment : DialogFragment() {
 
     companion object {
         private const val ARG_WEBAPP_ID = "arg_webapp_id"
-        private val META_REFRESH_URL_PATTERN = Pattern.compile(".*URL='?(.*)$", Pattern.CASE_INSENSITIVE)
+        private val META_REFRESH_URL_PATTERN =
+            Pattern.compile(".*URL\\s*=\\s*['\"]?([^'\";\\s]+)['\"]?.*$", Pattern.CASE_INSENSITIVE)
 
         @JvmStatic
         fun newInstance(webapp: WebApp): ShortcutDialogFragment =
@@ -433,7 +434,7 @@ private fun ShortcutDialogContent(
         val id = webapp?.ID
         if (id != null && bitmap == null) {
             val diskIcon = withContext(Dispatchers.IO) { ShortcutIconUtils.getIcon(context, id) }
-            if (diskIcon != null) {
+            if (diskIcon != null && bitmap == null) {
                 bitmap = diskIcon
                 isLoading = false
             }
@@ -441,7 +442,7 @@ private fun ShortcutDialogContent(
         ShortcutIconUtils.iconUpdates.collect { updatedId ->
             if (updatedId == id && bitmap == null) {
                 val loaded = withContext(Dispatchers.IO) { ShortcutIconUtils.getIcon(context, updatedId) }
-                if (loaded != null) {
+                if (loaded != null && bitmap == null) {
                     bitmap = loaded
                     isLoading = false
                 }

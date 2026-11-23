@@ -222,14 +222,23 @@ public class WebViewActivity extends AppCompatActivity
 
 		// Sandboxed Web App is openend in main process using an old shortcut
 		if (packageName.equals(processName) && webapp.isUseContainer()) {
-			WebViewLauncher.startWebViewInNewProcess(webapp, this);
+			if (!WebViewLauncher.startWebViewInNewProcess(webapp, this)) {
+				finish();
+			}
 			return;
 		}
 
 		if (!packageName.equals(processName)) {
+			if (!SandboxManager.isValidSandboxId(webapp.getContainerId())) {
+				Timber.e("Invalid containerId %d for sandboxed WebView", webapp.getContainerId());
+				finish();
+				return;
+			}
 			if (SandboxManager.getInstance().isSandboxUsedByAnotherApp(webapp)) {
 				SandboxManager.getInstance().unregisterWebAppFromSandbox(webapp.getContainerId());
-				WebViewLauncher.startWebViewInNewProcess(webapp, this);
+				if (!WebViewLauncher.startWebViewInNewProcess(webapp, this)) {
+					finish();
+				}
 				return;
 			}
 			try {
@@ -693,15 +702,20 @@ public class WebViewActivity extends AppCompatActivity
 
 		if (new_id != webappID) {
 			WebApp new_webapp = DataManager.getInstance().getWebApp(new_id);
-			WebViewLauncher.startWebViewInNewProcess(new_webapp, this);
+			if (new_webapp == null || !WebViewLauncher.startWebViewInNewProcess(new_webapp, this)) {
+				finish();
+			}
+			return;
+		}
+
+		if (wv == null || webapp == null) {
+			return;
 		}
 
 		// Refresh task description on every resume — covers re-entry from back stack
 		// or system-restored tasks where the system may have reverted to the manifest
 		// label.
-		if (webapp != null) {
-			updateTaskDescription(webapp.getTitle(), mCurrentTaskIcon);
-		}
+		updateTaskDescription(webapp.getTitle(), mCurrentTaskIcon);
 
 		wv.onResume();
 		wv.resumeTimers();

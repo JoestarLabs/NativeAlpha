@@ -122,17 +122,31 @@ class DataManagerRobustnessTest {
 
     @Test
     fun testLoadAppDataHandlesCorruptOrNullJsonGracefully() {
+        val iconFile =
+            com.cylonid.nativealpha.util.ShortcutIconUtils
+                .getIconFile(context, 7)
+        iconFile.writeText("keep-me")
+        dataManager.settings.apply {
+            themeId = 2
+            isClearCache = true
+            globalWebApp.containerId = 4
+        }
+
         val prefs = context.getSharedPreferences("WEBSITEDATA", Context.MODE_PRIVATE)
         prefs
             .edit()
-            .putString("webappdata", "{not-valid-json")
-            .putString("globalsettings", "null")
+            .putString("WEBSITEDATA", "{not-valid-json")
+            .putString("GLOBALSETTINGS", "null")
             .commit()
 
         dataManager.loadAppData()
         assertNotNull(dataManager.websites)
         assertNotNull(dataManager.settings)
+        assertEquals(0, dataManager.settings.themeId)
+        assertFalse(dataManager.settings.isClearCache)
         assertEquals(Const.NO_CONTAINER, dataManager.settings.globalWebApp.containerId)
+        assertTrue(iconFile.exists())
+        iconFile.delete()
     }
 
     @Test

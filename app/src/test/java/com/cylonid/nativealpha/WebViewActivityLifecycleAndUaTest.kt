@@ -10,6 +10,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.cylonid.nativealpha.model.DataManager
 import com.cylonid.nativealpha.model.WebApp
 import com.cylonid.nativealpha.util.Const
+import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -21,6 +22,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowWebSettings
 import java.lang.reflect.Proxy
 
 @RunWith(RobolectricTestRunner::class)
@@ -43,6 +45,11 @@ class WebViewActivityLifecycleAndUaTest {
         dm.saveWebAppData()
     }
 
+    @After
+    fun tearDown() {
+        ShadowWebSettings.reset()
+    }
+
     private fun buildStartedActivity(): org.robolectric.android.controller.ActivityController<WebViewActivity> {
         val intent =
             Intent(context, WebViewActivity::class.java).apply {
@@ -57,15 +64,16 @@ class WebViewActivityLifecycleAndUaTest {
 
     @Test
     fun testUserAgentStripsWebViewToken() {
+        ShadowWebSettings.setDefaultUserAgent("Mozilla/5.0 (Linux; Android 14; Pixel 8; wv) AppleWebKit/537.36")
         val controller = buildStartedActivity()
         val activity = controller.get()
         val webView = activity.webView
         assertNotNull(webView)
-        webView.settings.userAgentString = "Mozilla/5.0 (Linux; Android 14; Pixel 8; wv) AppleWebKit/537.36"
 
-        // Re-verify stripping logic directly against WebViewSettings
         val currentUa = webView.settings.userAgentString
-        assertFalse(currentUa.replace("; wv", "").contains("; wv"))
+        assertNotNull(currentUa)
+        assertFalse(currentUa.contains("; wv"))
+        assertTrue(currentUa.contains("Pixel 8"))
         controller.pause().stop().destroy()
     }
 

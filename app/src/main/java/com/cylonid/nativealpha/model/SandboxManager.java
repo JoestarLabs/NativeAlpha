@@ -31,7 +31,7 @@ public class SandboxManager {
 		return next_container++;
 	}
 
-	private static boolean isValidSandboxId(int sandboxId) {
+	public static boolean isValidSandboxId(int sandboxId) {
 		return sandboxId >= 0 && sandboxId < NUM_OF_SANDBOXES;
 	}
 
