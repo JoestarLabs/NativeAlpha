@@ -105,8 +105,12 @@ class ShortcutDialogFragment : DialogFragment() {
 
     companion object {
         private const val ARG_WEBAPP_ID = "arg_webapp_id"
+        private const val ARG_BASE_URL = "arg_base_url"
         private val META_REFRESH_URL_PATTERN =
-            Pattern.compile(".*URL\\s*=\\s*['\"]?([^'\";\\s]+)['\"]?.*$", Pattern.CASE_INSENSITIVE)
+            Pattern.compile(
+                "^.*?(?:^|[;\\s])URL\\s*=\\s*(?:'([^']+)'|\"([^\"]+)\"|([^\\s;'\"]+)).*$",
+                Pattern.CASE_INSENSITIVE,
+            )
 
         @JvmStatic
         fun newInstance(webapp: WebApp): ShortcutDialogFragment =
@@ -117,6 +121,7 @@ class ShortcutDialogFragment : DialogFragment() {
                     arguments =
                         Bundle().apply {
                             putInt(ARG_WEBAPP_ID, webapp.ID)
+                            putString(ARG_BASE_URL, webapp.baseUrl)
                         }
                 }
             }
@@ -126,11 +131,19 @@ class ShortcutDialogFragment : DialogFragment() {
         super.onCreate(savedInstanceState)
         if (webapp == null) {
             val id = arguments?.getInt(ARG_WEBAPP_ID, -1) ?: -1
+            val argBaseUrl = arguments?.getString(ARG_BASE_URL)
             if (id != -1) {
                 runCatching {
-                    webapp = DataManager.getInstance().getWebApp(id)
-                    baseUrl = webapp?.baseUrl.orEmpty()
+                    val stored = DataManager.getInstance().getWebApp(id)
+                    if (stored != null && !argBaseUrl.isNullOrBlank()) {
+                        webapp = WebApp(stored).apply { baseUrl = argBaseUrl }
+                    } else {
+                        webapp = stored
+                    }
+                    baseUrl = argBaseUrl?.takeIf { it.isNotBlank() } ?: webapp?.baseUrl.orEmpty()
                 }
+            } else if (!argBaseUrl.isNullOrBlank()) {
+                baseUrl = argBaseUrl
             }
         }
     }
@@ -268,7 +281,7 @@ class ShortcutDialogFragment : DialogFragment() {
                 val metaTag = metaTags.first()
                 val content = metaTag?.attr("content").orEmpty()
                 val m = META_REFRESH_URL_PATTERN.matcher(content)
-                val redirectUrl = if (m.matches()) m.group(1) else null
+                val redirectUrl = if (m.matches()) (m.group(1) ?: m.group(2) ?: m.group(3)) else null
                 if (!redirectUrl.isNullOrEmpty()) {
                     currentUrl = redirectUrl
                     doc = fetchDocument(currentUrl)
@@ -429,15 +442,22 @@ private fun ShortcutDialogContent(
     var titleText by remember { mutableStateOf(webapp?.title.orEmpty()) }
     var bitmap by remember(webapp?.ID) { mutableStateOf(initialIcon) }
     var isLoading by remember(webapp?.ID) { mutableStateOf(initialIcon == null) }
+    var diskCheckCompleted by remember(webapp?.ID) { mutableStateOf(initialIcon != null) }
 
     LaunchedEffect(webapp?.ID) {
         val id = webapp?.ID
         if (id != null && bitmap == null) {
-            val diskIcon = withContext(Dispatchers.IO) { ShortcutIconUtils.getIcon(context, id) }
-            if (diskIcon != null && bitmap == null) {
-                bitmap = diskIcon
-                isLoading = false
+            try {
+                val diskIcon = withContext(Dispatchers.IO) { ShortcutIconUtils.getIcon(context, id) }
+                if (diskIcon != null && bitmap == null) {
+                    bitmap = diskIcon
+                    isLoading = false
+                }
+            } finally {
+                diskCheckCompleted = true
             }
+        } else {
+            diskCheckCompleted = true
         }
         ShortcutIconUtils.iconUpdates.collect { updatedId ->
             if (updatedId == id && bitmap == null) {
@@ -483,7 +503,8 @@ private fun ShortcutDialogContent(
             }
         }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(diskCheckCompleted) {
+        if (!diskCheckCompleted) return@LaunchedEffect
         val webAppData =
             withContext(Dispatchers.IO) {
                 withTimeoutOrNull(10.seconds) {
@@ -550,7 +571,7 @@ private fun ShortcutDialogContent(
             titleText = fetchedTitle
         }
 
-        if (fetchedBitmap != null) {
+        if (fetchedBitmap != null && bitmap == null) {
             bitmap = fetchedBitmap
         }
         isLoading = false

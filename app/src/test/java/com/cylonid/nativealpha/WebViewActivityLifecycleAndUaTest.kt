@@ -11,6 +11,7 @@ import com.cylonid.nativealpha.model.DataManager
 import com.cylonid.nativealpha.model.WebApp
 import com.cylonid.nativealpha.util.Const
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -180,6 +181,11 @@ class WebViewActivityLifecycleAndUaTest {
             } as WebResourceRequest
 
         assertTrue(client.shouldOverrideUrlLoading(activity.webView, sneakyExternal))
+        val startedIntent = Shadows.shadowOf(activity).nextStartedActivity
+        assertNotNull(startedIntent)
+        assertEquals(Intent.ACTION_VIEW, startedIntent.action)
+        assertEquals(Uri.parse("https://evil.com/?q=example.com"), startedIntent.data)
+        assertEquals("https://example.com", activity.webView.url)
         controller.pause().stop().destroy()
     }
 }

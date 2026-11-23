@@ -117,7 +117,33 @@ public class WebViewActivity extends AppCompatActivity
 	private GeolocationPermissions.Callback mGeoPermissionRequestCallback = null;
 	private String mGeoPermissionRequestOrigin = null;
 	private PermissionRequest pendingWebPermissionRequest = null;
+	private int pendingWebPermissionToken = 0;
+	private int pendingWebOsToken = -1;
+	private int pendingWebOsRequestCode = -1;
+	private String pendingWebOsResource = null;
 	private final List<String> pendingWebResources = new ArrayList<>();
+	private final List<PendingWebResource> pendingWebResourceQueue = new ArrayList<>();
+
+	private static final class PendingWebResource {
+		final int titleRes;
+		final int messageRes;
+		final boolean currentState;
+		final String[] androidPermissions;
+		final int requestCode;
+		final String webkitResource;
+		final PermissionGrantedCallback successCallback;
+
+		PendingWebResource(int titleRes, int messageRes, boolean currentState, String[] androidPermissions,
+				int requestCode, String webkitResource, PermissionGrantedCallback successCallback) {
+			this.titleRes = titleRes;
+			this.messageRes = messageRes;
+			this.currentState = currentState;
+			this.androidPermissions = androidPermissions;
+			this.requestCode = requestCode;
+			this.webkitResource = webkitResource;
+			this.successCallback = successCallback;
+		}
+	}
 	private DownloadManager.Request dl_request = null;
 	private Map<String, String> CUSTOM_HEADERS;
 	protected ValueCallback<Uri[]> filePathCallback;
@@ -211,7 +237,10 @@ public class WebViewActivity extends AppCompatActivity
 			}
 			updateTaskDescription(webapp.getTitle(), mCurrentTaskIcon);
 			if (webapp.isBiometricProtection()) {
-				promptForBiometricUnlock(() -> setupWebView());
+				promptForBiometricUnlock(() -> {
+					setupWebView();
+					startAutoreloadIfEnabled();
+				});
 			} else {
 				setupWebView();
 			}
@@ -743,9 +772,18 @@ public class WebViewActivity extends AppCompatActivity
 		if (webapp.isBiometricProtection() && !isBiometricAuthenticated) {
 			View fullActivityView = findViewById(R.id.webviewActivity);
 			fullActivityView.setVisibility(View.GONE);
-			promptForBiometricUnlock(() -> fullActivityView.setVisibility(View.VISIBLE));
+			promptForBiometricUnlock(() -> {
+				fullActivityView.setVisibility(View.VISIBLE);
+				startAutoreloadIfEnabled();
+			});
+		} else {
+			startAutoreloadIfEnabled();
 		}
-		if (webapp.isAutoreload() && webapp.getTimeAutoreload() > 0) {
+
+	}
+
+	private void startAutoreloadIfEnabled() {
+		if (webapp != null && webapp.isAutoreload() && webapp.getTimeAutoreload() > 0) {
 			if (reload_handler == null) {
 				reload_handler = new Handler(Looper.getMainLooper());
 			} else {
@@ -753,7 +791,6 @@ public class WebViewActivity extends AppCompatActivity
 			}
 			reload();
 		}
-
 	}
 
 	@Override
@@ -981,11 +1018,21 @@ public class WebViewActivity extends AppCompatActivity
 		}
 		if (requestCode == Const.PERMISSION_CAMERA) {
 			enablePermissionBoolOnWebApp(() -> webapp.setCameraPermission(true));
-			resolvePendingWebPermissions(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
 		}
 		if (requestCode == Const.PERMISSION_AUDIO) {
 			enablePermissionBoolOnWebApp(() -> webapp.setMicrophonePermission(true));
-			resolvePendingWebPermissions(PermissionRequest.RESOURCE_AUDIO_CAPTURE);
+		}
+		if ((requestCode == Const.PERMISSION_CAMERA || requestCode == Const.PERMISSION_AUDIO)
+				&& pendingWebPermissionRequest != null && pendingWebOsToken == pendingWebPermissionToken
+				&& requestCode == pendingWebOsRequestCode) {
+			String resource = pendingWebOsResource;
+			int token = pendingWebOsToken;
+			pendingWebOsRequestCode = -1;
+			pendingWebOsResource = null;
+			if (resource != null && !pendingWebResources.contains(resource)) {
+				pendingWebResources.add(resource);
+			}
+			processNextPendingWebResource(token);
 		}
 		if (requestCode == Const.PERMISSION_RC_STORAGE) {
 			if (dl_request != null) {
@@ -1005,8 +1052,13 @@ public class WebViewActivity extends AppCompatActivity
 		if (requestCode == Const.PERMISSION_RC_LOCATION) {
 			this.handleGeoPermissionCallback(false);
 		}
-		if (requestCode == Const.PERMISSION_CAMERA || requestCode == Const.PERMISSION_AUDIO) {
-			denyPendingWebPermissions();
+		if ((requestCode == Const.PERMISSION_CAMERA || requestCode == Const.PERMISSION_AUDIO)
+				&& pendingWebPermissionRequest != null && pendingWebOsToken == pendingWebPermissionToken
+				&& requestCode == pendingWebOsRequestCode) {
+			int token = pendingWebOsToken;
+			pendingWebOsRequestCode = -1;
+			pendingWebOsResource = null;
+			processNextPendingWebResource(token);
 		}
 	}
 
@@ -1017,22 +1069,69 @@ public class WebViewActivity extends AppCompatActivity
 		}
 	}
 
-	private void resolvePendingWebPermissions(@NonNull String grantedResource) {
-		if (pendingWebPermissionRequest != null) {
-			if (!pendingWebResources.contains(grantedResource)) {
-				pendingWebResources.add(grantedResource);
+	private void processNextPendingWebResource(int token) {
+		if (token != pendingWebPermissionToken || pendingWebPermissionRequest == null) {
+			return;
+		}
+		if (pendingWebResourceQueue.isEmpty()) {
+			if (pendingWebResources.isEmpty()) {
+				pendingWebPermissionRequest.deny();
+			} else {
+				pendingWebPermissionRequest.grant(pendingWebResources.toArray(new String[0]));
 			}
-			pendingWebPermissionRequest.grant(pendingWebResources.toArray(new String[0]));
 			pendingWebPermissionRequest = null;
 			pendingWebResources.clear();
+			return;
 		}
+		PendingWebResource next = pendingWebResourceQueue.remove(0);
+		boolean androidPermissionsMissing = next.androidPermissions.length > 0
+				&& !EasyPermissions.hasPermissions(WebViewActivity.this, next.androidPermissions);
+		if (next.currentState && !androidPermissionsMissing) {
+			if (!pendingWebResources.contains(next.webkitResource)) {
+				pendingWebResources.add(next.webkitResource);
+			}
+			processNextPendingWebResource(token);
+			return;
+		}
+		if (next.currentState) {
+			pendingWebOsToken = token;
+			pendingWebOsRequestCode = next.requestCode;
+			pendingWebOsResource = next.webkitResource;
+			ActivityCompat.requestPermissions(WebViewActivity.this, next.androidPermissions, next.requestCode);
+			return;
+		}
+		new AlertDialog.Builder(WebViewActivity.this).setTitle(next.titleRes).setMessage(next.messageRes)
+				.setPositiveButton(android.R.string.ok, (dialog, id) -> {
+					enablePermissionBoolOnWebApp(next.successCallback);
+					if (token != pendingWebPermissionToken) {
+						return;
+					}
+					if (androidPermissionsMissing) {
+						pendingWebOsToken = token;
+						pendingWebOsRequestCode = next.requestCode;
+						pendingWebOsResource = next.webkitResource;
+						ActivityCompat.requestPermissions(WebViewActivity.this, next.androidPermissions,
+								next.requestCode);
+					} else {
+						if (!pendingWebResources.contains(next.webkitResource)) {
+							pendingWebResources.add(next.webkitResource);
+						}
+						processNextPendingWebResource(token);
+					}
+				}).setNegativeButton(android.R.string.cancel, (dialog, id) -> processNextPendingWebResource(token))
+				.setOnCancelListener(dialog -> processNextPendingWebResource(token)).create().show();
 	}
 
 	private void denyPendingWebPermissions() {
+		pendingWebPermissionToken++;
+		pendingWebOsToken = -1;
+		pendingWebOsRequestCode = -1;
+		pendingWebOsResource = null;
+		pendingWebResourceQueue.clear();
+		pendingWebResources.clear();
 		if (pendingWebPermissionRequest != null) {
 			pendingWebPermissionRequest.deny();
 			pendingWebPermissionRequest = null;
-			pendingWebResources.clear();
 		}
 	}
 
@@ -1069,32 +1168,6 @@ public class WebViewActivity extends AppCompatActivity
 						}
 					}).setNegativeButton(android.R.string.cancel, (dialog, id) -> handleGeoPermissionCallback(false))
 					.setOnCancelListener(dialog -> handleGeoPermissionCallback(false)).create().show();
-		}
-
-		private void handleWebPermission(int titleRes, int messageRes, boolean currentState,
-				String[] androidPermissions, int requestCode, String webkitResource,
-				PermissionGrantedCallback successCallback) {
-			boolean androidPermissionsMissing = androidPermissions.length > 0
-					&& !EasyPermissions.hasPermissions(WebViewActivity.this, androidPermissions);
-			if (currentState && androidPermissionsMissing) {
-				ActivityCompat.requestPermissions(WebViewActivity.this, androidPermissions, requestCode);
-				return;
-			}
-			if (currentState) {
-				resolvePendingWebPermissions(webkitResource);
-				return;
-			}
-
-			new AlertDialog.Builder(WebViewActivity.this).setTitle(titleRes).setMessage(messageRes)
-					.setPositiveButton(android.R.string.ok, (dialog, id) -> {
-						enablePermissionBoolOnWebApp(successCallback);
-						if (androidPermissionsMissing) {
-							ActivityCompat.requestPermissions(WebViewActivity.this, androidPermissions, requestCode);
-						} else {
-							resolvePendingWebPermissions(webkitResource);
-						}
-					}).setNegativeButton(android.R.string.cancel, (dialog, id) -> denyPendingWebPermissions())
-					.setOnCancelListener(dialog -> denyPendingWebPermissions()).create().show();
 		}
 
 		@Override
@@ -1178,26 +1251,32 @@ public class WebViewActivity extends AppCompatActivity
 			}
 			denyPendingWebPermissions();
 			pendingWebPermissionRequest = request;
-			pendingWebResources.clear();
+			int token = pendingWebPermissionToken;
 
 			List<String> requested = Arrays.asList(request.getResources());
 			if (requested.contains(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID)) {
-				this.handleWebPermission(R.string.dialog_permission_drm_title, R.string.dialog_permission_drm_txt,
-						webapp.isDrmAllowed(), new String[]{}, -1, PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID,
-						() -> webapp.setDrmAllowed(true));
-			} else if (requested.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
-				this.handleWebPermission(R.string.dialog_permission_camera_title, R.string.dialog_permission_camera_txt,
-						webapp.isCameraPermission(), new String[]{Manifest.permission.CAMERA}, Const.PERMISSION_CAMERA,
-						PermissionRequest.RESOURCE_VIDEO_CAPTURE, () -> webapp.setCameraPermission(true));
-			} else if (requested.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
-				this.handleWebPermission(R.string.dialog_permission_microphone_title,
+				pendingWebResourceQueue.add(new PendingWebResource(R.string.dialog_permission_drm_title,
+						R.string.dialog_permission_drm_txt, webapp.isDrmAllowed(), new String[]{}, -1,
+						PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID, () -> webapp.setDrmAllowed(true)));
+			}
+			if (requested.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
+				pendingWebResourceQueue.add(new PendingWebResource(R.string.dialog_permission_camera_title,
+						R.string.dialog_permission_camera_txt, webapp.isCameraPermission(),
+						new String[]{Manifest.permission.CAMERA}, Const.PERMISSION_CAMERA,
+						PermissionRequest.RESOURCE_VIDEO_CAPTURE, () -> webapp.setCameraPermission(true)));
+			}
+			if (requested.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
+				pendingWebResourceQueue.add(new PendingWebResource(R.string.dialog_permission_microphone_title,
 						R.string.dialog_permission_microphone_txt, webapp.isMicrophonePermission(),
 						new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS},
 						Const.PERMISSION_AUDIO, PermissionRequest.RESOURCE_AUDIO_CAPTURE,
-						() -> webapp.setMicrophonePermission(true));
-			} else {
-				denyPendingWebPermissions();
+						() -> webapp.setMicrophonePermission(true)));
 			}
+			if (pendingWebResourceQueue.isEmpty()) {
+				denyPendingWebPermissions();
+				return;
+			}
+			processNextPendingWebResource(token);
 		}
 
 		public void onProgressChanged(WebView view, int progress) {
@@ -1432,6 +1511,14 @@ public class WebViewActivity extends AppCompatActivity
 			}
 
 			if (webapp != null && webapp.isOpenUrlExternal()) {
+				String scheme = request.getUrl().getScheme();
+				if (!isHttpOrHttpsUrl(url) && scheme != null
+						&& ("sms".equalsIgnoreCase(scheme) || "smsto".equalsIgnoreCase(scheme)
+								|| "mms".equalsIgnoreCase(scheme) || "mmsto".equalsIgnoreCase(scheme)
+								|| "geo".equalsIgnoreCase(scheme))) {
+					startExternalActivitySafely(new Intent(Intent.ACTION_VIEW, request.getUrl()));
+					return true;
+				}
 				String base_url = webapp.getBaseUrl();
 				if (base_url != null) {
 					String baseHost = Uri.parse(base_url).getHost();
