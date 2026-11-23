@@ -18,8 +18,7 @@ internal class AdblockProviderApiHelper(
                 if (setFilter == null) {
                     setFilter = provider.viewModel.addFilter(config.label, config.value)
                     provider.viewModel.download(setFilter.id)
-                }
-                if (DateUtils.isOlderThanDays(setFilter.updateTime, 10)) {
+                } else if (DateUtils.isOlderThanDays(setFilter.updateTime, 10)) {
                     provider.viewModel.download(setFilter.id)
                 }
             }
