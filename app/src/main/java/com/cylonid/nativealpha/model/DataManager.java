@@ -165,6 +165,7 @@ public class DataManager {
 		Utility.Assert(App.getAppContext() != null, "App.getAppContext() null before loading sharedpref");
 
 		appdata = App.getAppContext().getSharedPreferences(SHARED_PREF_KEY, MODE_PRIVATE);
+		boolean unreadableWebsiteData = false;
 		// Webapp data
 		if (appdata.contains(shared_pref_webappdata)) {
 			String json = appdata.getString(shared_pref_webappdata, "");
@@ -182,19 +183,21 @@ public class DataManager {
 					}
 				} else {
 					Timber.w("Deserialized null websites list, keeping fallback list");
+					unreadableWebsiteData = true;
 					if (websites == null) {
 						websites = new ArrayList<>();
 					}
 				}
 			} catch (JsonSyntaxException e) {
 				Timber.e(e, "Failed to deserialize websites JSON");
+				unreadableWebsiteData = true;
 				if (websites == null) {
 					websites = new ArrayList<>();
 				}
 			}
 		}
 
-		if (websites != null && App.getAppContext() != null) {
+		if (!unreadableWebsiteData && websites != null && App.getAppContext() != null) {
 			ArrayList<Integer> validIds = new ArrayList<>();
 			for (WebApp w : websites) {
 				if (w != null && w.isActiveEntry()) {

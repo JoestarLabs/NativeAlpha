@@ -70,8 +70,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -105,6 +103,7 @@ fun WebAppSettingsScreen(
     webappId: Int,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: WebAppSettingsViewModel? = null,
 ) {
     val context = LocalContext.current
     val dataManager = remember { DataManager.getInstance() }
@@ -126,24 +125,22 @@ fun WebAppSettingsScreen(
         return
     }
 
-    var webapp by remember { mutableStateOf(WebApp(initialWebApp), policy = neverEqualPolicy()) }
-    var isDirty by remember { mutableStateOf(false) }
+    val stateViewModel = viewModel ?: remember { WebAppSettingsViewModel() }
+    val webapp = stateViewModel.ensureLoaded(webappId, initialWebApp)
 
     fun updateWebApp(modify: WebApp.() -> Unit) {
-        val updated = WebApp(webapp)
-        updated.modify()
-        webapp = updated
-        isDirty = true
+        stateViewModel.updateDraft(modify)
     }
 
     fun saveSettings() {
+        val currentDraft = stateViewModel.draftWebApp ?: return
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
         if (isGlobalWebApp) {
             if (activityManager != null) {
                 ProcessUtils.closeAllWebAppsAndProcesses(activityManager)
             }
-            dataManager.settings.globalWebApp = webapp
-            dataManager.settings.isUseBuiltinPdfViewer = webapp.isUseBuiltinPdfViewer
+            dataManager.settings.globalWebApp = currentDraft
+            dataManager.settings.isUseBuiltinPdfViewer = currentDraft.isUseBuiltinPdfViewer
             dataManager.saveGlobalSettings()
         } else {
             if (activityManager != null) {
@@ -151,16 +148,17 @@ fun WebAppSettingsScreen(
                     val id = task.taskInfo?.baseIntent?.getIntExtra(Const.INTENT_WEBAPPID, -1) ?: -1
                     if (id == webappId) task.finishAndRemoveTask()
                 }
-                ProcessUtils.killWebSandbox(webapp.containerId, activityManager)
+                ProcessUtils.killWebSandbox(currentDraft.containerId, activityManager)
             }
-            dataManager.replaceWebApp(webapp)
+            dataManager.replaceWebApp(currentDraft)
         }
+        stateViewModel.markSaved()
     }
 
     DisposableEffect(Unit) {
         onDispose {
             val isConfigChange = (context as? Activity)?.isChangingConfigurations == true
-            if (isDirty && !isConfigChange) {
+            if (stateViewModel.isDirty && !isConfigChange) {
                 saveSettings()
             }
         }

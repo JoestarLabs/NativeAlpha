@@ -3,12 +3,11 @@ package com.cylonid.nativealpha.ui.settings
 import android.app.Activity
 import android.content.Intent
 import android.os.Build
-import android.webkit.CookieManager
-import android.webkit.WebStorage
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,6 +44,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.RadioButton
@@ -65,12 +65,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.cylonid.nativealpha.MainActivity
 import com.cylonid.nativealpha.R
 import com.cylonid.nativealpha.WebAppSettingsActivity
 import com.cylonid.nativealpha.activities.AdblockConfigActivity
@@ -103,8 +104,10 @@ fun SettingsScreen(
 
     var settings by remember { mutableStateOf(dataManager.settings.copy(), policy = neverEqualPolicy()) }
     var showMenuStyleDialog by remember { mutableStateOf(false) }
+    val isRestoring = SettingsBackupCoordinator.isRestoring
 
     fun updateSettings(modify: GlobalSettings.() -> Unit) {
+        if (SettingsBackupCoordinator.isRestoring) return
         val updated = settings.copy()
         updated.modify()
         settings = updated
@@ -119,7 +122,7 @@ fun SettingsScreen(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.CreateDocument("*/*"),
         ) { uri ->
-            if (uri != null) {
+            if (uri != null && !SettingsBackupCoordinator.isRestoring) {
                 coroutineScope.launch {
                     val success =
                         withContext(Dispatchers.IO) {
@@ -138,31 +141,20 @@ fun SettingsScreen(
             contract = ActivityResultContracts.OpenDocument(),
         ) { uri ->
             if (uri != null) {
-                coroutineScope.launch {
-                    val success =
-                        withContext(Dispatchers.IO) {
-                            val loaded = dataManager.loadSharedPreferencesFromFile(uri)
-                            if (loaded) {
-                                dataManager.loadAppData()
-                            }
-                            loaded
+                SettingsBackupCoordinator.restoreBackup(
+                    context = context,
+                    uri = uri,
+                    onFailure = {
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = importFailedMsg,
+                            )
                         }
-                    if (!success) {
-                        snackbarHostState.showSnackbar(
-                            message = importFailedMsg,
-                        )
-                    } else {
-                        WebStorage.getInstance().deleteAllData()
-                        CookieManager.getInstance().removeAllCookies(null)
-                        val intent =
-                            Intent(context, MainActivity::class.java).apply {
-                                putExtra(Const.INTENT_BACKUP_RESTORED, true)
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                            }
-                        context.startActivity(intent)
+                    },
+                    onSuccess = {
                         (context as? Activity)?.finish()
-                    }
-                }
+                    },
+                )
             }
         }
 
@@ -401,9 +393,11 @@ fun SettingsScreen(
                     icon = Icons.Rounded.CloudUpload,
                     trailingIcon = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                     onClick = {
-                        val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
-                        val currentDateTime = sdf.format(Date())
-                        exportLauncher.launch("NativeAlpha_$currentDateTime")
+                        if (!isRestoring) {
+                            val sdf = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                            val currentDateTime = sdf.format(Date())
+                            exportLauncher.launch("NativeAlpha_$currentDateTime")
+                        }
                     },
                 )
 
@@ -412,12 +406,38 @@ fun SettingsScreen(
                     icon = Icons.Rounded.CloudDownload,
                     trailingIcon = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                     onClick = {
-                        importLauncher.launch(arrayOf("*/*"))
+                        if (!isRestoring) {
+                            importLauncher.launch(arrayOf("*/*"))
+                        }
                     },
                 )
             }
 
             Spacer(Modifier.height(24.dp))
+        }
+
+        if (isRestoring) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    awaitPointerEvent(PointerEventPass.Initial)
+                                        .changes
+                                        .forEach { it.consume() }
+                                }
+                            }
+                        },
+            ) {
+                LinearProgressIndicator(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(innerPadding),
+                )
+            }
         }
 
         if (showMenuStyleDialog) {

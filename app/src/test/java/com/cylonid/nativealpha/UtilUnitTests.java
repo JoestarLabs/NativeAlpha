@@ -100,13 +100,13 @@ public class UtilUnitTests {
 
 		Map<String, String> pages = new java.util.HashMap<>();
 		pages.put("https://example.com", redirectHtml);
-		pages.put("https://example.com/landing'", landingHtml);
 		pages.put("https://example.com/landing", landingHtml);
 
 		ShortcutDialogFragment.MetadataFetchOutcome outcome = parseOffline("https://example.com", pages,
 				Collections.emptyMap());
 
 		assertEquals("Landing", outcome.getResult()[IconFetchResult.TITLE.index]);
+		assertEquals("https://example.com/landing", outcome.getResolvedBaseUrl());
 		assertNotNull(outcome.getResult()[IconFetchResult.FAVICON.index]);
 	}
 }

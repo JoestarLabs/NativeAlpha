@@ -55,11 +55,14 @@ open class AdBlockClient(
         check(nativeClientPointer != 0L) { "AdBlockClient is closed" }
         val timestamp = System.currentTimeMillis()
         Timber.d("Loading basic data for $id")
-        if (rawDataPointer != 0L) {
-            releaseBuffer(rawDataPointer)
-            rawDataPointer = 0L
+        val oldPointer = rawDataPointer
+        val newPointer = loadBasicData(nativeClientPointer, data, preserveRules)
+        if (newPointer != 0L) {
+            rawDataPointer = newPointer
+            if (oldPointer != 0L) {
+                releaseBuffer(oldPointer)
+            }
         }
-        rawDataPointer = loadBasicData(nativeClientPointer, data, preserveRules)
         Timber.d("Loading basic data for $id completed in ${System.currentTimeMillis() - timestamp}ms")
     }
 
@@ -89,11 +92,14 @@ open class AdBlockClient(
         check(nativeClientPointer != 0L) { "AdBlockClient is closed" }
         val timestamp = System.currentTimeMillis()
         Timber.d("Loading preprocessed data for $id")
-        if (processedDataPointer != 0L) {
-            releaseBuffer(processedDataPointer)
-            processedDataPointer = 0L
+        val oldPointer = processedDataPointer
+        val newPointer = loadProcessedData(nativeClientPointer, data)
+        if (newPointer != 0L) {
+            processedDataPointer = newPointer
+            if (oldPointer != 0L) {
+                releaseBuffer(oldPointer)
+            }
         }
-        processedDataPointer = loadProcessedData(nativeClientPointer, data)
         Timber.d("Loading preprocessed data for $id completed in ${System.currentTimeMillis() - timestamp}ms")
     }
 

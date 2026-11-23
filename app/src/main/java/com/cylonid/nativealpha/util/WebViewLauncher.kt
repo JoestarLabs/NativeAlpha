@@ -60,14 +60,15 @@ object WebViewLauncher {
     fun startWebViewInNewProcess(
         webapp: WebApp,
         a: Activity,
-    ) {
+    ): Boolean {
         val intent = createWebViewIntent(webapp, a)
         if (intent == null) {
             showLaunchFailed(a)
             Timber.e("Failed to start WebView activity in new process for container %d", webapp.containerId)
-            return
+            return false
         }
         ProcessPhoenix.triggerRebirth(a, intent)
+        return true
     }
 
     @JvmStatic
