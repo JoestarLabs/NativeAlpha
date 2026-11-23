@@ -95,18 +95,18 @@ public class UtilUnitTests {
 
 	@Test
 	public void metaRefreshRedirectFollowsTargetDocument() {
-		String redirectHtml = "<html><head><meta http-equiv=\"refresh\" content=\"0; URL='https://example.com/landing'\"></head></html>";
+		String redirectHtml = "<html><head><meta http-equiv=\"refresh\" content=\"0; URL='https://example.com/landing?url=https://other.invalid'\"></head></html>";
 		String landingHtml = "<html><head><title>Landing</title><link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/apple.png\"></head></html>";
 
 		Map<String, String> pages = new java.util.HashMap<>();
 		pages.put("https://example.com", redirectHtml);
-		pages.put("https://example.com/landing", landingHtml);
+		pages.put("https://example.com/landing?url=https://other.invalid", landingHtml);
 
 		ShortcutDialogFragment.MetadataFetchOutcome outcome = parseOffline("https://example.com", pages,
 				Collections.emptyMap());
 
 		assertEquals("Landing", outcome.getResult()[IconFetchResult.TITLE.index]);
-		assertEquals("https://example.com/landing", outcome.getResolvedBaseUrl());
+		assertEquals("https://example.com/landing?url=https://other.invalid", outcome.getResolvedBaseUrl());
 		assertNotNull(outcome.getResult()[IconFetchResult.FAVICON.index]);
 	}
 }

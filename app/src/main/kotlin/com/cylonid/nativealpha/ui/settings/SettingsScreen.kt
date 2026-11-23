@@ -83,9 +83,7 @@ import com.cylonid.nativealpha.ui.components.SettingsSectionHeader
 import com.cylonid.nativealpha.ui.components.SettingsSwitchItem
 import com.cylonid.nativealpha.ui.webapp.WebAppMenuStyle
 import com.cylonid.nativealpha.util.Const
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -122,16 +120,13 @@ fun SettingsScreen(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.CreateDocument("*/*"),
         ) { uri ->
-            if (uri != null && !SettingsBackupCoordinator.isRestoring) {
-                coroutineScope.launch {
-                    val success =
-                        withContext(Dispatchers.IO) {
-                            dataManager.saveGlobalSettings()
-                            dataManager.saveSharedPreferencesToFile(uri)
-                        }
-                    snackbarHostState.showSnackbar(
-                        message = if (success) exportSuccessMsg else exportFailedMsg,
-                    )
+            if (uri != null) {
+                SettingsBackupCoordinator.exportBackup(context = context, uri = uri) { success ->
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = if (success) exportSuccessMsg else exportFailedMsg,
+                        )
+                    }
                 }
             }
         }

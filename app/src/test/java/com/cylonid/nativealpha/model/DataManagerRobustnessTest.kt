@@ -178,4 +178,24 @@ class DataManagerRobustnessTest {
         assertFalse(dataManager.settings.isClearCache)
         assertEquals(1, dataManager.settings.themeId)
     }
+
+    @Test
+    fun testLoadAppDataImportsLegacyGlobalSettingsWhenJsonFlagAndBlobAbsent() {
+        dataManager.settings.apply {
+            isClearCache = false
+            themeId = 0
+        }
+        val prefs = context.getSharedPreferences("WEBSITEDATA", Context.MODE_PRIVATE)
+        prefs
+            .edit()
+            .remove("GLOBALSETTINGS")
+            .remove("globalSettingsStoredAsJson")
+            .putBoolean("Cache", true)
+            .putInt("UITheme", 1)
+            .commit()
+
+        dataManager.loadAppData()
+        assertTrue(dataManager.settings.isClearCache)
+        assertEquals(1, dataManager.settings.themeId)
+    }
 }
