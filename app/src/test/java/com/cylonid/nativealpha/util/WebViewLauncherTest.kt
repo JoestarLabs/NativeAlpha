@@ -65,4 +65,30 @@ class WebViewLauncherTest {
         assertTrue((intent7.flags and Intent.FLAG_ACTIVITY_NEW_DOCUMENT) != 0)
         assertTrue((intent7.flags and Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) != 0)
     }
+
+    @Test
+    fun testManifestIsolatesWebViewDocumentTasksFromMainActivity() {
+        val pm = context.packageManager
+        val webViewInfo =
+            pm.getActivityInfo(
+                android.content.ComponentName(context, WebViewActivity::class.java),
+                0,
+            )
+        assertEquals(
+            android.content.pm.ActivityInfo.DOCUMENT_LAUNCH_INTO_EXISTING,
+            webViewInfo.documentLaunchMode,
+        )
+        assertTrue(webViewInfo.taskAffinity.isNullOrEmpty())
+
+        val sandboxInfo =
+            pm.getActivityInfo(
+                android.content.ComponentName(context, WebSandboxActivity0::class.java),
+                0,
+            )
+        assertEquals(
+            android.content.pm.ActivityInfo.DOCUMENT_LAUNCH_INTO_EXISTING,
+            sandboxInfo.documentLaunchMode,
+        )
+        assertTrue(sandboxInfo.taskAffinity.isNullOrEmpty())
+    }
 }

@@ -117,27 +117,30 @@ public class WebViewActivity extends AppCompatActivity
 	private GeolocationPermissions.Callback mGeoPermissionRequestCallback = null;
 	private String mGeoPermissionRequestOrigin = null;
 	private PermissionRequest pendingWebPermissionRequest = null;
+	private AlertDialog activeWebPermissionDialog = null;
 	private int pendingWebPermissionToken = 0;
 	private int pendingWebOsToken = -1;
 	private int pendingWebOsRequestCode = -1;
 	private String pendingWebOsResource = null;
 	private final List<String> pendingWebResources = new ArrayList<>();
 	private final List<PendingWebResource> pendingWebResourceQueue = new ArrayList<>();
+	private final List<PermissionRequest> queuedWebPermissionRequests = new ArrayList<>();
 
 	private static final class PendingWebResource {
 		final int titleRes;
 		final int messageRes;
-		final boolean currentState;
+		final java.util.function.BooleanSupplier isAllowed;
 		final String[] androidPermissions;
 		final int requestCode;
 		final String webkitResource;
 		final PermissionGrantedCallback successCallback;
 
-		PendingWebResource(int titleRes, int messageRes, boolean currentState, String[] androidPermissions,
-				int requestCode, String webkitResource, PermissionGrantedCallback successCallback) {
+		PendingWebResource(int titleRes, int messageRes, java.util.function.BooleanSupplier isAllowed,
+				String[] androidPermissions, int requestCode, String webkitResource,
+				PermissionGrantedCallback successCallback) {
 			this.titleRes = titleRes;
 			this.messageRes = messageRes;
-			this.currentState = currentState;
+			this.isAllowed = isAllowed;
 			this.androidPermissions = androidPermissions;
 			this.requestCode = requestCode;
 			this.webkitResource = webkitResource;
@@ -829,6 +832,12 @@ public class WebViewActivity extends AppCompatActivity
 
 	@Override
 	protected void onDestroy() {
+		if (activeWebPermissionDialog != null && activeWebPermissionDialog.isShowing()) {
+			activeWebPermissionDialog.dismiss();
+		}
+		activeWebPermissionDialog = null;
+		queuedWebPermissionRequests.clear();
+		pendingWebPermissionRequest = null;
 		if (backPressHandler != null && resetBackPressRunnable != null) {
 			backPressHandler.removeCallbacks(resetBackPressRunnable);
 		}
@@ -1081,27 +1090,33 @@ public class WebViewActivity extends AppCompatActivity
 			}
 			pendingWebPermissionRequest = null;
 			pendingWebResources.clear();
+			startNextQueuedWebPermissionRequest();
 			return;
 		}
 		PendingWebResource next = pendingWebResourceQueue.remove(0);
+		boolean allowed = next.isAllowed.getAsBoolean();
 		boolean androidPermissionsMissing = next.androidPermissions.length > 0
 				&& !EasyPermissions.hasPermissions(WebViewActivity.this, next.androidPermissions);
-		if (next.currentState && !androidPermissionsMissing) {
+		if (allowed && !androidPermissionsMissing) {
 			if (!pendingWebResources.contains(next.webkitResource)) {
 				pendingWebResources.add(next.webkitResource);
 			}
 			processNextPendingWebResource(token);
 			return;
 		}
-		if (next.currentState) {
+		if (allowed) {
 			pendingWebOsToken = token;
 			pendingWebOsRequestCode = next.requestCode;
 			pendingWebOsResource = next.webkitResource;
 			ActivityCompat.requestPermissions(WebViewActivity.this, next.androidPermissions, next.requestCode);
 			return;
 		}
-		new AlertDialog.Builder(WebViewActivity.this).setTitle(next.titleRes).setMessage(next.messageRes)
-				.setPositiveButton(android.R.string.ok, (dialog, id) -> {
+		if (activeWebPermissionDialog != null && activeWebPermissionDialog.isShowing()) {
+			activeWebPermissionDialog.dismiss();
+		}
+		activeWebPermissionDialog = new AlertDialog.Builder(WebViewActivity.this).setTitle(next.titleRes)
+				.setMessage(next.messageRes).setPositiveButton(android.R.string.ok, (dialog, id) -> {
+					activeWebPermissionDialog = null;
 					enablePermissionBoolOnWebApp(next.successCallback);
 					if (token != pendingWebPermissionToken) {
 						return;
@@ -1118,21 +1133,67 @@ public class WebViewActivity extends AppCompatActivity
 						}
 						processNextPendingWebResource(token);
 					}
-				}).setNegativeButton(android.R.string.cancel, (dialog, id) -> processNextPendingWebResource(token))
-				.setOnCancelListener(dialog -> processNextPendingWebResource(token)).create().show();
+				}).setNegativeButton(android.R.string.cancel, (dialog, id) -> {
+					activeWebPermissionDialog = null;
+					denyQueuedPermissionRequestsForBurst();
+					processNextPendingWebResource(token);
+				}).setOnCancelListener(dialog -> {
+					activeWebPermissionDialog = null;
+					denyQueuedPermissionRequestsForBurst();
+					processNextPendingWebResource(token);
+				}).create();
+		activeWebPermissionDialog.show();
 	}
 
-	private void denyPendingWebPermissions() {
+	private void denyQueuedPermissionRequestsForBurst() {
+		while (!queuedWebPermissionRequests.isEmpty()) {
+			PermissionRequest queued = queuedWebPermissionRequests.remove(0);
+			queued.deny();
+		}
+	}
+
+	private void startNextQueuedWebPermissionRequest() {
+		while (!queuedWebPermissionRequests.isEmpty() && pendingWebPermissionRequest == null) {
+			PermissionRequest nextRequest = queuedWebPermissionRequests.remove(0);
+			beginWebPermissionRequest(nextRequest);
+		}
+	}
+
+	private void beginWebPermissionRequest(@NonNull PermissionRequest request) {
 		pendingWebPermissionToken++;
 		pendingWebOsToken = -1;
 		pendingWebOsRequestCode = -1;
 		pendingWebOsResource = null;
 		pendingWebResourceQueue.clear();
 		pendingWebResources.clear();
-		if (pendingWebPermissionRequest != null) {
+		pendingWebPermissionRequest = request;
+		int token = pendingWebPermissionToken;
+
+		List<String> requested = Arrays.asList(request.getResources());
+		if (requested.contains(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID)) {
+			pendingWebResourceQueue.add(new PendingWebResource(R.string.dialog_permission_drm_title,
+					R.string.dialog_permission_drm_txt, () -> webapp != null && webapp.isDrmAllowed(), new String[]{},
+					-1, PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID, () -> webapp.setDrmAllowed(true)));
+		}
+		if (requested.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
+			pendingWebResourceQueue.add(new PendingWebResource(R.string.dialog_permission_camera_title,
+					R.string.dialog_permission_camera_txt, () -> webapp != null && webapp.isCameraPermission(),
+					new String[]{Manifest.permission.CAMERA}, Const.PERMISSION_CAMERA,
+					PermissionRequest.RESOURCE_VIDEO_CAPTURE, () -> webapp.setCameraPermission(true)));
+		}
+		if (requested.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
+			pendingWebResourceQueue.add(new PendingWebResource(R.string.dialog_permission_microphone_title,
+					R.string.dialog_permission_microphone_txt, () -> webapp != null && webapp.isMicrophonePermission(),
+					new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS},
+					Const.PERMISSION_AUDIO, PermissionRequest.RESOURCE_AUDIO_CAPTURE,
+					() -> webapp.setMicrophonePermission(true)));
+		}
+		if (pendingWebResourceQueue.isEmpty()) {
 			pendingWebPermissionRequest.deny();
 			pendingWebPermissionRequest = null;
+			return;
 		}
+		processNextPendingWebResource(token);
 	}
 
 	private class CustomWebChromeClient extends android.webkit.WebChromeClient {
@@ -1249,34 +1310,11 @@ public class WebViewActivity extends AppCompatActivity
 			if (request == null) {
 				return;
 			}
-			denyPendingWebPermissions();
-			pendingWebPermissionRequest = request;
-			int token = pendingWebPermissionToken;
-
-			List<String> requested = Arrays.asList(request.getResources());
-			if (requested.contains(PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID)) {
-				pendingWebResourceQueue.add(new PendingWebResource(R.string.dialog_permission_drm_title,
-						R.string.dialog_permission_drm_txt, webapp.isDrmAllowed(), new String[]{}, -1,
-						PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID, () -> webapp.setDrmAllowed(true)));
-			}
-			if (requested.contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
-				pendingWebResourceQueue.add(new PendingWebResource(R.string.dialog_permission_camera_title,
-						R.string.dialog_permission_camera_txt, webapp.isCameraPermission(),
-						new String[]{Manifest.permission.CAMERA}, Const.PERMISSION_CAMERA,
-						PermissionRequest.RESOURCE_VIDEO_CAPTURE, () -> webapp.setCameraPermission(true)));
-			}
-			if (requested.contains(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
-				pendingWebResourceQueue.add(new PendingWebResource(R.string.dialog_permission_microphone_title,
-						R.string.dialog_permission_microphone_txt, webapp.isMicrophonePermission(),
-						new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS},
-						Const.PERMISSION_AUDIO, PermissionRequest.RESOURCE_AUDIO_CAPTURE,
-						() -> webapp.setMicrophonePermission(true)));
-			}
-			if (pendingWebResourceQueue.isEmpty()) {
-				denyPendingWebPermissions();
+			if (pendingWebPermissionRequest != null) {
+				queuedWebPermissionRequests.add(request);
 				return;
 			}
-			processNextPendingWebResource(token);
+			beginWebPermissionRequest(request);
 		}
 
 		public void onProgressChanged(WebView view, int progress) {
