@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.6.6](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.5...v1.6.6) (2026-11-24)
+
+
+### Bug Fixes
+
+* **adblock-client:** fix native cache-miss leak, null deref, and thread safety ([739555f](https://github.com/JoestarLabs/NativeAlpha/commit/739555f144827d11ae3eea4967550420a209346f))
+* **adblock-client:** harden JNI pointer lifecycle, null termination, and local refs ([71c77de](https://github.com/JoestarLabs/NativeAlpha/commit/71c77dec3d2581fb945c0ad6f3eea369b7ce1f86))
+* **adblock:** avoid double download when adding a new filter ([d5ed994](https://github.com/JoestarLabs/NativeAlpha/commit/d5ed99442263556a530d9b98cbea389b410c01d8))
+* address Phase C review findings across permissions, routing, backup, and shortcut dialogs ([d707c30](https://github.com/JoestarLabs/NativeAlpha/commit/d707c30dc463410d37da035a21b44ad3c740948f))
+* address PR review findings across lifecycle, state retention, and tests ([aad2aec](https://github.com/JoestarLabs/NativeAlpha/commit/aad2aecae69864cb5e02bdc30a03e46268cbf8dc))
+* **backup:** handle INTENT_BACKUP_RESTORED in onCreate and chain shortcut dialogs ([6b8548c](https://github.com/JoestarLabs/NativeAlpha/commit/6b8548cda2ec5d6e16a8062ab13491a89edeebd9))
+* **data:** fix inverted legacy settings migration condition ([b24394e](https://github.com/JoestarLabs/NativeAlpha/commit/b24394e7313836889f19c4762bf3bb4eaaddc67a))
+* **deps:** update androidx dependencies ([e3bca23](https://github.com/JoestarLabs/NativeAlpha/commit/e3bca236e6c97b9a8dc7e9597fa61c1056faa52f))
+* **deps:** update dependency androidx.compose.material3:material3 to v1.5.0-rc01 ([718a1b8](https://github.com/JoestarLabs/NativeAlpha/commit/718a1b8ad052a26553881f461019771e92e3739c))
+* **deps:** update dependency com.github.edsuns.adblockandroid:ad-filter to v0.9.1 ([82f7b85](https://github.com/JoestarLabs/NativeAlpha/commit/82f7b850fc04d4c622b7dbe88375b8bc96d5140c))
+* **deps:** update dependency org.robolectric:robolectric to v4.18 ([58435c6](https://github.com/JoestarLabs/NativeAlpha/commit/58435c6551861edef475cf1913d1d39b67e839ca))
+* **deps:** update dependency org.robolectric:robolectric to v4.18.1 ([87c7997](https://github.com/JoestarLabs/NativeAlpha/commit/87c7997d415dce588817a4060e89170a0db76612))
+* isolate WebView document tasks to keep multiple PWAs open ([#71](https://github.com/JoestarLabs/NativeAlpha/issues/71)) ([7fdd8f0](https://github.com/JoestarLabs/NativeAlpha/commit/7fdd8f04e9aebf353f5f50eb87939ad413ac7ab4))
+* **security:** enforce exact/subdomain host matching for third-party and external-link checks ([04b152b](https://github.com/JoestarLabs/NativeAlpha/commit/04b152ba8433183856dc3bf471c29fbf173012a4))
+* **security:** gate WebView initialization behind biometric authentication ([23fa0cc](https://github.com/JoestarLabs/NativeAlpha/commit/23fa0cce77c7f491ef31b75ed1532333916dc8e1))
+* **security:** restrict web PDF interception to http/https and block private file URIs ([db86b25](https://github.com/JoestarLabs/NativeAlpha/commit/db86b25eacd210fa6e49648c79a738ac931ecb6c))
+* **webview:** coalesce concurrent DRM permission dialogs and isolate sandbox taskAffinity ([deb2c0b](https://github.com/JoestarLabs/NativeAlpha/commit/deb2c0bc40dbf82e3c08cf38ac9c3f77ae39e0e6))
+* **webview:** defer PermissionRequest grant/deny until async dialog and OS permissions resolve ([cf4ae63](https://github.com/JoestarLabs/NativeAlpha/commit/cf4ae6359041de79198a5216de77c6afc87e18c2))
+* **webview:** guard auto-reload against 0s loop and default interval to 30s ([9569f38](https://github.com/JoestarLabs/NativeAlpha/commit/9569f38ac0639d25716f9be78c2d697cf6077d56))
+* **webview:** scope burst permission denials per resource and handle request cancellation ([bf638bf](https://github.com/JoestarLabs/NativeAlpha/commit/bf638bf12afa3c0a6e14fcd6be174c8c103e49d6))
+
 ## [1.6.5](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.4...v1.6.5) (2026-11-04)
 
 
