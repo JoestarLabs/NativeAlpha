@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.7](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.6...v1.6.7) (2026-11-24)
+
+
+### Bug Fixes
+
+* **sandbox:** prevent duplicate containerId assignment and repair collisions on load ([d3c07a0](https://github.com/JoestarLabs/NativeAlpha/commit/d3c07a0561e8a2d55f92e6e1fe2f526900eb9c07))
+
 ## [1.6.6](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.5...v1.6.6) (2026-11-24)
 
 
