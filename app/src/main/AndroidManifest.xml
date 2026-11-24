@@ -64,6 +64,7 @@
             android:configChanges="orientation|screenSize|smallestScreenSize|density|screenLayout|uiMode|keyboard|keyboardHidden|navigation"
             android:launchMode="standard"
             android:process=":web_sandbox_0"
+            android:taskAffinity=""
             android:documentLaunchMode="intoExisting" />
         <activity-alias
             android:name=".__WebViewActivity_0"
@@ -79,6 +80,7 @@
             android:configChanges="orientation|screenSize|smallestScreenSize|density|screenLayout|uiMode|keyboard|keyboardHidden|navigation"
             android:launchMode="standard"
             android:process=":web_sandbox_1"
+            android:taskAffinity=""
             android:documentLaunchMode="intoExisting" />
         <activity-alias
             android:name=".__WebViewActivity_1"
@@ -94,6 +96,7 @@
             android:configChanges="orientation|screenSize|smallestScreenSize|density|screenLayout|uiMode|keyboard|keyboardHidden|navigation"
             android:launchMode="standard"
             android:process=":web_sandbox_2"
+            android:taskAffinity=""
             android:documentLaunchMode="intoExisting" />
         <activity-alias
             android:name=".__WebViewActivity_2"
@@ -109,6 +112,7 @@
             android:configChanges="orientation|screenSize|smallestScreenSize|density|screenLayout|uiMode|keyboard|keyboardHidden|navigation"
             android:launchMode="standard"
             android:process=":web_sandbox_3"
+            android:taskAffinity=""
             android:documentLaunchMode="intoExisting" />
         <activity-alias
             android:name=".__WebViewActivity_3"
@@ -124,6 +128,7 @@
             android:configChanges="orientation|screenSize|smallestScreenSize|density|screenLayout|uiMode|keyboard|keyboardHidden|navigation"
             android:launchMode="standard"
             android:process=":web_sandbox_4"
+            android:taskAffinity=""
             android:documentLaunchMode="intoExisting" />
         <activity-alias
             android:name=".__WebViewActivity_4"
@@ -139,6 +144,7 @@
             android:configChanges="orientation|screenSize|smallestScreenSize|density|screenLayout|uiMode|keyboard|keyboardHidden|navigation"
             android:launchMode="standard"
             android:process=":web_sandbox_5"
+            android:taskAffinity=""
             android:documentLaunchMode="intoExisting" />
         <activity-alias
             android:name=".__WebViewActivity_5"
@@ -154,6 +160,7 @@
             android:configChanges="orientation|screenSize|smallestScreenSize|density|screenLayout|uiMode|keyboard|keyboardHidden|navigation"
             android:launchMode="standard"
             android:process=":web_sandbox_6"
+            android:taskAffinity=""
             android:documentLaunchMode="intoExisting" />
         <activity-alias
             android:name=".__WebViewActivity_6"
@@ -169,6 +176,7 @@
             android:configChanges="orientation|screenSize|smallestScreenSize|density|screenLayout|uiMode|keyboard|keyboardHidden|navigation"
             android:launchMode="standard"
             android:process=":web_sandbox_7"
+            android:taskAffinity=""
             android:documentLaunchMode="intoExisting" />
         <activity-alias
             android:name=".__WebViewActivity_7"

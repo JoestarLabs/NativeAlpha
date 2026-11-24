@@ -188,4 +188,52 @@ class WebViewActivityLifecycleAndUaTest {
         assertEquals("https://example.com", activity.webView.url)
         controller.pause().stop().destroy()
     }
+
+    @Test
+    fun testMultipleConcurrentDrmPermissionRequestsShowSingleDialogAndAutoGrantQueue() {
+        val controller = buildStartedActivity()
+        val activity = controller.get()
+        val chromeClass =
+            WebViewActivity::class.java.declaredClasses.first { it.simpleName == "CustomWebChromeClient" }
+        val ctor = chromeClass.getDeclaredConstructor(WebViewActivity::class.java).apply { isAccessible = true }
+        val chromeClient = ctor.newInstance(activity) as android.webkit.WebChromeClient
+
+        val granted = mutableListOf<List<String>>()
+
+        fun makeDrmRequest(): android.webkit.PermissionRequest =
+            object : android.webkit.PermissionRequest() {
+                override fun getOrigin(): Uri = Uri.parse("https://example.com")
+
+                override fun getResources(): Array<String> = arrayOf(RESOURCE_PROTECTED_MEDIA_ID)
+
+                override fun grant(resources: Array<String>) {
+                    granted.add(resources.toList())
+                }
+
+                override fun deny() {}
+            }
+
+        chromeClient.onPermissionRequest(makeDrmRequest())
+        chromeClient.onPermissionRequest(makeDrmRequest())
+        chromeClient.onPermissionRequest(makeDrmRequest())
+
+        val dialogs =
+            org.robolectric.shadows.ShadowAlertDialog
+                .getShownDialogs()
+        assertEquals(1, dialogs.size)
+
+        val alertDialog = dialogs.first() as androidx.appcompat.app.AlertDialog
+        alertDialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).performClick()
+        org.robolectric.shadows.ShadowLooper
+            .idleMainLooper()
+
+        assertEquals(3, granted.size)
+        assertEquals(
+            1,
+            org.robolectric.shadows.ShadowAlertDialog
+                .getShownDialogs()
+                .size,
+        )
+        controller.pause().stop().destroy()
+    }
 }
