@@ -236,4 +236,132 @@ class WebViewActivityLifecycleAndUaTest {
         )
         controller.pause().stop().destroy()
     }
+
+    @Test
+    fun testCancelingDrmDeniesOnlyDrmBurstAndKeepsQueuedCameraRequest() {
+        val dm = DataManager.getInstance()
+        dm.websites[0].isCameraPermission = true
+        dm.saveWebAppData()
+
+        val controller = buildStartedActivity()
+        val activity = controller.get()
+        Shadows.shadowOf(activity.application).grantPermissions(android.Manifest.permission.CAMERA)
+
+        val chromeClass =
+            WebViewActivity::class.java.declaredClasses.first { it.simpleName == "CustomWebChromeClient" }
+        val ctor = chromeClass.getDeclaredConstructor(WebViewActivity::class.java).apply { isAccessible = true }
+        val chromeClient = ctor.newInstance(activity) as android.webkit.WebChromeClient
+
+        val granted = mutableListOf<List<String>>()
+        var deniedCount = 0
+
+        fun makeRequest(vararg resources: String): android.webkit.PermissionRequest =
+            object : android.webkit.PermissionRequest() {
+                override fun getOrigin(): Uri = Uri.parse("https://example.com")
+
+                override fun getResources(): Array<String> = arrayOf(*resources)
+
+                override fun grant(grantedResources: Array<String>) {
+                    granted.add(grantedResources.toList())
+                }
+
+                override fun deny() {
+                    deniedCount++
+                }
+            }
+
+        chromeClient.onPermissionRequest(
+            makeRequest(android.webkit.PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID),
+        )
+        chromeClient.onPermissionRequest(
+            makeRequest(android.webkit.PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID),
+        )
+        chromeClient.onPermissionRequest(
+            makeRequest(
+                android.webkit.PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID,
+                android.webkit.PermissionRequest.RESOURCE_VIDEO_CAPTURE,
+            ),
+        )
+
+        val dialogs =
+            org.robolectric.shadows.ShadowAlertDialog
+                .getShownDialogs()
+        assertEquals(1, dialogs.size)
+
+        val alertDialog = dialogs.first() as androidx.appcompat.app.AlertDialog
+        alertDialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE).performClick()
+        org.robolectric.shadows.ShadowLooper
+            .idleMainLooper()
+
+        assertEquals(2, deniedCount)
+        assertEquals(listOf(listOf(android.webkit.PermissionRequest.RESOURCE_VIDEO_CAPTURE)), granted)
+        assertEquals(
+            1,
+            org.robolectric.shadows.ShadowAlertDialog
+                .getShownDialogs()
+                .size,
+        )
+        controller.pause().stop().destroy()
+    }
+
+    @Test
+    fun testOnPermissionRequestCanceledDismissesActiveDialogAndAdvancesQueue() {
+        val controller = buildStartedActivity()
+        val activity = controller.get()
+        val chromeClass =
+            WebViewActivity::class.java.declaredClasses.first { it.simpleName == "CustomWebChromeClient" }
+        val ctor = chromeClass.getDeclaredConstructor(WebViewActivity::class.java).apply { isAccessible = true }
+        val chromeClient = ctor.newInstance(activity) as android.webkit.WebChromeClient
+
+        val granted = mutableListOf<String>()
+
+        fun makeTaggedDrmRequest(tag: String): android.webkit.PermissionRequest =
+            object : android.webkit.PermissionRequest() {
+                override fun getOrigin(): Uri = Uri.parse("https://example.com")
+
+                override fun getResources(): Array<String> = arrayOf(RESOURCE_PROTECTED_MEDIA_ID)
+
+                override fun grant(resources: Array<String>) {
+                    granted.add(tag)
+                }
+
+                override fun deny() {}
+            }
+
+        val first = makeTaggedDrmRequest("first")
+        val canceledQueued = makeTaggedDrmRequest("canceledQueued")
+        val third = makeTaggedDrmRequest("third")
+
+        chromeClient.onPermissionRequest(first)
+        chromeClient.onPermissionRequest(canceledQueued)
+        chromeClient.onPermissionRequest(third)
+
+        chromeClient.onPermissionRequestCanceled(canceledQueued)
+
+        val dialogsBeforeCancel =
+            org.robolectric.shadows.ShadowAlertDialog
+                .getShownDialogs()
+        assertEquals(1, dialogsBeforeCancel.size)
+        val firstDialog = dialogsBeforeCancel.first() as androidx.appcompat.app.AlertDialog
+        assertTrue(firstDialog.isShowing)
+
+        chromeClient.onPermissionRequestCanceled(first)
+        org.robolectric.shadows.ShadowLooper
+            .idleMainLooper()
+
+        assertFalse(firstDialog.isShowing)
+        assertFalse(DataManager.getInstance().websites[0].isDrmAllowed)
+
+        val dialogsAfterCancel =
+            org.robolectric.shadows.ShadowAlertDialog
+                .getShownDialogs()
+        assertEquals(2, dialogsAfterCancel.size)
+        val secondDialog = dialogsAfterCancel.last() as androidx.appcompat.app.AlertDialog
+        secondDialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE).performClick()
+        org.robolectric.shadows.ShadowLooper
+            .idleMainLooper()
+
+        assertEquals(listOf("third"), granted)
+        controller.pause().stop().destroy()
+    }
 }

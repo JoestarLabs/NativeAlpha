@@ -125,6 +125,7 @@ public class WebViewActivity extends AppCompatActivity
 	private final List<String> pendingWebResources = new ArrayList<>();
 	private final List<PendingWebResource> pendingWebResourceQueue = new ArrayList<>();
 	private final List<PermissionRequest> queuedWebPermissionRequests = new ArrayList<>();
+	private final java.util.Set<String> burstDeniedWebResources = new java.util.HashSet<>();
 
 	private static final class PendingWebResource {
 		final int titleRes;
@@ -837,7 +838,8 @@ public class WebViewActivity extends AppCompatActivity
 		}
 		activeWebPermissionDialog = null;
 		queuedWebPermissionRequests.clear();
-		pendingWebPermissionRequest = null;
+		burstDeniedWebResources.clear();
+		invalidatePendingWebPermissionState();
 		if (backPressHandler != null && resetBackPressRunnable != null) {
 			backPressHandler.removeCallbacks(resetBackPressRunnable);
 		}
@@ -1094,6 +1096,10 @@ public class WebViewActivity extends AppCompatActivity
 			return;
 		}
 		PendingWebResource next = pendingWebResourceQueue.remove(0);
+		if (burstDeniedWebResources.contains(next.webkitResource)) {
+			processNextPendingWebResource(token);
+			return;
+		}
 		boolean allowed = next.isAllowed.getAsBoolean();
 		boolean androidPermissionsMissing = next.androidPermissions.length > 0
 				&& !EasyPermissions.hasPermissions(WebViewActivity.this, next.androidPermissions);
@@ -1117,10 +1123,10 @@ public class WebViewActivity extends AppCompatActivity
 		activeWebPermissionDialog = new AlertDialog.Builder(WebViewActivity.this).setTitle(next.titleRes)
 				.setMessage(next.messageRes).setPositiveButton(android.R.string.ok, (dialog, id) -> {
 					activeWebPermissionDialog = null;
-					enablePermissionBoolOnWebApp(next.successCallback);
 					if (token != pendingWebPermissionToken) {
 						return;
 					}
+					enablePermissionBoolOnWebApp(next.successCallback);
 					if (androidPermissionsMissing) {
 						pendingWebOsToken = token;
 						pendingWebOsRequestCode = next.requestCode;
@@ -1133,23 +1139,30 @@ public class WebViewActivity extends AppCompatActivity
 						}
 						processNextPendingWebResource(token);
 					}
-				}).setNegativeButton(android.R.string.cancel, (dialog, id) -> {
-					activeWebPermissionDialog = null;
-					denyQueuedPermissionRequestsForBurst();
-					processNextPendingWebResource(token);
-				}).setOnCancelListener(dialog -> {
-					activeWebPermissionDialog = null;
-					denyQueuedPermissionRequestsForBurst();
-					processNextPendingWebResource(token);
-				}).create();
+				})
+				.setNegativeButton(android.R.string.cancel,
+						(dialog, id) -> handleWebPermissionDialogRejected(token, next.webkitResource))
+				.setOnCancelListener(dialog -> handleWebPermissionDialogRejected(token, next.webkitResource)).create();
 		activeWebPermissionDialog.show();
 	}
 
-	private void denyQueuedPermissionRequestsForBurst() {
-		while (!queuedWebPermissionRequests.isEmpty()) {
-			PermissionRequest queued = queuedWebPermissionRequests.remove(0);
-			queued.deny();
+	private void handleWebPermissionDialogRejected(int token, @NonNull String webkitResource) {
+		activeWebPermissionDialog = null;
+		if (token != pendingWebPermissionToken) {
+			return;
 		}
+		burstDeniedWebResources.add(webkitResource);
+		processNextPendingWebResource(token);
+	}
+
+	private void invalidatePendingWebPermissionState() {
+		pendingWebPermissionToken++;
+		pendingWebOsToken = -1;
+		pendingWebOsRequestCode = -1;
+		pendingWebOsResource = null;
+		pendingWebResourceQueue.clear();
+		pendingWebResources.clear();
+		pendingWebPermissionRequest = null;
 	}
 
 	private void startNextQueuedWebPermissionRequest() {
@@ -1157,15 +1170,13 @@ public class WebViewActivity extends AppCompatActivity
 			PermissionRequest nextRequest = queuedWebPermissionRequests.remove(0);
 			beginWebPermissionRequest(nextRequest);
 		}
+		if (pendingWebPermissionRequest == null && queuedWebPermissionRequests.isEmpty()) {
+			burstDeniedWebResources.clear();
+		}
 	}
 
 	private void beginWebPermissionRequest(@NonNull PermissionRequest request) {
-		pendingWebPermissionToken++;
-		pendingWebOsToken = -1;
-		pendingWebOsRequestCode = -1;
-		pendingWebOsResource = null;
-		pendingWebResourceQueue.clear();
-		pendingWebResources.clear();
+		invalidatePendingWebPermissionState();
 		pendingWebPermissionRequest = request;
 		int token = pendingWebPermissionToken;
 
@@ -1315,6 +1326,26 @@ public class WebViewActivity extends AppCompatActivity
 				return;
 			}
 			beginWebPermissionRequest(request);
+		}
+
+		@Override
+		public void onPermissionRequestCanceled(PermissionRequest request) {
+			if (request == null) {
+				return;
+			}
+			for (int i = queuedWebPermissionRequests.size() - 1; i >= 0; i--) {
+				if (queuedWebPermissionRequests.get(i) == request) {
+					queuedWebPermissionRequests.remove(i);
+				}
+			}
+			if (pendingWebPermissionRequest == request) {
+				invalidatePendingWebPermissionState();
+				if (activeWebPermissionDialog != null && activeWebPermissionDialog.isShowing()) {
+					activeWebPermissionDialog.dismiss();
+				}
+				activeWebPermissionDialog = null;
+				startNextQueuedWebPermissionRequest();
+			}
 		}
 
 		public void onProgressChanged(WebView view, int progress) {
