@@ -28,7 +28,56 @@ public class SandboxManager {
 		if (next_container < 0 || next_container >= NUM_OF_SANDBOXES) {
 			next_container = 0;
 		}
-		return next_container++;
+		boolean[] used = new boolean[NUM_OF_SANDBOXES];
+		for (WebApp w : DataManager.getInstance().getWebsites()) {
+			if (w != null && w.isActiveEntry() && w.isUseContainer() && isValidSandboxId(w.getContainerId())) {
+				used[w.getContainerId()] = true;
+			}
+		}
+		for (int offset = 0; offset < NUM_OF_SANDBOXES; offset++) {
+			int candidate = (next_container + offset) % NUM_OF_SANDBOXES;
+			if (!used[candidate]) {
+				next_container = (candidate + 1) % NUM_OF_SANDBOXES;
+				return candidate;
+			}
+		}
+		int chosen = next_container;
+		next_container = (next_container + 1) % NUM_OF_SANDBOXES;
+		return chosen;
+	}
+
+	public boolean deduplicateAssignedContainers(java.util.List<WebApp> websites) {
+		if (websites == null || websites.isEmpty()) {
+			return false;
+		}
+		boolean[] used = new boolean[NUM_OF_SANDBOXES];
+		java.util.List<WebApp> duplicates = new java.util.ArrayList<>();
+		for (WebApp w : websites) {
+			if (w == null || !w.isActiveEntry() || !w.isUseContainer()) {
+				continue;
+			}
+			int id = w.getContainerId();
+			if (!isValidSandboxId(id)) {
+				continue;
+			}
+			if (used[id]) {
+				duplicates.add(w);
+			} else {
+				used[id] = true;
+			}
+		}
+		boolean changed = false;
+		for (WebApp dup : duplicates) {
+			for (int candidate = 0; candidate < NUM_OF_SANDBOXES; candidate++) {
+				if (!used[candidate]) {
+					dup.setContainerId(candidate);
+					used[candidate] = true;
+					changed = true;
+					break;
+				}
+			}
+		}
+		return changed;
 	}
 
 	public static boolean isValidSandboxId(int sandboxId) {
