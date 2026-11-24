@@ -8,6 +8,7 @@ import com.cylonid.nativealpha.WebSandboxActivity7
 import com.cylonid.nativealpha.WebViewActivity
 import com.cylonid.nativealpha.model.WebApp
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -35,6 +36,14 @@ class WebViewLauncherTest {
         assertEquals(4, standardIntent.getIntExtra(Const.INTENT_WEBAPPID, -1))
         assertEquals(Intent.ACTION_VIEW, standardIntent.action)
         assertEquals("https://example.com4", standardIntent.dataString)
+        assertTrue((standardIntent.flags and Intent.FLAG_ACTIVITY_NEW_DOCUMENT) != 0)
+        assertTrue((standardIntent.flags and Intent.FLAG_ACTIVITY_NEW_TASK) != 0)
+
+        val secondStandardApp = WebApp("https://github.com", 8, 1)
+        val secondIntent = WebViewLauncher.createWebViewIntent(secondStandardApp, context)
+        assertNotNull(secondIntent)
+        assertNotEquals(standardIntent.dataString, secondIntent!!.dataString)
+        assertTrue((secondIntent.flags and Intent.FLAG_ACTIVITY_NEW_DOCUMENT) != 0)
 
         val sandbox0 =
             WebApp("https://s0.example", 5, 1).apply {
@@ -53,6 +62,7 @@ class WebViewLauncherTest {
         val intent7 = WebViewLauncher.createWebViewIntent(sandbox7, context)
         assertNotNull(intent7)
         assertEquals(WebSandboxActivity7::class.java.name, intent7!!.component?.className)
+        assertTrue((intent7.flags and Intent.FLAG_ACTIVITY_NEW_DOCUMENT) != 0)
         assertTrue((intent7.flags and Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) != 0)
     }
 }
