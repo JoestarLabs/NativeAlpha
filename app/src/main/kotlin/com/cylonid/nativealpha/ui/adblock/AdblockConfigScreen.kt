@@ -320,6 +320,7 @@ fun AdblockConfigScreen(
                                 ListItemDefaults.colors(
                                     containerColor = MaterialTheme.colorScheme.surfaceBright,
                                 ),
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }

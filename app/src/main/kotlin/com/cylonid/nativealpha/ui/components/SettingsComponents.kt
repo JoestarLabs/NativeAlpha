@@ -64,16 +64,18 @@ fun SettingsSectionHeader(
     )
 }
 
+/**
+ * Shared Material 3 [ListItem] base for settings rows, ensuring consistent surface colors
+ * and uniform vertical centering of leading and trailing content regardless of line count.
+ */
 @Composable
-fun SettingsActionItem(
+private fun SettingsListItem(
     title: String,
     modifier: Modifier = Modifier,
     description: String? = null,
     icon: ImageVector? = null,
-    trailingIcon: ImageVector? = null,
-    enabled: Boolean = true,
+    trailingContent: (@Composable () -> Unit)? = null,
     containerColor: Color = MaterialTheme.colorScheme.surfaceBright,
-    onClick: () -> Unit,
 ) {
     ListItem(
         content = {
@@ -113,6 +115,31 @@ fun SettingsActionItem(
                     }
                 }
             },
+        trailingContent = trailingContent,
+        colors =
+            ListItemDefaults.colors(
+                containerColor = containerColor,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+fun SettingsActionItem(
+    title: String,
+    modifier: Modifier = Modifier,
+    description: String? = null,
+    icon: ImageVector? = null,
+    trailingIcon: ImageVector? = null,
+    enabled: Boolean = true,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceBright,
+    onClick: () -> Unit,
+) {
+    SettingsListItem(
+        title = title,
+        description = description,
+        icon = icon,
         trailingContent =
             trailingIcon?.let {
                 {
@@ -123,19 +150,14 @@ fun SettingsActionItem(
                     )
                 }
             },
-        colors =
-            ListItemDefaults.colors(
-                containerColor = containerColor,
-            ),
+        containerColor = containerColor,
         modifier =
-            modifier
-                .fillMaxWidth()
-                .clickable(
-                    enabled = enabled,
-                    indication = ripple(),
-                    interactionSource = remember { MutableInteractionSource() },
-                    onClick = onClick,
-                ),
+            modifier.clickable(
+                enabled = enabled,
+                indication = ripple(),
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = onClick,
+            ),
     )
 }
 
@@ -152,44 +174,10 @@ fun SettingsSwitchItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
 
-    ListItem(
-        content = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
-        },
-        supportingContent =
-            description?.let {
-                {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            },
-        leadingContent =
-            icon?.let {
-                {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = it,
-                            contentDescription = null,
-                            modifier = Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
-                    }
-                }
-            },
+    SettingsListItem(
+        title = title,
+        description = description,
+        icon = icon,
         trailingContent = {
             Switch(
                 checked = checked,
@@ -198,20 +186,15 @@ fun SettingsSwitchItem(
                 enabled = enabled,
             )
         },
-        colors =
-            ListItemDefaults.colors(
-                containerColor = containerColor,
-            ),
+        containerColor = containerColor,
         modifier =
-            modifier
-                .fillMaxWidth()
-                .toggleable(
-                    value = checked,
-                    interactionSource = interactionSource,
-                    indication = ripple(),
-                    enabled = enabled,
-                    role = Role.Switch,
-                    onValueChange = onCheckedChange,
-                ),
+            modifier.toggleable(
+                value = checked,
+                interactionSource = interactionSource,
+                indication = ripple(),
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            ),
     )
 }
