@@ -18,6 +18,7 @@ class SandboxManagerTest {
     fun setUp() {
         sandboxManager = SandboxManager.getInstance()
         sandboxManager.nextContainer = 0
+        DataManager.getInstance().websites.clear()
         for (i in 0 until 8) {
             sandboxManager.unregisterWebAppFromSandbox(i)
         }
@@ -80,5 +81,48 @@ class SandboxManagerTest {
         DataManager.getInstance().websites.clear()
         sandboxManager.unregisterWebAppFromSandbox(3)
         assertFalse(sandboxManager.isSandboxUsedByAnotherApp(orphan))
+    }
+
+    @Test
+    fun testCalculateNextFreeContainerIdSkipsAlreadyAssignedContainersEvenIfCounterResets() {
+        val appA =
+            WebApp("https://amazon.example", 0, 0).apply {
+                isUseContainer = true
+                containerId = 0
+            }
+        val appB =
+            WebApp("https://github.example", 1, 1).apply {
+                isUseContainer = true
+                containerId = 2
+            }
+        DataManager.getInstance().websites.addAll(listOf(appA, appB))
+
+        sandboxManager.nextContainer = 0
+        assertEquals(1, sandboxManager.calculateNextFreeContainerId())
+        assertEquals(3, sandboxManager.calculateNextFreeContainerId())
+    }
+
+    @Test
+    fun testLoadAppDataDeduplicatesCollidingSandboxContainers() {
+        val dm = DataManager.getInstance()
+        dm.websites.clear()
+        dm.websites.add(
+            WebApp("https://amazon.example", 0, 0).apply {
+                isUseContainer = true
+                containerId = 0
+            },
+        )
+        dm.websites.add(
+            WebApp("https://github.example", 1, 1).apply {
+                isUseContainer = true
+                containerId = 0
+            },
+        )
+        dm.saveWebAppData()
+
+        dm.loadAppData()
+
+        assertEquals(0, dm.websites[0].containerId)
+        assertEquals(1, dm.websites[1].containerId)
     }
 }

@@ -82,6 +82,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import com.cylonid.nativealpha.R
 import com.cylonid.nativealpha.ShortcutDialogFragment
 import com.cylonid.nativealpha.helper.BiometricPromptHelper
@@ -155,8 +158,20 @@ fun WebAppSettingsScreen(
         stateViewModel.markSaved()
     }
 
-    DisposableEffect(Unit) {
+    val lifecycleOwner = context as? LifecycleOwner
+    DisposableEffect(lifecycleOwner) {
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_PAUSE) {
+                    val isConfigChange = (context as? Activity)?.isChangingConfigurations == true
+                    if (stateViewModel.isDirty && !isConfigChange) {
+                        saveSettings()
+                    }
+                }
+            }
+        lifecycleOwner?.lifecycle?.addObserver(observer)
         onDispose {
+            lifecycleOwner?.lifecycle?.removeObserver(observer)
             val isConfigChange = (context as? Activity)?.isChangingConfigurations == true
             if (stateViewModel.isDirty && !isConfigChange) {
                 saveSettings()
