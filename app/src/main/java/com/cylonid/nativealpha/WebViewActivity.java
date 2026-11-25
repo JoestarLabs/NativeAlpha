@@ -748,6 +748,12 @@ public class WebViewActivity extends AppCompatActivity
 	}
 
 	@Override
+	protected void onNewIntent(@NonNull Intent intent) {
+		super.onNewIntent(intent);
+		setIntent(intent);
+	}
+
+	@Override
 	protected void onResume() {
 		super.onResume();
 		int new_id = getIntent().getIntExtra(Const.INTENT_WEBAPPID, -1);

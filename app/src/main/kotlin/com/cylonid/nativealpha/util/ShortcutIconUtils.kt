@@ -1,6 +1,7 @@
 package com.cylonid.nativealpha.util
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.Bitmap
@@ -320,6 +321,54 @@ object ShortcutIconUtils {
                             info.intent?.let { builder.setIntent(it) }
                             builder.build()
                         }
+                    scManager.updateShortcuts(updates)
+                }
+            }
+        }
+    }
+
+    internal fun intentsMatchForLaunch(
+        existing: Intent?,
+        expected: Intent,
+    ): Boolean {
+        if (existing == null) return false
+        return existing.component == expected.component &&
+            existing.action == expected.action &&
+            existing.data == expected.data &&
+            existing.flags == expected.flags
+    }
+
+    @JvmStatic
+    fun syncPinnedShortcutIntents(
+        context: Context,
+        webApps: List<com.cylonid.nativealpha.model.WebApp>,
+    ) {
+        val appContext = context.applicationContext ?: context
+        val scManager = appContext.getSystemService(ShortcutManager::class.java) ?: return
+        val webAppsById = webApps.filter { it.isActiveEntry }.associateBy { it.ID }
+        if (webAppsById.isEmpty()) return
+        ioScope.launch {
+            runCatching {
+                val updates = mutableListOf<ShortcutInfo>()
+                for (info in scManager.pinnedShortcuts) {
+                    val webAppId = info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) ?: -1
+                    val webApp = webAppsById[webAppId] ?: continue
+                    val expectedIntent = WebViewLauncher.createWebViewIntent(webApp, appContext) ?: continue
+                    if (!intentsMatchForLaunch(info.intent, expectedIntent)) {
+                        val icon =
+                            getIcon(appContext, webAppId)?.let { Icon.createWithBitmap(downscaleIfNecessary(it)) }
+                                ?: Icon.createWithResource(appContext, R.mipmap.native_alpha_shortcut)
+                        val builder =
+                            ShortcutInfo
+                                .Builder(appContext, info.id)
+                                .setIcon(icon)
+                                .setIntent(expectedIntent)
+                        info.shortLabel?.let { builder.setShortLabel(it) }
+                        info.longLabel?.let { builder.setLongLabel(it) }
+                        updates.add(builder.build())
+                    }
+                }
+                if (updates.isNotEmpty()) {
                     scManager.updateShortcuts(updates)
                 }
             }

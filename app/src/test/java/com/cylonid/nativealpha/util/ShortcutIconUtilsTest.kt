@@ -191,4 +191,28 @@ class ShortcutIconUtilsTest {
         // Empty url returns null
         assertNull(ShortcutIconUtils.fetchBitmapFromNetwork(""))
     }
+
+    @Test
+    fun testIntentsMatchForLaunchDetectsStaleShortcutIntents() {
+        val app =
+            com.cylonid.nativealpha.model.WebApp("https://amazon.example", 7, 0).apply {
+                isUseContainer = true
+                containerId = 1
+            }
+        val expected = WebViewLauncher.createWebViewIntent(app, context)!!
+        assertTrue(ShortcutIconUtils.intentsMatchForLaunch(android.content.Intent(expected), expected))
+
+        val staleComponent =
+            android.content.Intent(expected).apply {
+                setClassName(context, com.cylonid.nativealpha.WebSandboxActivity0::class.java.name)
+            }
+        assertFalse(ShortcutIconUtils.intentsMatchForLaunch(staleComponent, expected))
+
+        val missingSingleTop =
+            android.content.Intent(expected).apply {
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT or android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+        assertFalse(ShortcutIconUtils.intentsMatchForLaunch(missingSingleTop, expected))
+        ShortcutIconUtils.syncPinnedShortcutIntents(context, listOf(app))
+    }
 }

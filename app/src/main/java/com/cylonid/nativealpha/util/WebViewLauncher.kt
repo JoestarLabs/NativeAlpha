@@ -1,6 +1,7 @@
 package com.cylonid.nativealpha.util
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
@@ -53,7 +54,32 @@ object WebViewLauncher {
             Timber.e("Failed to start WebView activity for container %d", webapp.containerId)
             return
         }
+        if (moveExistingTaskToFront(webapp, intent, c)) {
+            return
+        }
         c.startActivity(intent)
+    }
+
+    private fun moveExistingTaskToFront(
+        webapp: WebApp,
+        intent: Intent,
+        c: Context,
+    ): Boolean {
+        val activityManager = c.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager ?: return false
+        val targetComponent = intent.component ?: return false
+        for (task in activityManager.appTasks.orEmpty()) {
+            val taskInfo = runCatching { task.taskInfo }.getOrNull() ?: continue
+            if (taskInfo.numActivities <= 0) continue
+            val baseIntent = taskInfo.baseIntent ?: continue
+            val baseId = baseIntent.getIntExtra(Const.INTENT_WEBAPPID, -1)
+            if (baseId == webapp.ID && baseIntent.component == targetComponent) {
+                val moved = runCatching { task.moveToFront() }.isSuccess
+                if (moved) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     @JvmStatic
@@ -91,7 +117,7 @@ object WebViewLauncher {
                 WebViewActivity::class.java
             }
         val intent = Intent(c, webViewClass)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         if (c !is Activity) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }

@@ -364,4 +364,24 @@ class WebViewActivityLifecycleAndUaTest {
         assertEquals(listOf("third"), granted)
         controller.pause().stop().destroy()
     }
+
+    @Test
+    fun testOnNewIntentUpdatesIntentAndPreservesWebViewInstance() {
+        val controller = buildStartedActivity()
+        val activity = controller.get()
+        val originalWebView = activity.webView
+        assertNotNull(originalWebView)
+
+        val newIntent =
+            Intent(activity, WebViewActivity::class.java).apply {
+                action = Intent.ACTION_VIEW
+                putExtra(Const.INTENT_WEBAPPID, 0)
+            }
+        controller.newIntent(newIntent).resume()
+
+        assertEquals(newIntent, activity.intent)
+        assertTrue(activity.webView === originalWebView)
+        assertFalse(activity.isFinishing)
+        controller.pause().stop().destroy()
+    }
 }
