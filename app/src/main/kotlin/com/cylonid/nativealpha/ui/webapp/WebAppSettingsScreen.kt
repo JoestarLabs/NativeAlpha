@@ -98,6 +98,7 @@ import com.cylonid.nativealpha.ui.components.SettingsSwitchItem
 import com.cylonid.nativealpha.util.Const
 import com.cylonid.nativealpha.util.DateUtils
 import com.cylonid.nativealpha.util.ProcessUtils
+import com.cylonid.nativealpha.util.ShortcutIconUtils
 import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -154,6 +155,7 @@ fun WebAppSettingsScreen(
                 ProcessUtils.killWebSandbox(currentDraft.containerId, activityManager)
             }
             dataManager.replaceWebApp(currentDraft)
+            ShortcutIconUtils.syncPinnedShortcutIntents(context, dataManager.activeWebsites)
         }
         stateViewModel.markSaved()
     }
