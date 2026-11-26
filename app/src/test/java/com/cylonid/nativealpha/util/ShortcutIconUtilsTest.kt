@@ -193,26 +193,52 @@ class ShortcutIconUtilsTest {
     }
 
     @Test
-    fun testIntentsMatchForLaunchDetectsStaleShortcutIntents() {
-        val app =
-            com.cylonid.nativealpha.model.WebApp("https://amazon.example", 7, 0).apply {
-                isUseContainer = true
-                containerId = 1
-            }
-        val expected = WebViewLauncher.createWebViewIntent(app, context)!!
-        assertTrue(ShortcutIconUtils.intentsMatchForLaunch(android.content.Intent(expected), expected))
+    fun testSyncPinnedShortcutIntentsMigratesStaleShortcutAndRespectsGlobalBiometricSetting() {
+        val dm =
+            com.cylonid.nativealpha.model.DataManager
+                .getInstance()
+        val prevGlobalBiometric = dm.settings.globalWebApp.isBiometricProtection
+        dm.settings.globalWebApp.isBiometricProtection = true
+        try {
+            val app =
+                com.cylonid.nativealpha.model.WebApp("https://amazon.example", 7, 0).apply {
+                    isUseContainer = true
+                    containerId = 1
+                    isOverrideGlobalSettings = false
+                }
+            val effectiveApp =
+                app.deepCopy().apply {
+                    copySettings(dm.settings.globalWebApp)
+                }
+            val expected = WebViewLauncher.createWebViewIntent(effectiveApp, context)!!
+            assertTrue((expected.flags and android.content.Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS) != 0)
 
-        val staleComponent =
-            android.content.Intent(expected).apply {
-                setClassName(context, com.cylonid.nativealpha.WebSandboxActivity0::class.java.name)
-            }
-        assertFalse(ShortcutIconUtils.intentsMatchForLaunch(staleComponent, expected))
+            val staleIntent =
+                android.content.Intent(expected).apply {
+                    setClassName(context, com.cylonid.nativealpha.WebSandboxActivity0::class.java.name)
+                    flags =
+                        android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT or
+                        android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            assertFalse(ShortcutIconUtils.intentsMatchForLaunch(staleIntent, expected))
 
-        val missingSingleTop =
-            android.content.Intent(expected).apply {
-                flags = android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT or android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+            val scManager = context.getSystemService(android.content.pm.ShortcutManager::class.java)!!
+            val staleShortcut =
+                android.content.pm.ShortcutInfo
+                    .Builder(context, "amazon-7")
+                    .setShortLabel("Amazon")
+                    .setIntent(staleIntent)
+                    .build()
+            scManager.requestPinShortcut(staleShortcut, null)
+
+            kotlinx.coroutines.runBlocking {
+                ShortcutIconUtils.syncPinnedShortcutIntentsJob(context, listOf(app))?.join()
             }
-        assertFalse(ShortcutIconUtils.intentsMatchForLaunch(missingSingleTop, expected))
-        ShortcutIconUtils.syncPinnedShortcutIntents(context, listOf(app))
+
+            val updated = scManager.pinnedShortcuts.first { it.id == "amazon-7" }
+            assertTrue(ShortcutIconUtils.intentsMatchForLaunch(updated.intent, expected))
+        } finally {
+            dm.settings.globalWebApp.isBiometricProtection = prevGlobalBiometric
+        }
     }
 }
