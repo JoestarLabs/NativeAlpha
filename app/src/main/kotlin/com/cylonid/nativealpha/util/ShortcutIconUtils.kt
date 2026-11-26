@@ -17,13 +17,18 @@ import android.util.LruCache
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.scale
 import com.cylonid.nativealpha.R
+import com.cylonid.nativealpha.model.DataManager
+import com.cylonid.nativealpha.model.WebApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -58,6 +63,7 @@ object ShortcutIconUtils {
     // In-memory LRU cache: cache up to 24 icons (~1-2MB RAM maximum)
     private val memoryCache = LruCache<Int, Bitmap>(24)
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val shortcutUpdateMutex = Mutex()
     private const val MAX_ICON_BYTES = 5 * 1024 * 1024
 
     private val _iconUpdates = MutableSharedFlow<Int>(extraBufferCapacity = 64)
@@ -304,24 +310,26 @@ object ShortcutIconUtils {
         val downscaled = downscaleIfNecessary(bitmap)
         val scManager = appContext.getSystemService(ShortcutManager::class.java) ?: return
         ioScope.launch {
-            runCatching {
-                val matching =
-                    scManager.pinnedShortcuts.filter { info ->
-                        info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) == webAppId
-                    }
-                if (matching.isNotEmpty()) {
-                    val updates =
-                        matching.map { info ->
-                            val builder =
-                                ShortcutInfo
-                                    .Builder(appContext, info.id)
-                                    .setIcon(Icon.createWithBitmap(downscaled))
-                            info.shortLabel?.let { builder.setShortLabel(it) }
-                            info.longLabel?.let { builder.setLongLabel(it) }
-                            info.intent?.let { builder.setIntent(it) }
-                            builder.build()
+            shortcutUpdateMutex.withLock {
+                runCatching {
+                    val matching =
+                        scManager.pinnedShortcuts.filter { info ->
+                            info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) == webAppId
                         }
-                    scManager.updateShortcuts(updates)
+                    if (matching.isNotEmpty()) {
+                        val updates =
+                            matching.map { info ->
+                                val builder =
+                                    ShortcutInfo
+                                        .Builder(appContext, info.id)
+                                        .setIcon(Icon.createWithBitmap(downscaled))
+                                info.shortLabel?.let { builder.setShortLabel(it) }
+                                info.longLabel?.let { builder.setLongLabel(it) }
+                                info.intent?.let { builder.setIntent(it) }
+                                builder.build()
+                            }
+                        scManager.updateShortcuts(updates)
+                    }
                 }
             }
         }
@@ -338,38 +346,56 @@ object ShortcutIconUtils {
             existing.flags == expected.flags
     }
 
+    private fun resolveEffectiveWebApp(webApp: WebApp): WebApp {
+        if (webApp.isOverrideGlobalSettings) {
+            return webApp
+        }
+        val globalWebApp = DataManager.getInstance().settings?.globalWebApp ?: return webApp
+        return webApp.deepCopy().apply { copySettings(globalWebApp) }
+    }
+
     @JvmStatic
     fun syncPinnedShortcutIntents(
         context: Context,
-        webApps: List<com.cylonid.nativealpha.model.WebApp>,
+        webApps: List<WebApp>,
     ) {
+        syncPinnedShortcutIntentsJob(context, webApps)
+    }
+
+    internal fun syncPinnedShortcutIntentsJob(
+        context: Context,
+        webApps: List<WebApp>,
+    ): Job? {
         val appContext = context.applicationContext ?: context
-        val scManager = appContext.getSystemService(ShortcutManager::class.java) ?: return
+        val scManager = appContext.getSystemService(ShortcutManager::class.java) ?: return null
         val webAppsById = webApps.filter { it.isActiveEntry }.associateBy { it.ID }
-        if (webAppsById.isEmpty()) return
-        ioScope.launch {
-            runCatching {
-                val updates = mutableListOf<ShortcutInfo>()
-                for (info in scManager.pinnedShortcuts) {
-                    val webAppId = info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) ?: -1
-                    val webApp = webAppsById[webAppId] ?: continue
-                    val expectedIntent = WebViewLauncher.createWebViewIntent(webApp, appContext) ?: continue
-                    if (!intentsMatchForLaunch(info.intent, expectedIntent)) {
-                        val icon =
-                            getIcon(appContext, webAppId)?.let { Icon.createWithBitmap(downscaleIfNecessary(it)) }
-                                ?: Icon.createWithResource(appContext, R.mipmap.native_alpha_shortcut)
-                        val builder =
-                            ShortcutInfo
-                                .Builder(appContext, info.id)
-                                .setIcon(icon)
-                                .setIntent(expectedIntent)
-                        info.shortLabel?.let { builder.setShortLabel(it) }
-                        info.longLabel?.let { builder.setLongLabel(it) }
-                        updates.add(builder.build())
+        if (webAppsById.isEmpty()) return null
+        return ioScope.launch {
+            shortcutUpdateMutex.withLock {
+                runCatching {
+                    val updates = mutableListOf<ShortcutInfo>()
+                    for (info in scManager.pinnedShortcuts) {
+                        val webAppId = info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) ?: -1
+                        val storedWebApp = webAppsById[webAppId] ?: continue
+                        val effectiveWebApp = resolveEffectiveWebApp(storedWebApp)
+                        val expectedIntent = WebViewLauncher.createWebViewIntent(effectiveWebApp, appContext) ?: continue
+                        if (!intentsMatchForLaunch(info.intent, expectedIntent)) {
+                            val icon =
+                                getIcon(appContext, webAppId)?.let { Icon.createWithBitmap(downscaleIfNecessary(it)) }
+                                    ?: Icon.createWithResource(appContext, R.mipmap.native_alpha_shortcut)
+                            val builder =
+                                ShortcutInfo
+                                    .Builder(appContext, info.id)
+                                    .setIcon(icon)
+                                    .setIntent(expectedIntent)
+                            info.shortLabel?.let { builder.setShortLabel(it) }
+                            info.longLabel?.let { builder.setLongLabel(it) }
+                            updates.add(builder.build())
+                        }
                     }
-                }
-                if (updates.isNotEmpty()) {
-                    scManager.updateShortcuts(updates)
+                    if (updates.isNotEmpty()) {
+                        scManager.updateShortcuts(updates)
+                    }
                 }
             }
         }
