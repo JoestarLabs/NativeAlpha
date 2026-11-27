@@ -1,5 +1,7 @@
 package com.cylonid.nativealpha.ui.about
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -20,7 +22,9 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Code
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Extension
 import androidx.compose.material.icons.rounded.Favorite
@@ -37,6 +41,8 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,6 +51,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +71,10 @@ import com.cylonid.nativealpha.ui.components.ReleaseNotesBottomSheet
 import com.cylonid.nativealpha.ui.components.RoundedCardContainer
 import com.cylonid.nativealpha.ui.components.SettingsActionItem
 import com.cylonid.nativealpha.ui.components.SettingsSectionHeader
+import com.cylonid.nativealpha.util.DebugInfoFormatter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -77,16 +88,20 @@ fun AboutScreen(
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val copiedMessage = stringResource(R.string.about_debug_info_copied)
     var releaseNotes by remember { mutableStateOf<com.cylonid.nativealpha.model.ReleaseNotes?>(null) }
     androidx.compose.runtime.LaunchedEffect(Unit) {
         releaseNotes =
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
                 ReleaseNotesRepository.load(context)
             }
     }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             MediumFlexibleTopAppBar(
                 title = {
@@ -265,6 +280,24 @@ fun AboutScreen(
                             context,
                             "https://github.com/JoestarLabs/NativeAlpha/blob/main/privacy_policy.md",
                         )
+                    },
+                )
+
+                SettingsActionItem(
+                    title = stringResource(R.string.about_debug_info_title),
+                    description = stringResource(R.string.about_debug_info_desc),
+                    icon = Icons.Rounded.BugReport,
+                    trailingIcon = Icons.Rounded.ContentCopy,
+                    onClick = {
+                        coroutineScope.launch {
+                            val debugText =
+                                withContext(Dispatchers.IO) {
+                                    DebugInfoFormatter.format(DebugInfoFormatter.collect(context))
+                                }
+                            val clipboard = context.getSystemService(ClipboardManager::class.java)
+                            clipboard?.setPrimaryClip(ClipData.newPlainText("Native Alpha Debug Info", debugText))
+                            snackbarHostState.showSnackbar(copiedMessage)
+                        }
                     },
                 )
             }

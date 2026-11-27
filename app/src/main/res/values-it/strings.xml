@@ -187,4 +187,7 @@
     <string name="pdf_viewer_loading">Caricamento PDF…</string>
     <string name="pdf_viewer_retry">Riprova</string>
     <string name="press_back_again_to_exit">Premi di nuovo indietro per uscire</string>
+    <string name="about_debug_info_title">Copia info di debug</string>
+    <string name="about_debug_info_desc">Copia la diagnostica di dispositivo, WebView e app per le segnalazioni</string>
+    <string name="about_debug_info_copied">Info di debug copiate negli appunti</string>
 </resources>
