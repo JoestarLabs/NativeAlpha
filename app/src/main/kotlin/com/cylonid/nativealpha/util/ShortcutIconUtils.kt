@@ -36,6 +36,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URL
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
 object ShortcutIconUtils {
@@ -64,6 +65,7 @@ object ShortcutIconUtils {
     private val memoryCache = LruCache<Int, Bitmap>(24)
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val shortcutUpdateMutex = Mutex()
+    private val shortcutSyncGeneration = AtomicLong(0L)
     private const val MAX_ICON_BYTES = 5 * 1024 * 1024
 
     private val _iconUpdates = MutableSharedFlow<Int>(extraBufferCapacity = 64)
@@ -370,23 +372,29 @@ object ShortcutIconUtils {
         val scManager = appContext.getSystemService(ShortcutManager::class.java) ?: return null
         val webAppsById = webApps.filter { it.isActiveEntry }.associateBy { it.ID }
         if (webAppsById.isEmpty()) return null
+        val generation = shortcutSyncGeneration.incrementAndGet()
         return ioScope.launch {
             shortcutUpdateMutex.withLock {
+                if (shortcutSyncGeneration.get() != generation) {
+                    return@withLock
+                }
                 runCatching {
                     val updates = mutableListOf<ShortcutInfo>()
                     for (info in scManager.pinnedShortcuts) {
                         val webAppId = info.intent?.getIntExtra(Const.INTENT_WEBAPPID, -1) ?: -1
-                        val storedWebApp = webAppsById[webAppId] ?: continue
+                        val storedWebApp =
+                            DataManager
+                                .getInstance()
+                                .websites
+                                .firstOrNull { it != null && it.isActiveEntry && it.ID == webAppId }
+                                ?: webAppsById[webAppId]
+                                ?: continue
                         val effectiveWebApp = resolveEffectiveWebApp(storedWebApp)
                         val expectedIntent = WebViewLauncher.createWebViewIntent(effectiveWebApp, appContext) ?: continue
                         if (!intentsMatchForLaunch(info.intent, expectedIntent)) {
-                            val icon =
-                                getIcon(appContext, webAppId)?.let { Icon.createWithBitmap(downscaleIfNecessary(it)) }
-                                    ?: Icon.createWithResource(appContext, R.mipmap.native_alpha_shortcut)
                             val builder =
                                 ShortcutInfo
                                     .Builder(appContext, info.id)
-                                    .setIcon(icon)
                                     .setIntent(expectedIntent)
                             info.shortLabel?.let { builder.setShortLabel(it) }
                             info.longLabel?.let { builder.setLongLabel(it) }

@@ -241,4 +241,42 @@ class ShortcutIconUtilsTest {
             dm.settings.globalWebApp.isBiometricProtection = prevGlobalBiometric
         }
     }
+
+    @Test
+    fun testSupersededSyncPinnedShortcutIntentsJobDoesNotOverwriteLatestConfig() {
+        val staleApp =
+            com.cylonid.nativealpha.model.WebApp("https://amazon.example", 8, 0).apply {
+                isUseContainer = true
+                containerId = 0
+            }
+        val latestApp =
+            com.cylonid.nativealpha.model.WebApp("https://amazon.example", 8, 0).apply {
+                isUseContainer = true
+                containerId = 2
+            }
+        val initialIntent =
+            android.content.Intent(WebViewLauncher.createWebViewIntent(staleApp, context)!!).apply {
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT or android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+        val scManager = context.getSystemService(android.content.pm.ShortcutManager::class.java)!!
+        scManager.requestPinShortcut(
+            android.content.pm.ShortcutInfo
+                .Builder(context, "amazon-8")
+                .setShortLabel("Amazon")
+                .setIntent(initialIntent)
+                .build(),
+            null,
+        )
+
+        val job1 = ShortcutIconUtils.syncPinnedShortcutIntentsJob(context, listOf(staleApp))
+        val job2 = ShortcutIconUtils.syncPinnedShortcutIntentsJob(context, listOf(latestApp))
+        kotlinx.coroutines.runBlocking {
+            job1?.join()
+            job2?.join()
+        }
+
+        val updated = scManager.pinnedShortcuts.first { it.id == "amazon-8" }
+        val expectedLatest = WebViewLauncher.createWebViewIntent(latestApp, context)!!
+        assertTrue(ShortcutIconUtils.intentsMatchForLaunch(updated.intent, expectedLatest))
+    }
 }
