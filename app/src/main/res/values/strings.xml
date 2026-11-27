@@ -191,4 +191,7 @@
     <string name="pdf_viewer_loading">Loading PDF…</string>
     <string name="pdf_viewer_retry">Retry</string>
     <string name="press_back_again_to_exit">Press back again to exit</string>
+    <string name="about_debug_info_title">Copy debug info</string>
+    <string name="about_debug_info_desc">Copy device, WebView, and app diagnostics for bug reports</string>
+    <string name="about_debug_info_copied">Debug info copied to clipboard</string>
 </resources>
