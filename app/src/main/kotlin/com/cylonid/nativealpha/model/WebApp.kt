@@ -34,6 +34,7 @@ data class WebApp(
     var isAutoreload = false
     var timeAutoreload = 0
     var isForceDarkMode = false
+    var isForceDarkOnlyWhenSystemDark = false
     var isUseTimespanDarkMode = false
     var timespanDarkModeBegin: String? = "22:00"
     var timespanDarkModeEnd: String? = "06:00"
@@ -100,6 +101,7 @@ data class WebApp(
         isAutoreload = other.isAutoreload
         timeAutoreload = other.timeAutoreload
         isForceDarkMode = other.isForceDarkMode
+        isForceDarkOnlyWhenSystemDark = other.isForceDarkOnlyWhenSystemDark
         isUseTimespanDarkMode = other.isUseTimespanDarkMode
         timespanDarkModeBegin = other.timespanDarkModeBegin
         timespanDarkModeEnd = other.timespanDarkModeEnd

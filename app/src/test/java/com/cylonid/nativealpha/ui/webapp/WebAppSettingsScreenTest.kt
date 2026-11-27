@@ -164,4 +164,43 @@ class WebAppSettingsScreenTest {
         pdfToggle.performClick()
         pdfToggle.assertIsOn()
     }
+
+    @Test
+    fun testOnlyWhenSystemDarkSwitchTracksAndResetsWithForceDarkMode() {
+        val dm = DataManager.getInstance()
+        val webApp = dm.websites[0]
+        webApp.isOverrideGlobalSettings = true
+        webApp.isForceDarkMode = false
+        webApp.isForceDarkOnlyWhenSystemDark = false
+
+        composeTestRule.setContent {
+            NativeAlphaTheme {
+                WebAppSettingsScreen(
+                    webappId = testWebAppId,
+                    onNavigateBack = {},
+                )
+            }
+        }
+
+        val forceDarkStr = context.getString(R.string.force_dark_mode)
+        val systemDarkOnlyStr = context.getString(R.string.force_dark_mode_only_system_dark)
+
+        val forceDarkToggle = composeTestRule.onNodeWithText(forceDarkStr).performScrollTo()
+        val systemDarkOnlyToggle = composeTestRule.onNodeWithText(systemDarkOnlyStr).performScrollTo()
+
+        forceDarkToggle.assertIsOff()
+        systemDarkOnlyToggle.assertIsOff()
+
+        // Enable Force Dark Mode, then enable Only when system theme is dark
+        forceDarkToggle.performClick()
+        forceDarkToggle.assertIsOn()
+
+        systemDarkOnlyToggle.performClick()
+        systemDarkOnlyToggle.assertIsOn()
+
+        // Turning Force Dark Mode off resets Only when system theme is dark
+        forceDarkToggle.performClick()
+        forceDarkToggle.assertIsOff()
+        systemDarkOnlyToggle.assertIsOff()
+    }
 }

@@ -191,4 +191,5 @@
     <string name="pdf_viewer_loading">Loading PDF…</string>
     <string name="pdf_viewer_retry">Retry</string>
     <string name="press_back_again_to_exit">Press back again to exit</string>
+    <string name="force_dark_mode_only_system_dark">Only when system theme is dark</string>
 </resources>
