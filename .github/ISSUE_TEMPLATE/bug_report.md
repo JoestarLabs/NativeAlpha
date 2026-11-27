@@ -24,10 +24,14 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. Pixel 11 Pro]
+**Device & App Info**
+Please open **About (i) → Copy debug info** in Native Alpha and paste the output below (or fill in manually):
+```
+<!-- Paste debug info here -->
+```
+ - Device (if not using Copy debug info): [e.g. Pixel 11 Pro]
  - Android version: [e.g. Android 17]
- - App version [In the About (i) screen, e.g. v1.6.3]
+ - App version [In the About (i) screen, e.g. v1.6.8]
 
 **Additional context**
 Add any other context about the problem here.
