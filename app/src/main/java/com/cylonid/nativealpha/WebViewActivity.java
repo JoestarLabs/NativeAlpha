@@ -576,7 +576,7 @@ public class WebViewActivity extends AppCompatActivity
 			try {
 				getDelegate().setLocalNightMode(
 						useDarkPalette ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
-				wv.setBackgroundColor(useDarkPalette ? Color.BLACK : Color.WHITE);
+				wv.setBackgroundColor(needsForcedDarkMode ? Color.BLACK : Color.WHITE);
 				wv.setForceDarkAllowed(needsForcedDarkMode);
 				if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
 					WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), needsForcedDarkMode);
