@@ -27,6 +27,7 @@ import com.cylonid.nativealpha.ui.webapplist.WebAppListScreen
 import com.cylonid.nativealpha.ui.webapplist.WebAppListViewModel
 import com.cylonid.nativealpha.util.Const
 import com.cylonid.nativealpha.util.EntryPointUtils.entryPointReached
+import com.cylonid.nativealpha.util.ShortcutIconUtils
 import com.cylonid.nativealpha.util.WebViewLauncher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -110,6 +111,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         DataManager.getInstance().loadAppData()
+        ShortcutIconUtils.syncPinnedShortcutIntents(this, DataManager.getInstance().activeWebsites)
         isDynamicColor = runCatching { DataManager.getInstance().settings.isDynamicColor }.getOrDefault(false)
         viewModel.loadWebApps()
     }
