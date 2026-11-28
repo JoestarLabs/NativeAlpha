@@ -190,4 +190,5 @@
     <string name="about_debug_info_title">Debug-Infos kopieren</string>
     <string name="about_debug_info_desc">Geräte-, WebView- und App-Diagnosedaten für Fehlerberichte kopieren</string>
     <string name="about_debug_info_copied">Debug-Infos in die Zwischenablage kopiert</string>
+    <string name="force_dark_mode_only_system_dark">Nur bei dunklem Systemdesign</string>
 </resources>

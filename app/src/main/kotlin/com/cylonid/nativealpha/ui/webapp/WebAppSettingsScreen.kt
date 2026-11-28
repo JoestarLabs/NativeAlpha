@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.AppShortcut
 import androidx.compose.material.icons.rounded.Autorenew
 import androidx.compose.material.icons.rounded.Badge
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.BrightnessAuto
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.Cookie
 import androidx.compose.material.icons.rounded.DarkMode
@@ -600,9 +601,20 @@ fun WebAppSettingsScreen(
                         updateWebApp {
                             isForceDarkMode = isChecked
                             if (!isChecked) {
+                                isForceDarkOnlyWhenSystemDark = false
                                 isUseTimespanDarkMode = false
                             }
                         }
+                    },
+                )
+
+                SettingsSwitchItem(
+                    title = stringResource(R.string.force_dark_mode_only_system_dark),
+                    checked = webapp.isForceDarkOnlyWhenSystemDark,
+                    icon = Icons.Rounded.BrightnessAuto,
+                    enabled = isSettingsEnabled && webapp.isForceDarkMode,
+                    onCheckedChange = { isChecked ->
+                        updateWebApp { isForceDarkOnlyWhenSystemDark = isChecked }
                     },
                 )
 

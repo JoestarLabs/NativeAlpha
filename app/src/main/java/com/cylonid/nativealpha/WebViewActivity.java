@@ -71,6 +71,7 @@ import com.cylonid.nativealpha.model.DataManager;
 import com.cylonid.nativealpha.model.SandboxManager;
 import com.cylonid.nativealpha.model.WebApp;
 import com.cylonid.nativealpha.util.Const;
+import com.cylonid.nativealpha.util.DarkModeUtils;
 import com.cylonid.nativealpha.util.DateUtils;
 import com.cylonid.nativealpha.util.EntryPointUtils;
 import com.cylonid.nativealpha.util.LocaleUtils;
@@ -567,32 +568,18 @@ public class WebViewActivity extends AppCompatActivity
 	}
 
 	private void setDarkModeIfNeeded() {
-		Calendar beginCal = webapp.isUseTimespanDarkMode()
-				? DateUtils.convertStringToCalendar(webapp.getTimespanDarkModeBegin())
-				: null;
-		Calendar endCal = webapp.isUseTimespanDarkMode()
-				? DateUtils.convertStringToCalendar(webapp.getTimespanDarkModeEnd())
-				: null;
-		boolean needsForcedDarkMode = (beginCal != null && endCal != null
-				&& DateUtils.isInInterval(beginCal, Calendar.getInstance(), endCal))
-				|| (!webapp.isUseTimespanDarkMode() && webapp.isForceDarkMode());
+		boolean isSystemDark = DarkModeUtils.isSystemDarkMode(this);
+		boolean needsForcedDarkMode = DarkModeUtils.shouldForceDarkMode(webapp, isSystemDark);
+		boolean useDarkPalette = needsForcedDarkMode || isSystemDark;
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 			try {
-				if (needsForcedDarkMode) {
-					wv.setBackgroundColor(Color.BLACK);
-					wv.setForceDarkAllowed(true);
-					getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-					if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
-						WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), true);
-					}
-				} else {
-					getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-					wv.setBackgroundColor(Color.WHITE);
-					wv.setForceDarkAllowed(false);
-					if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
-						WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), false);
-					}
+				getDelegate().setLocalNightMode(
+						useDarkPalette ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+				wv.setBackgroundColor(needsForcedDarkMode ? Color.BLACK : Color.WHITE);
+				wv.setForceDarkAllowed(needsForcedDarkMode);
+				if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
+					WebSettingsCompat.setAlgorithmicDarkeningAllowed(wv.getSettings(), needsForcedDarkMode);
 				}
 			} catch (Exception e) {
 				Timber.w(e, "Dark mode web settings not supported on this device/environment");

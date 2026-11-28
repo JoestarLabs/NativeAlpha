@@ -191,4 +191,5 @@
     <string name="about_debug_info_title">Copiar info de depuración</string>
     <string name="about_debug_info_desc">Copia el diagnóstico del dispositivo, WebView y la app para informes de error</string>
     <string name="about_debug_info_copied">Info de depuración copiada al portapapeles</string>
+    <string name="force_dark_mode_only_system_dark">Solo cuando el tema del sistema es oscuro</string>
 </resources>

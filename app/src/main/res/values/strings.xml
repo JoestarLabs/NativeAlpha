@@ -194,4 +194,5 @@
     <string name="about_debug_info_title">Copy debug info</string>
     <string name="about_debug_info_desc">Copy device, WebView, and app diagnostics for bug reports</string>
     <string name="about_debug_info_copied">Debug info copied to clipboard</string>
+    <string name="force_dark_mode_only_system_dark">Only when system theme is dark</string>
 </resources>

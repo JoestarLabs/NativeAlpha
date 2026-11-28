@@ -190,4 +190,5 @@
     <string name="about_debug_info_title">Copia info di debug</string>
     <string name="about_debug_info_desc">Copia la diagnostica di dispositivo, WebView e app per le segnalazioni</string>
     <string name="about_debug_info_copied">Info di debug copiate negli appunti</string>
+    <string name="force_dark_mode_only_system_dark">Solo con tema di sistema scuro</string>
 </resources>
