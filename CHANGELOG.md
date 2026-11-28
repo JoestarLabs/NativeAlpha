@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.6.8](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.7...v1.6.8) (2026-11-28)
+
+
+### Features
+
+* **about:** add copy debug info option ([7899496](https://github.com/JoestarLabs/NativeAlpha/commit/789949635017ea2c95b107af4c5af05de81f8a2f))
+* **dark-mode:** add option to force dark mode only when system theme is dark ([bbf11ea](https://github.com/JoestarLabs/NativeAlpha/commit/bbf11ea1904b4f6377f3ab1d11a3b49fc95782e4))
+* **dark-mode:** add option to force dark mode only when system theme is dark ([#55](https://github.com/JoestarLabs/NativeAlpha/issues/55)) ([3d9672e](https://github.com/JoestarLabs/NativeAlpha/commit/3d9672ec2397065452384d3179f6f2ccaea425cc))
+
+
+### Bug Fixes
+
+* **deps:** update mockito monorepo to v5.25.0 ([e28e8f4](https://github.com/JoestarLabs/NativeAlpha/commit/e28e8f4679cafa8635dd19f26c5d89c0bf9a2d3e))
+* **shortcuts:** preserve custom icons and skip superseded intent syncs ([3b4c7c4](https://github.com/JoestarLabs/NativeAlpha/commit/3b4c7c42ca3d97068dad8c90cd961532fb3c744d))
+* **shortcuts:** resolve effective settings and serialize pinned shortcut updates ([5c69ab5](https://github.com/JoestarLabs/NativeAlpha/commit/5c69ab58ca8f20d148971f4b3547ff3962fe49c0))
+* **webview:** reuse existing PWA tasks and sync stale pinned shortcut intents ([#71](https://github.com/JoestarLabs/NativeAlpha/issues/71)) ([c7f0305](https://github.com/JoestarLabs/NativeAlpha/commit/c7f0305915202f1e4782dc0979b110c95461731b))
+* **webview:** use needsForcedDarkMode for WebView background color ([05115a8](https://github.com/JoestarLabs/NativeAlpha/commit/05115a8dabdd0e0ed81c4694e980d2390affd8fa))
+
 ## [1.6.7](https://github.com/JoestarLabs/NativeAlpha/compare/v1.6.6...v1.6.7) (2026-11-24)
 
 
